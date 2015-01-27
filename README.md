@@ -1,0 +1,1 @@
+# embulk-plugin-out-elasticsearch
