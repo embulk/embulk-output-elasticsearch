@@ -24,7 +24,6 @@ configurations {
 repositories {
     mavenCentral()
     jcenter()
-    maven { url 'http://dl.bintray.com/embulk/maven' }
 }
 
 dependencies {
@@ -34,6 +33,6 @@ dependencies {
 }
 
 task copyDependencies(type:Copy) {
-    from (configurations.runtime - configurations.compile)
-    into "classpath"
+    new File("$buildDir/libs/dependencies").mkdirs()
+    into "$buildDir/libs/dependencies" from configurations.runtime
 }
