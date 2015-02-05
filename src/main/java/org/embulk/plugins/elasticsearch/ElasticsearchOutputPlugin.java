@@ -32,7 +32,7 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.util.UUID;
 
-public class ElasticsearchOutputPluginRunner
+public class ElasticsearchOutputPlugin
         implements OutputPlugin
 {
     public interface RunnerTask
@@ -70,7 +70,7 @@ public class ElasticsearchOutputPluginRunner
     private final Logger log;
 
     @Inject
-    public ElasticsearchOutputPluginRunner()
+    public ElasticsearchOutputPlugin()
     {
         log = Exec.getLogger(getClass());
     }

@@ -20,7 +20,7 @@ public class ElasticsearchOutputPluginModule
     public void configure(Binder binder)
     {
         Preconditions.checkNotNull(binder, "binder is null.");
-        registerPluginTo(binder, OutputPlugin.class, "elasticsearch", ElasticsearchOutputPluginRunner.class);
+        registerPluginTo(binder, OutputPlugin.class, "elasticsearch", ElasticsearchOutputPlugin.class);
     }
 
     @Override
