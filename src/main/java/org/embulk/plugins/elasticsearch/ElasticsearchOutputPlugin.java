@@ -30,6 +30,7 @@ import org.embulk.spi.TransactionalPageOutput;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 
 public class ElasticsearchOutputPlugin
@@ -93,6 +94,21 @@ public class ElasticsearchOutputPlugin
         NextConfig nextConfig = Exec.newNextConfig();
         return nextConfig;
     }
+
+    @Override
+    public NextConfig resume(TaskSource taskSource,
+                             Schema schema, int processorCount,
+                             OutputPlugin.Control control)
+    {
+        //  TODO
+        return Exec.newNextConfig();
+    }
+
+    @Override
+    public void cleanup(TaskSource taskSource,
+                        Schema schema, int processorCount,
+                        List<CommitReport> successCommitReports)
+    { }
 
     private Client createClient(final RunnerTask task)
     {
