@@ -1,12 +1,12 @@
 package org.embulk.plugins.elasticsearch;
 
+import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
-import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
@@ -16,7 +16,7 @@ import org.embulk.config.CommitReport;
 import org.embulk.config.Config;
 import org.embulk.config.ConfigDefault;
 import org.embulk.config.ConfigSource;
-import org.embulk.config.NextConfig;
+import org.embulk.config.ConfigDiff;
 import org.embulk.config.Task;
 import org.embulk.config.TaskSource;
 import org.embulk.spi.Column;
@@ -31,7 +31,6 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.UUID;
 
 public class ElasticsearchOutputPlugin
         implements OutputPlugin
@@ -47,16 +46,17 @@ public class ElasticsearchOutputPlugin
         @ConfigDefault("9300")
         public int getPort();
 
-        @Config("index_name")
+        @Config("index")
         @ConfigDefault("embulk")
-        public String getIndexName();
+        public String getIndex();
 
-        @Config("type_name")
+        @Config("index_type")
         @ConfigDefault("embulk")
-        public String getTypeName();
+        public String getIndexType();
 
-        @Config("id_key")
-        public String getIdKey(); //  TODO Optional
+        @Config("doc_id")
+        @ConfigDefault("null")
+        public Optional<String> getDocId();
 
         @Config("bulk_actions")
         @ConfigDefault("1000")
@@ -77,7 +77,7 @@ public class ElasticsearchOutputPlugin
     }
 
     @Override
-    public NextConfig transaction(ConfigSource config, Schema schema,
+    public ConfigDiff transaction(ConfigSource config, Schema schema,
                                   int processorCount, Control control)
     {
         final RunnerTask task = config.loadConfig(RunnerTask.class);
@@ -91,17 +91,17 @@ public class ElasticsearchOutputPlugin
             throw Throwables.propagate(e);
         }
 
-        NextConfig nextConfig = Exec.newNextConfig();
+        ConfigDiff nextConfig = Exec.newConfigDiff();
         return nextConfig;
     }
 
     @Override
-    public NextConfig resume(TaskSource taskSource,
+    public ConfigDiff resume(TaskSource taskSource,
                              Schema schema, int processorCount,
                              OutputPlugin.Control control)
     {
         //  TODO
-        return Exec.newNextConfig();
+        return Exec.newConfigDiff();
     }
 
     @Override
@@ -121,7 +121,7 @@ public class ElasticsearchOutputPlugin
         return client;
     }
 
-    private BulkProcessor createBulkProcessor(final RunnerTask task, final Client client)
+    private BulkProcessor newBulkProcessor(final RunnerTask task, final Client client)
     {
         return BulkProcessor.builder(client, new BulkProcessor.Listener() {
             @Override
@@ -146,6 +146,13 @@ public class ElasticsearchOutputPlugin
           .build();
     }
 
+    private IndexRequestBuilder newIndexRequestBuilder(final RunnerTask task, final Client client)
+    {
+        Optional<String> docId = task.getDocId();
+        String id = docId.isPresent() ? docId.get() : null;
+        return client.prepareIndex(task.getIndex(), task.getIndexType(), id);
+    }
+
     @Override
     public TransactionalPageOutput open(TaskSource taskSource, Schema schema,
                                         int processorIndex)
@@ -153,38 +160,36 @@ public class ElasticsearchOutputPlugin
         final RunnerTask task = taskSource.loadTask(RunnerTask.class);
 
         Client client = createClient(task);
-        BulkProcessor bulkProcessor = createBulkProcessor(task, client);
-        BulkUploader uploader = new BulkUploader(task, client, bulkProcessor);
-        uploader.open(schema);
-        return uploader;
+        BulkProcessor bulkProcessor = newBulkProcessor(task, client);
+        IndexRequestBuilder indexRequestBuider = newIndexRequestBuilder(task, client);
+        ElasticsearchPageOutput pageOutput = new ElasticsearchPageOutput(task, client,
+                bulkProcessor, indexRequestBuider);
+        pageOutput.open(schema);
+        return pageOutput;
     }
 
-    static class BulkUploader implements TransactionalPageOutput
+    static class ElasticsearchPageOutput implements TransactionalPageOutput
     {
         private Client client;
         private BulkProcessor bulkProcessor;
-
-        private final String index;
-        private final String type;
-        private final String id;
+        private IndexRequestBuilder indexRequestBuider;
 
         private PageReader pageReader;
-        private BulkRequestBuilder builder;
+        //private BulkRequestBuilder builder;
 
-        BulkUploader(RunnerTask task, Client client, BulkProcessor bulkProcessor)
+        ElasticsearchPageOutput(RunnerTask task, Client client,
+                                BulkProcessor bulkProcessor,
+                                IndexRequestBuilder indexRequestBuider)
         {
             this.client = client;
             this.bulkProcessor = bulkProcessor;
-
-            this.index = task.getIndexName();
-            this.type = task.getTypeName();
-            this.id = task.getIdKey();
+            this.indexRequestBuider = indexRequestBuider;
         }
 
         void open(final Schema schema)
         {
             pageReader = new PageReader(schema);
-            builder = client.prepareBulk();
+            //builder = client.prepareBulk();
         }
 
         @Override
@@ -254,15 +259,7 @@ public class ElasticsearchOutputPlugin
                         }
                     });
                     contextBuilder.endObject();
-
-                    String _id;
-                    if (!StringUtils.isEmpty(id)) {
-                        _id = id;
-                    } else {
-                        _id = UUID.randomUUID().toString();
-                    }
-
-                    builder.add(client.prepareIndex(index, type, _id).setSource(contextBuilder));
+                    bulkProcessor.add(indexRequestBuider.setSource(contextBuilder).request());
                     //System.out.println("# added index: " + index + ", type: " + type + ", id: " + _id);
                     //BulkResponse bulkResponse = builder.execute().actionGet();
 
