@@ -16,4 +16,4 @@ include 'api'
 include 'services:webservice'
 */
 
-rootProject.name = 'embulk-plugin-out-elasticsearch'
+rootProject.name = 'embulk-plugin-output-elasticsearch'
