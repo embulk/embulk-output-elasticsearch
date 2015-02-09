@@ -15,8 +15,8 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.embulk.config.CommitReport;
 import org.embulk.config.Config;
 import org.embulk.config.ConfigDefault;
+import org.embulk.config.ConfigDiff;
 import org.embulk.config.ConfigSource;
-import org.embulk.config.NextConfig;
 import org.embulk.config.Task;
 import org.embulk.config.TaskSource;
 import org.embulk.spi.Column;
@@ -77,7 +77,7 @@ public class ElasticsearchOutputPlugin
     }
 
     @Override
-    public NextConfig transaction(ConfigSource config, Schema schema,
+    public ConfigDiff transaction(ConfigSource config, Schema schema,
                                   int processorCount, Control control)
     {
         final RunnerTask task = config.loadConfig(RunnerTask.class);
@@ -91,17 +91,17 @@ public class ElasticsearchOutputPlugin
             throw Throwables.propagate(e);
         }
 
-        NextConfig nextConfig = Exec.newNextConfig();
+        ConfigDiff nextConfig = Exec.newConfigDiff();
         return nextConfig;
     }
 
     @Override
-    public  NextConfig resume(TaskSource taskSource,
+    public  ConfigDiff resume(TaskSource taskSource,
                              Schema schema, int processorCount,
                              OutputPlugin.Control control)
     {
         //  TODO
-        return Exec.newNextConfig();
+        return Exec.newConfigDiff();
     }
 
     @Override
