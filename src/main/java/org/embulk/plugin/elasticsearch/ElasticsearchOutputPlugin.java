@@ -1,4 +1,4 @@
-package org.embulk.plugins.elasticsearch;
+package org.embulk.plugin.elasticsearch;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
