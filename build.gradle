@@ -7,7 +7,7 @@ import com.github.jrubygradle.JRubyExec
 repositories {
     mavenCentral()
     jcenter()
-    mavenLocal()
+    //mavenLocal()
 }
 configurations {
     provided
