@@ -127,30 +127,23 @@ public class ElasticsearchOutputPlugin
             @Override
             public void beforeBulk(long executionId, BulkRequest request)
             {
-                //  TODO logging
+                log.debug("Going to execute {} bulk actions", request.numberOfActions());
             }
 
             @Override
             public void afterBulk(long executionId, BulkRequest request, BulkResponse response)
             {
-                //  TODO logging
+                log.debug("Executed {} bulk actions", request.numberOfActions());
             }
 
             @Override
             public void afterBulk(long executionId, BulkRequest request, Throwable failure)
             {
-                //  TODO error handling
+                log.warn("Got the error during bulk processing", failure);
             }
         }).setBulkActions(task.getBulkActions())
           .setConcurrentRequests(task.getConcurrentRequests())
           .build();
-    }
-
-    private IndexRequestBuilder newIndexRequestBuilder(final RunnerTask task, final Client client)
-    {
-        Optional<String> docId = task.getDocId();
-        String id = docId.isPresent() ? docId.get() : null;
-        return client.prepareIndex(task.getIndex(), task.getIndexType(), id);
     }
 
     @Override
@@ -161,9 +154,8 @@ public class ElasticsearchOutputPlugin
 
         Client client = createClient(task);
         BulkProcessor bulkProcessor = newBulkProcessor(task, client);
-        IndexRequestBuilder indexRequestBuider = newIndexRequestBuilder(task, client);
         ElasticsearchPageOutput pageOutput = new ElasticsearchPageOutput(task, client,
-                bulkProcessor, indexRequestBuider);
+                bulkProcessor);
         pageOutput.open(schema);
         return pageOutput;
     }
@@ -172,24 +164,28 @@ public class ElasticsearchOutputPlugin
     {
         private Client client;
         private BulkProcessor bulkProcessor;
-        private IndexRequestBuilder indexRequestBuider;
 
         private PageReader pageReader;
-        //private BulkRequestBuilder builder;
+
+        private final String index;
+        private final String indexType;
+        private final String docId;
 
         ElasticsearchPageOutput(RunnerTask task, Client client,
-                                BulkProcessor bulkProcessor,
-                                IndexRequestBuilder indexRequestBuider)
+                                BulkProcessor bulkProcessor)
         {
             this.client = client;
             this.bulkProcessor = bulkProcessor;
-            this.indexRequestBuider = indexRequestBuider;
+
+            this.index = task.getIndex();
+            this.indexType = task.getIndexType();
+            Optional<String> did = task.getDocId();
+            this.docId = did.isPresent() ? did.get() : null;
         }
 
         void open(final Schema schema)
         {
             pageReader = new PageReader(schema);
-            //builder = client.prepareBulk();
         }
 
         @Override
@@ -259,14 +255,18 @@ public class ElasticsearchOutputPlugin
                         }
                     });
                     contextBuilder.endObject();
-                    bulkProcessor.add(indexRequestBuider.setSource(contextBuilder).request());
-                    //System.out.println("# added index: " + index + ", type: " + type + ", id: " + _id);
-                    //BulkResponse bulkResponse = builder.execute().actionGet();
+                    bulkProcessor.add(newIndexRequestBuilder().setSource(contextBuilder).request());
+                    System.out.println("# add contextBuilder: "+contextBuilder);
 
                 } catch (IOException e) {
                     Throwables.propagate(e); //  TODO error handling
                 }
             }
+        }
+
+        private IndexRequestBuilder newIndexRequestBuilder()
+        {
+            return client.prepareIndex(index, indexType, docId);
         }
 
         @Override
