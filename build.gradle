@@ -16,8 +16,8 @@ configurations {
 version = "0.1.0-SNAPSHOT"
 
 dependencies {
-    compile  "org.embulk:embulk-core:0.3.3-SNAPSHOT"
-    provided "org.embulk:embulk-core:0.3.3-SNAPSHOT"
+    compile  "org.embulk:embulk-core:0.3.2"
+    provided "org.embulk:embulk-core:0.3.2"
     compile 'org.elasticsearch:elasticsearch:1.4.2'
     testCompile "junit:junit:4.+"
     testCompile "org.mockito:mockito-core:1.+"
