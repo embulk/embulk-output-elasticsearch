@@ -9,6 +9,8 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -112,12 +114,13 @@ public class ElasticsearchOutputPlugin
 
     private Client createClient(final RunnerTask task)
     {
-        String host = task.getHost();
-        int port = task.getPort();
-        //  TODO uses Settings
+
         //  @see http://www.elasticsearch.org/guide/en/elasticsearch/client/java-api/current/client.html
-        Client client = new TransportClient() //  ElasticsearchException
-                .addTransportAddress(new InetSocketTransportAddress(host, port));
+        Settings settings = ImmutableSettings.settingsBuilder()
+                .classLoader(Settings.class.getClassLoader())
+                .build();
+        Client client = new TransportClient(settings) //  ElasticsearchException
+                .addTransportAddress(new InetSocketTransportAddress(task.getHost(), task.getPort()));
         return client;
     }
 
