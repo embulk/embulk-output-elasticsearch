@@ -50,7 +50,7 @@ Gem::Specification.new do |gem|
   gem.authors       = ["Muga Nishizawa"]
   gem.email         = ["muga.nishizawa@gmail.com"]
   gem.license       = "Apache 2.0"
-  gem.homepage      = "https://github.com/muga/embulk-plugin-output-elasticsearch"
+  gem.homepage      = "https://github.com/muga/embulk-output-elasticsearch"
 
   gem.files         = `git ls-files`.split("\n") + Dir["classpath/*.jar"]
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})

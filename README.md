@@ -1,1 +1,1 @@
-# embulk-plugin-output-elasticsearch
+# embulk-output-elasticsearch
