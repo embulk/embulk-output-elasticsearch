@@ -12,9 +12,8 @@
 ```yaml
 out:
   type: elasticsearch
-  host: <elasticsearch host>
-  port: <elasticsearch port>
-  index: <your index>
+  cluster: <cluster name>
+  index_name: <your index>
   index_type: <your index type>
 ```
 

@@ -3,17 +3,19 @@ package org.embulk.plugin.elasticsearch;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
+import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.index.IndexRequestBuilder;
+import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.client.Requests;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.node.Node;
+import org.elasticsearch.node.NodeBuilder;
 import org.embulk.config.CommitReport;
 import org.embulk.config.Config;
 import org.embulk.config.ConfigDefault;
@@ -27,12 +29,13 @@ import org.embulk.spi.OutputPlugin;
 import org.embulk.spi.Page;
 import org.embulk.spi.PageReader;
 import org.embulk.spi.Schema;
-import org.embulk.spi.SchemaVisitor;
+import org.embulk.spi.ColumnVisitor;
 import org.embulk.spi.TransactionalPageOutput;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class ElasticsearchOutputPlugin
         implements OutputPlugin
@@ -40,15 +43,11 @@ public class ElasticsearchOutputPlugin
     public interface RunnerTask
             extends Task
     {
-        @Config("host")
-        @ConfigDefault("localhost")
-        public String getHost();
+        @Config("cluster")
+        @ConfigDefault("elasticsearch")
+        public String getClusterName();
 
-        @Config("port")
-        @ConfigDefault("9300")
-        public int getPort();
-
-        @Config("index")
+        @Config("index_name")
         @ConfigDefault("embulk")
         public String getIndex();
 
@@ -65,7 +64,7 @@ public class ElasticsearchOutputPlugin
         public int getBulkActions();
 
         @Config("concurrent_requests")
-        @ConfigDefault("5")
+        @ConfigDefault("0")  // TODO
         public int getConcurrentRequests();
 
     }
@@ -84,7 +83,9 @@ public class ElasticsearchOutputPlugin
     {
         final RunnerTask task = config.loadConfig(RunnerTask.class);
 
-        try (Client client = createClient(task)) {
+        try (Node node = createNode(task)) {
+            try (Client client = createClient(task, node)) {
+            }
         }
 
         try {
@@ -112,16 +113,18 @@ public class ElasticsearchOutputPlugin
                         List<CommitReport> successCommitReports)
     { }
 
-    private Client createClient(final RunnerTask task)
+    private Node createNode(final RunnerTask task)
     {
-
         //  @see http://www.elasticsearch.org/guide/en/elasticsearch/client/java-api/current/client.html
         Settings settings = ImmutableSettings.settingsBuilder()
                 .classLoader(Settings.class.getClassLoader())
                 .build();
-        Client client = new TransportClient(settings) //  ElasticsearchException
-                .addTransportAddress(new InetSocketTransportAddress(task.getHost(), task.getPort()));
-        return client;
+        return NodeBuilder.nodeBuilder().clusterName(task.getClusterName()).settings(settings).node();
+    }
+
+    private Client createClient(final RunnerTask task, final Node node)
+    {
+        return node.client();
     }
 
     private BulkProcessor newBulkProcessor(final RunnerTask task, final Client client)
@@ -130,13 +133,27 @@ public class ElasticsearchOutputPlugin
             @Override
             public void beforeBulk(long executionId, BulkRequest request)
             {
-                log.debug("Going to execute {} bulk actions", request.numberOfActions());
+                log.info("Execute {} bulk actions", request.numberOfActions());
             }
 
             @Override
             public void afterBulk(long executionId, BulkRequest request, BulkResponse response)
             {
-                log.debug("Executed {} bulk actions", request.numberOfActions());
+                if (response.hasFailures()) {
+                    long items = 0;
+                    if (log.isDebugEnabled()) {
+                        for (BulkItemResponse item : response.getItems()) {
+                            if (item.isFailed()) {
+                                items += 1;
+                                log.debug("   Error for {}/{}/{} for {} operation: {}", item.getIndex(),
+                                        item.getType(), item.getId(), item.getOpType(), item.getFailureMessage());
+                            }
+                        }
+                    }
+                    log.warn("{} bulk actions failed: {}", items, response.buildFailureMessage());
+                } else {
+                    log.info("{} bulk actions succeeded", request.numberOfActions());
+                }
             }
 
             @Override
@@ -155,16 +172,17 @@ public class ElasticsearchOutputPlugin
     {
         final RunnerTask task = taskSource.loadTask(RunnerTask.class);
 
-        Client client = createClient(task);
+        Node node = createNode(task);
+        Client client = createClient(task, node);
         BulkProcessor bulkProcessor = newBulkProcessor(task, client);
-        ElasticsearchPageOutput pageOutput = new ElasticsearchPageOutput(task, client,
-                bulkProcessor);
+        ElasticsearchPageOutput pageOutput = new ElasticsearchPageOutput(task, node, client, bulkProcessor);
         pageOutput.open(schema);
         return pageOutput;
     }
 
     static class ElasticsearchPageOutput implements TransactionalPageOutput
     {
+        private Node node;
         private Client client;
         private BulkProcessor bulkProcessor;
 
@@ -174,9 +192,10 @@ public class ElasticsearchOutputPlugin
         private final String indexType;
         private final String docId;
 
-        ElasticsearchPageOutput(RunnerTask task, Client client,
+        ElasticsearchPageOutput(RunnerTask task, Node node, Client client,
                                 BulkProcessor bulkProcessor)
         {
+            this.node = node;
             this.client = client;
             this.bulkProcessor = bulkProcessor;
 
@@ -199,7 +218,7 @@ public class ElasticsearchOutputPlugin
             while (pageReader.nextRecord()) {
                 try {
                     final XContentBuilder contextBuilder = XContentFactory.jsonBuilder().startObject(); //  TODO reusable??
-                    pageReader.getSchema().visitColumns(new SchemaVisitor() {
+                    pageReader.getSchema().visitColumns(new ColumnVisitor() {
                         @Override
                         public void booleanColumn(Column column) {
                             try {
@@ -257,9 +276,9 @@ public class ElasticsearchOutputPlugin
                             //  TODO
                         }
                     });
+
                     contextBuilder.endObject();
-                    bulkProcessor.add(newIndexRequestBuilder().setSource(contextBuilder).request());
-                    System.out.println("# add contextBuilder: "+contextBuilder);
+                    bulkProcessor.add(newIndexRequest().source(contextBuilder));
 
                 } catch (IOException e) {
                     Throwables.propagate(e); //  TODO error handling
@@ -267,9 +286,9 @@ public class ElasticsearchOutputPlugin
             }
         }
 
-        private IndexRequestBuilder newIndexRequestBuilder()
+        private IndexRequest newIndexRequest()
         {
-            return client.prepareIndex(index, indexType, docId);
+            return Requests.indexRequest(index).type(indexType).id(docId);
         }
 
         @Override
@@ -286,13 +305,22 @@ public class ElasticsearchOutputPlugin
         public void close()
         {
             if (bulkProcessor != null) {
-                bulkProcessor.close();
+                try {
+                    bulkProcessor.awaitClose(0, TimeUnit.NANOSECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
                 bulkProcessor = null;
             }
 
             if (client != null) {
                 client.close(); //  ElasticsearchException
                 client = null;
+            }
+
+            if (node != null) {
+                node.close();
+                node = null;
             }
         }
 
