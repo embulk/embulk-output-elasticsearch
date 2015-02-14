@@ -9,12 +9,18 @@
 
 ## Configuration
 
+- **cluster**: description (string, required)
+- **index_name**: description (integer, default: default-value)
+- **index_type**: description (integer, default: default-value)
+
+## Example
+
 ```yaml
 out:
   type: elasticsearch
-  cluster: <cluster name>
-  index_name: <your index>
-  index_type: <your index type>
+  cluster: elasticsearch
+  index_name: embulk
+  index_type: embulk
 ```
 
 ## Build

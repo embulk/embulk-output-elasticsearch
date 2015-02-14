@@ -1,4 +1,4 @@
-package org.embulk.plugin.elasticsearch;
+package org.embulk.output;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;

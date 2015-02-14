@@ -23,11 +23,12 @@ dependencies {
     testCompile "org.mockito:mockito-core:1.+"
 }
 
-task classpath(type: Copy) {
+task classpath(type: Copy, dependsOn: ["jar"]) {
     doFirst { file("classpath").deleteDir() }
     from (configurations.runtime - configurations.provided + files(jar.archivePath))
     into "classpath"
 }
+clean { delete 'classpath' }
 
 //task copyDependencies(type:Copy) {
 //    new File("$buildDir/libs/dependencies").mkdirs()
@@ -41,26 +42,25 @@ task gem(type: JRubyExec, dependsOn: ["build", "gemspec", "classpath"]) {
 }
 
 task gemspec << { file("build/gemspec").write($/
-Gem::Specification.new do |gem|
-  gem.summary       = "Elasticsearch output plugin for Embulk, a plugin-based parallel bulk data loader"
+Gem::Specification.new do |spec|
+  spec.name          = "${project.name}"
+  spec.version       = "${project.version}"
+  spec.authors       = ["Muga Nishizawa"]
+  spec.summary       = %[Elasticsearch output plugin for Embulk]
+  spec.description   = %[Elasticsearch output plugin is an Embulk plugin that loads records to Elasticsearch read by any input plugins. Search the input plugins by "embulk-input" keyword.]
+  spec.email         = ["muga.nishizawa@gmail.com"]
+  spec.license       = ["MIT"]
+  spec.homepage      = "https://github.com/muga/embulk-output-elasticsearch"
 
-  gem.name          = "${project.name}"
-  gem.version       = "${project.version}"
-  gem.description   = gem.summary
-  gem.authors       = ["Muga Nishizawa"]
-  gem.email         = ["muga.nishizawa@gmail.com"]
-  gem.license       = "Apache 2.0"
-  gem.homepage      = "https://github.com/muga/embulk-output-elasticsearch"
+  spec.files         = `git ls-files`.split("\n") + Dir["classpath/*.jar"]
+  spec.test_files    = spec.files.grep(%r"^(test|spec)/")
+  spec.require_paths = ["lib"]
+  spec.executables   = spec.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
+  spec.has_rdoc      = false
 
-  gem.files         = `git ls-files`.split("\n") + Dir["classpath/*.jar"]
-  gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
-  gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
-  gem.require_paths = ["lib"]
-  gem.has_rdoc      = false
-
-  gem.add_development_dependency "bundler", [">= 1.0"]
-  gem.add_development_dependency "rake", [">= 0.10.0"]
-  gem.add_development_dependency "test-unit", ["~> 3.0.2"]
+  spec.add_development_dependency "bundler", [">= 1.0"]
+  spec.add_development_dependency "rake", [">= 10.0"]
+  spec.add_development_dependency "test-unit", ["~> 3.0.2"]
 end
 /$)
 }

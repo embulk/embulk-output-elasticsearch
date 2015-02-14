@@ -1,4 +1,4 @@
-package org.embulk.plugin.elasticsearch;
+package org.embulk.output;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
@@ -119,7 +119,10 @@ public class ElasticsearchOutputPlugin
         Settings settings = ImmutableSettings.settingsBuilder()
                 .classLoader(Settings.class.getClassLoader())
                 .build();
-        return NodeBuilder.nodeBuilder().clusterName(task.getClusterName()).settings(settings).node();
+        return NodeBuilder.nodeBuilder()
+                .clusterName(task.getClusterName())
+                .settings(settings)
+                .node();
     }
 
     private Client createClient(final RunnerTask task, final Node node)
@@ -145,8 +148,9 @@ public class ElasticsearchOutputPlugin
                         for (BulkItemResponse item : response.getItems()) {
                             if (item.isFailed()) {
                                 items += 1;
-                                log.debug("   Error for {}/{}/{} for {} operation: {}", item.getIndex(),
-                                        item.getType(), item.getId(), item.getOpType(), item.getFailureMessage());
+                                log.debug("   Error for {}/{}/{} for {} operation: {}",
+                                        item.getIndex(), item.getType(), item.getId(),
+                                        item.getOpType(), item.getFailureMessage());
                             }
                         }
                     }
