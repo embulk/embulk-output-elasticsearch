@@ -49,7 +49,7 @@ Gem::Specification.new do |spec|
   spec.summary       = %[Elasticsearch output plugin for Embulk]
   spec.description   = %[Elasticsearch output plugin is an Embulk plugin that loads records to Elasticsearch read by any input plugins. Search the input plugins by "embulk-input" keyword.]
   spec.email         = ["muga.nishizawa@gmail.com"]
-  spec.license       = ["MIT"]
+  spec.licenses      = ["MIT"]
   spec.homepage      = "https://github.com/muga/embulk-output-elasticsearch"
 
   spec.files         = `git ls-files`.split("\n") + Dir["classpath/*.jar"]
