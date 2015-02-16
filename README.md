@@ -9,9 +9,9 @@
 
 ## Configuration
 
-- **cluster**: description (string, required)
-- **index_name**: description (integer, default: default-value)
-- **index_type**: description (integer, default: default-value)
+- **cluster**: cluster name (string, default: 'elasticsearch')
+- **index_name**: index name (string, required)
+- **index_type**: index type (string, required)
 
 ## Example
 
