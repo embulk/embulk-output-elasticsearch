@@ -64,7 +64,7 @@ public class ElasticsearchOutputPlugin
         public int getBulkActions();
 
         @Config("concurrent_requests")
-        @ConfigDefault("0")  // TODO
+        @ConfigDefault("5")
         public int getConcurrentRequests();
 
     }
@@ -186,6 +186,8 @@ public class ElasticsearchOutputPlugin
 
     static class ElasticsearchPageOutput implements TransactionalPageOutput
     {
+        private Logger log;
+
         private Node node;
         private Client client;
         private BulkProcessor bulkProcessor;
@@ -199,14 +201,15 @@ public class ElasticsearchOutputPlugin
         ElasticsearchPageOutput(RunnerTask task, Node node, Client client,
                                 BulkProcessor bulkProcessor)
         {
+            this.log = Exec.getLogger(getClass());
+
             this.node = node;
             this.client = client;
             this.bulkProcessor = bulkProcessor;
 
             this.index = task.getIndex();
             this.indexType = task.getIndexType();
-            Optional<String> did = task.getDocId();
-            this.docId = did.isPresent() ? did.get() : null;
+            this.docId = task.getDocId().orNull();
         }
 
         void open(final Schema schema)
@@ -310,7 +313,9 @@ public class ElasticsearchOutputPlugin
         {
             if (bulkProcessor != null) {
                 try {
-                    bulkProcessor.awaitClose(0, TimeUnit.NANOSECONDS);
+                    while (!bulkProcessor.awaitClose(3, TimeUnit.SECONDS)) {
+                        log.debug("wait for closing the bulk processing..");
+                    }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
