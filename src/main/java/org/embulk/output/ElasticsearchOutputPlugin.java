@@ -47,7 +47,6 @@ public class ElasticsearchOutputPlugin
             extends Task
     {
         @Config("transport_addresses")
-        @ConfigDefault("[]")
         public List<ConfigSource> getTransportAddressConfigs();
 
         @Config("index_name")
