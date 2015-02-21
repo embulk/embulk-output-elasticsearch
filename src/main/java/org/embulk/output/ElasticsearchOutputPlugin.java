@@ -2,6 +2,7 @@ package org.embulk.output;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkProcessor;
@@ -10,8 +11,10 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.Requests;
+import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.node.Node;
@@ -43,9 +46,9 @@ public class ElasticsearchOutputPlugin
     public interface RunnerTask
             extends Task
     {
-        @Config("cluster")
-        @ConfigDefault("elasticsearch")
-        public String getClusterName();
+        @Config("transport_addresses")
+        @ConfigDefault("[]")
+        public List<ConfigSource> getTransportAddressConfigs();
 
         @Config("index_name")
         @ConfigDefault("embulk")
@@ -69,6 +72,17 @@ public class ElasticsearchOutputPlugin
 
     }
 
+    public interface TransportAddressTask
+            extends Task
+    {
+        @Config("hostname")
+        public String getHostname();
+
+        @Config("port")
+        @ConfigDefault("9300")
+        public int getPort();
+    }
+
     private final Logger log;
 
     @Inject
@@ -83,9 +97,7 @@ public class ElasticsearchOutputPlugin
     {
         final RunnerTask task = config.loadConfig(RunnerTask.class);
 
-        try (Node node = createNode(task)) {
-            try (Client client = createClient(task, node)) {
-            }
+        try (Client client = createClient(task)) {
         }
 
         try {
@@ -113,21 +125,19 @@ public class ElasticsearchOutputPlugin
                         List<CommitReport> successCommitReports)
     { }
 
-    private Node createNode(final RunnerTask task)
+    private Client createClient(final RunnerTask task)
     {
         //  @see http://www.elasticsearch.org/guide/en/elasticsearch/client/java-api/current/client.html
         Settings settings = ImmutableSettings.settingsBuilder()
                 .classLoader(Settings.class.getClassLoader())
                 .build();
-        return NodeBuilder.nodeBuilder()
-                .clusterName(task.getClusterName())
-                .settings(settings)
-                .node();
-    }
-
-    private Client createClient(final RunnerTask task, final Node node)
-    {
-        return node.client();
+        TransportClient client = new TransportClient(settings);
+        List<ConfigSource> configs = task.getTransportAddressConfigs();
+        for (ConfigSource config : configs) {
+            TransportAddressTask t = config.loadConfig(TransportAddressTask.class);
+            client.addTransportAddress(new InetSocketTransportAddress(t.getHostname(), t.getPort()));
+        }
+        return client;
     }
 
     private BulkProcessor newBulkProcessor(final RunnerTask task, final Client client)
@@ -176,10 +186,9 @@ public class ElasticsearchOutputPlugin
     {
         final RunnerTask task = taskSource.loadTask(RunnerTask.class);
 
-        Node node = createNode(task);
-        Client client = createClient(task, node);
+        Client client = createClient(task);
         BulkProcessor bulkProcessor = newBulkProcessor(task, client);
-        ElasticsearchPageOutput pageOutput = new ElasticsearchPageOutput(task, node, client, bulkProcessor);
+        ElasticsearchPageOutput pageOutput = new ElasticsearchPageOutput(task, client, bulkProcessor);
         pageOutput.open(schema);
         return pageOutput;
     }
@@ -188,7 +197,6 @@ public class ElasticsearchOutputPlugin
     {
         private Logger log;
 
-        private Node node;
         private Client client;
         private BulkProcessor bulkProcessor;
 
@@ -198,12 +206,10 @@ public class ElasticsearchOutputPlugin
         private final String indexType;
         private final String docId;
 
-        ElasticsearchPageOutput(RunnerTask task, Node node, Client client,
-                                BulkProcessor bulkProcessor)
+        ElasticsearchPageOutput(RunnerTask task, Client client, BulkProcessor bulkProcessor)
         {
             this.log = Exec.getLogger(getClass());
 
-            this.node = node;
             this.client = client;
             this.bulkProcessor = bulkProcessor;
 
@@ -325,11 +331,6 @@ public class ElasticsearchOutputPlugin
             if (client != null) {
                 client.close(); //  ElasticsearchException
                 client = null;
-            }
-
-            if (node != null) {
-                node.close();
-                node = null;
             }
         }
 
