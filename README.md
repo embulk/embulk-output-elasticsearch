@@ -9,7 +9,7 @@
 
 ## Configuration
 
-- **cluster**: cluster name (string, default: 'elasticsearch')
+- **transport_addresses**: list of pairs of address and port (list, required)
 - **index_name**: index name (string, required)
 - **index_type**: index type (string, required)
 
@@ -18,7 +18,8 @@
 ```yaml
 out:
   type: elasticsearch
-  cluster: elasticsearch
+  transport_addresses:
+  - {hostname: localhost, port: 9300}
   index_name: embulk
   index_type: embulk
 ```
