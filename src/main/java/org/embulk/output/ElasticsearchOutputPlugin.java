@@ -40,6 +40,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.google.common.base.Preconditions.checkState;
+
 public class ElasticsearchOutputPlugin
         implements OutputPlugin
 {
@@ -60,15 +62,15 @@ public class ElasticsearchOutputPlugin
         @Config("nodes")
         public List<NodeAddressTask> getNodes();
 
-        @Config("index_name")
+        @Config("index")
         public String getIndex();
 
         @Config("index_type")
-        public String getIndexType();
+        public String getType();
 
-        @Config("doc_id_column")
+        @Config("id")
         @ConfigDefault("null")
-        public Optional<String> getIdColumn();
+        public Optional<String> getId();
 
         @Config("bulk_actions")
         @ConfigDefault("1000")
@@ -94,7 +96,20 @@ public class ElasticsearchOutputPlugin
     {
         final RunnerTask task = config.loadConfig(RunnerTask.class);
 
+        // confirm that a client can be initialized
         try (Client client = createClient(task)) {
+        }
+
+        // check that id is included in the schema or not if the id is not null.
+        if (task.getId().isPresent()) {
+            String id = task.getId().get();
+            boolean found = false;
+            for (Column column : schema.getColumns()) {
+                if (column.equals(id)) {
+                    found = true;
+                }
+            }
+            checkState(found, "id is not included in column names of the Schema.");
         }
 
         try {
@@ -199,8 +214,8 @@ public class ElasticsearchOutputPlugin
         private PageReader pageReader;
 
         private final String index;
-        private final String indexType;
-        private final String docIdColumn;
+        private final String type;
+        private final String id;
 
         ElasticsearchPageOutput(RunnerTask task, Client client, BulkProcessor bulkProcessor)
         {
@@ -210,8 +225,8 @@ public class ElasticsearchOutputPlugin
             this.bulkProcessor = bulkProcessor;
 
             this.index = task.getIndex();
-            this.indexType = task.getIndexType();
-            this.docIdColumn = task.getIdColumn().orNull();
+            this.type = task.getType();
+            this.id = task.getId().orNull();
         }
 
         void open(final Schema schema)
@@ -297,7 +312,7 @@ public class ElasticsearchOutputPlugin
 
         private IndexRequest newIndexRequest()
         {
-            return Requests.indexRequest(index).type(indexType).id(docIdColumn);
+            return Requests.indexRequest(index).type(type).id(id);
         }
 
         @Override
