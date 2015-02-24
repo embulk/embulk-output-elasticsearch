@@ -67,6 +67,7 @@ public class ElasticsearchOutputPlugin
         public String getIndexType();
 
         @Config("doc_id_column")
+        @ConfigDefault("null")
         public Optional<String> getIdColumn();
 
         @Config("bulk_actions")
