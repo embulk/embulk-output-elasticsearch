@@ -46,7 +46,7 @@ public class ElasticsearchOutputPlugin
     public interface NodeAddressTask
             extends Task
     {
-        @Config("hsot")
+        @Config("host")
         public String getHost();
 
         @Config("port")
