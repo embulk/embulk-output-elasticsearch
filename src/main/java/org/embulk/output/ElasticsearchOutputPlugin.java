@@ -43,23 +43,31 @@ import java.util.concurrent.TimeUnit;
 public class ElasticsearchOutputPlugin
         implements OutputPlugin
 {
+    public interface NodeAddressTask
+            extends Task
+    {
+        @Config("hsot")
+        public String getHost();
+
+        @Config("port")
+        @ConfigDefault("9300")
+        public int getPort();
+    }
+
     public interface RunnerTask
             extends Task
     {
-        @Config("transport_addresses")
-        public List<ConfigSource> getTransportAddressConfigs();
+        @Config("nodes")
+        public List<NodeAddressTask> getNodes();
 
         @Config("index_name")
-        @ConfigDefault("embulk")
         public String getIndex();
 
         @Config("index_type")
-        @ConfigDefault("embulk")
         public String getIndexType();
 
-        @Config("doc_id")
-        @ConfigDefault("null")
-        public Optional<String> getDocId();
+        @Config("doc_id_column")
+        public Optional<String> getIdColumn();
 
         @Config("bulk_actions")
         @ConfigDefault("1000")
@@ -69,17 +77,6 @@ public class ElasticsearchOutputPlugin
         @ConfigDefault("5")
         public int getConcurrentRequests();
 
-    }
-
-    public interface TransportAddressTask
-            extends Task
-    {
-        @Config("hostname")
-        public String getHostname();
-
-        @Config("port")
-        @ConfigDefault("9300")
-        public int getPort();
     }
 
     private final Logger log;
@@ -131,10 +128,9 @@ public class ElasticsearchOutputPlugin
                 .classLoader(Settings.class.getClassLoader())
                 .build();
         TransportClient client = new TransportClient(settings);
-        List<ConfigSource> configs = task.getTransportAddressConfigs();
-        for (ConfigSource config : configs) {
-            TransportAddressTask t = config.loadConfig(TransportAddressTask.class);
-            client.addTransportAddress(new InetSocketTransportAddress(t.getHostname(), t.getPort()));
+        List<NodeAddressTask> nodes = task.getNodes();
+        for (NodeAddressTask node : nodes) {
+            client.addTransportAddress(new InetSocketTransportAddress(node.getHost(), node.getPort()));
         }
         return client;
     }
@@ -203,7 +199,7 @@ public class ElasticsearchOutputPlugin
 
         private final String index;
         private final String indexType;
-        private final String docId;
+        private final String docIdColumn;
 
         ElasticsearchPageOutput(RunnerTask task, Client client, BulkProcessor bulkProcessor)
         {
@@ -214,7 +210,7 @@ public class ElasticsearchOutputPlugin
 
             this.index = task.getIndex();
             this.indexType = task.getIndexType();
-            this.docId = task.getDocId().orNull();
+            this.docIdColumn = task.getIdColumn().orNull();
         }
 
         void open(final Schema schema)
@@ -300,7 +296,7 @@ public class ElasticsearchOutputPlugin
 
         private IndexRequest newIndexRequest()
         {
-            return Requests.indexRequest(index).type(indexType).id(docId);
+            return Requests.indexRequest(index).type(indexType).id(docIdColumn);
         }
 
         @Override
