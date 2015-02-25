@@ -37,6 +37,7 @@ import org.embulk.spi.TransactionalPageOutput;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -297,7 +298,15 @@ public class ElasticsearchOutputPlugin
 
                         @Override
                         public void timestampColumn(Column column) {
-                            //  TODO
+                            try {
+                                contextBuilder.field(column.getName(), new Date(pageReader.getTimestamp(column).toEpochMilli()));
+                            } catch (IOException e) {
+                                try {
+                                    contextBuilder.nullField(column.getName());
+                                } catch (IOException ex) {
+                                    throw Throwables.propagate(ex);
+                                }
+                            }
                         }
                     });
 
