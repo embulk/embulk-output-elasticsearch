@@ -10,7 +10,7 @@
 ## Configuration
 
 - **nodes**: list of nodes. nodes are pairs of host and port (list, required)
-- **index_name**: index name (string, required)
+- **index**: index name (string, required)
 - **index_type**: index type (string, required)
 - **doc_id_column**: document id column (string, default is null)
 - **bulk_actions**: bulk_actions (int, default is 1000)
@@ -23,7 +23,7 @@ out:
   type: elasticsearch
   node:
   - {host: localhost, port: 9300}
-  index_name: <index name>
+  index: <index name>
   index_type: <index type>
 ```
 
