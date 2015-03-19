@@ -21,7 +21,7 @@
 ```yaml
 out:
   type: elasticsearch
-  node:
+  nodes:
   - {host: localhost, port: 9300}
   index: <index name>
   index_type: <index type>
