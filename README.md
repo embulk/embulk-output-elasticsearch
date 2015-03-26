@@ -10,6 +10,7 @@
 ## Configuration
 
 - **nodes**: list of nodes. nodes are pairs of host and port (list, required)
+- **cluster_name**: name of the cluster (string, default is "elasticsearch")
 - **index_name**: index name (string, required)
 - **index_type**: index type (string, required)
 - **doc_id_column**: document id column (string, default is null)
