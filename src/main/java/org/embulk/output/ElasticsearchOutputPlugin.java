@@ -57,11 +57,15 @@ public class ElasticsearchOutputPlugin
         public int getPort();
     }
 
-    public interface RunnerTask
+    public interface PluginTask
             extends Task
     {
         @Config("nodes")
         public List<NodeAddressTask> getNodes();
+
+        @Config("cluster_name")
+        @ConfigDefault("\"elasticsearch\"")
+        public String getClusterName();
 
         @Config("index")
         public String getIndex();
@@ -80,7 +84,6 @@ public class ElasticsearchOutputPlugin
         @Config("concurrent_requests")
         @ConfigDefault("5")
         public int getConcurrentRequests();
-
     }
 
     private final Logger log;
@@ -95,7 +98,7 @@ public class ElasticsearchOutputPlugin
     public ConfigDiff transaction(ConfigSource config, Schema schema,
                                   int processorCount, Control control)
     {
-        final RunnerTask task = config.loadConfig(RunnerTask.class);
+        final PluginTask task = config.loadConfig(PluginTask.class);
 
         // confirm that a client can be initialized
         try (Client client = createClient(task)) {
@@ -138,11 +141,12 @@ public class ElasticsearchOutputPlugin
                         List<CommitReport> successCommitReports)
     { }
 
-    private Client createClient(final RunnerTask task)
+    private Client createClient(final PluginTask task)
     {
         //  @see http://www.elasticsearch.org/guide/en/elasticsearch/client/java-api/current/client.html
         Settings settings = ImmutableSettings.settingsBuilder()
                 .classLoader(Settings.class.getClassLoader())
+                .put("cluster.name", task.getClusterName())
                 .build();
         TransportClient client = new TransportClient(settings);
         List<NodeAddressTask> nodes = task.getNodes();
@@ -152,7 +156,7 @@ public class ElasticsearchOutputPlugin
         return client;
     }
 
-    private BulkProcessor newBulkProcessor(final RunnerTask task, final Client client)
+    private BulkProcessor newBulkProcessor(final PluginTask task, final Client client)
     {
         return BulkProcessor.builder(client, new BulkProcessor.Listener() {
             @Override
@@ -196,7 +200,7 @@ public class ElasticsearchOutputPlugin
     public TransactionalPageOutput open(TaskSource taskSource, Schema schema,
                                         int processorIndex)
     {
-        final RunnerTask task = taskSource.loadTask(RunnerTask.class);
+        final PluginTask task = taskSource.loadTask(PluginTask.class);
 
         Client client = createClient(task);
         BulkProcessor bulkProcessor = newBulkProcessor(task, client);
@@ -218,7 +222,7 @@ public class ElasticsearchOutputPlugin
         private final String type;
         private final String id;
 
-        ElasticsearchPageOutput(RunnerTask task, Client client, BulkProcessor bulkProcessor)
+        ElasticsearchPageOutput(PluginTask task, Client client, BulkProcessor bulkProcessor)
         {
             this.log = Exec.getLogger(getClass());
 

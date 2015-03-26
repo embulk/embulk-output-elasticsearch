@@ -11,6 +11,7 @@
 
 - **nodes**: list of nodes. nodes are pairs of host and port (list, required)
 - **index**: index name (string, required)
+- **cluster_name**: name of the cluster (string, default is "elasticsearch")
 - **index_type**: index type (string, required)
 - **id**: document id column (string, default is null)
 - **bulk_actions**: bulk_actions (int, default is 1000)
