@@ -12,6 +12,8 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.Requests;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.unit.ByteSizeValue;
+import org.elasticsearch.common.unit.ByteSizeUnit;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
@@ -80,6 +82,10 @@ public class ElasticsearchOutputPlugin
         @Config("bulk_actions")
         @ConfigDefault("1000")
         public int getBulkActions();
+
+        @Config("bulk_size")
+        @ConfigDefault("5242880")
+        public long getBulkSize();
 
         @Config("concurrent_requests")
         @ConfigDefault("5")
@@ -192,6 +198,7 @@ public class ElasticsearchOutputPlugin
                 log.warn("Got the error during bulk processing", failure);
             }
         }).setBulkActions(task.getBulkActions())
+          .setBulkSize(new ByteSizeValue(task.getBulkSize()))
           .setConcurrentRequests(task.getConcurrentRequests())
           .build();
     }
