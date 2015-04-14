@@ -13,7 +13,7 @@ configurations {
     provided
 }
 
-version = "0.1.5"
+version = "0.1.6"
 
 compileJava.options.encoding = 'UTF-8' // source encoding
 sourceCompatibility = 1.7
