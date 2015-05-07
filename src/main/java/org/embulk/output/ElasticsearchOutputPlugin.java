@@ -258,7 +258,11 @@ public class ElasticsearchOutputPlugin
                         @Override
                         public void booleanColumn(Column column) {
                             try {
-                                contextBuilder.field(column.getName(), pageReader.getBoolean(column));
+                                if (pageReader.isNull(column)) {
+                                    contextBuilder.nullField(column.getName());
+                                } else {
+                                    contextBuilder.field(column.getName(), pageReader.getBoolean(column));
+                                }
                             } catch (IOException e) {
                                 try {
                                     contextBuilder.nullField(column.getName());
@@ -271,7 +275,11 @@ public class ElasticsearchOutputPlugin
                         @Override
                         public void longColumn(Column column) {
                             try {
-                                contextBuilder.field(column.getName(), pageReader.getLong(column));
+                                if (pageReader.isNull(column)) {
+                                    contextBuilder.nullField(column.getName());
+                                } else {
+                                    contextBuilder.field(column.getName(), pageReader.getLong(column));
+                                }
                             } catch (IOException e) {
                                 try {
                                     contextBuilder.nullField(column.getName());
@@ -284,7 +292,11 @@ public class ElasticsearchOutputPlugin
                         @Override
                         public void doubleColumn(Column column) {
                             try {
-                                contextBuilder.field(column.getName(), pageReader.getDouble(column));
+                                if (pageReader.isNull(column)) {
+                                    contextBuilder.nullField(column.getName());
+                                } else {
+                                    contextBuilder.field(column.getName(), pageReader.getDouble(column));
+                                }
                             } catch (IOException e) {
                                 try {
                                     contextBuilder.nullField(column.getName());
@@ -297,7 +309,11 @@ public class ElasticsearchOutputPlugin
                         @Override
                         public void stringColumn(Column column) {
                             try {
-                                contextBuilder.field(column.getName(), pageReader.getString(column));
+                                if (pageReader.isNull(column)) {
+                                    contextBuilder.nullField(column.getName());
+                                } else {
+                                    contextBuilder.field(column.getName(), pageReader.getString(column));
+                                }
                             } catch (IOException e) {
                                 try {
                                     contextBuilder.nullField(column.getName());
@@ -310,7 +326,11 @@ public class ElasticsearchOutputPlugin
                         @Override
                         public void timestampColumn(Column column) {
                             try {
-                                contextBuilder.field(column.getName(), new Date(pageReader.getTimestamp(column).toEpochMilli()));
+                                if (pageReader.isNull(column)) {
+                                    contextBuilder.nullField(column.getName());
+                                } else {
+                                    contextBuilder.field(column.getName(), new Date(pageReader.getTimestamp(column).toEpochMilli()));
+                                }
                             } catch (IOException e) {
                                 try {
                                     contextBuilder.nullField(column.getName());
