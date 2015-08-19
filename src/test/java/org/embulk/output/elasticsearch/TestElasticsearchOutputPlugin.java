@@ -1,4 +1,4 @@
-package org.embulk.output;
+package org.embulk.output.elasticsearch;
 
 public class TestElasticsearchOutputPlugin
 {

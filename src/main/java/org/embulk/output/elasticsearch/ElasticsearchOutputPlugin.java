@@ -1,4 +1,4 @@
-package org.embulk.output;
+package org.embulk.output.elasticsearch;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
@@ -216,7 +216,7 @@ public class ElasticsearchOutputPlugin
         return pageOutput;
     }
 
-    static class ElasticsearchPageOutput implements TransactionalPageOutput
+    public static class ElasticsearchPageOutput implements TransactionalPageOutput
     {
         private Logger log;
 
@@ -229,7 +229,7 @@ public class ElasticsearchOutputPlugin
         private final String type;
         private final String id;
 
-        ElasticsearchPageOutput(PluginTask task, Client client, BulkProcessor bulkProcessor)
+        public ElasticsearchPageOutput(PluginTask task, Client client, BulkProcessor bulkProcessor)
         {
             this.log = Exec.getLogger(getClass());
 
