@@ -21,7 +21,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
-import org.embulk.config.CommitReport;
+import org.embulk.config.TaskReport;
 import org.embulk.config.Config;
 import org.embulk.config.ConfigDefault;
 import org.embulk.config.ConfigDiff;
@@ -144,7 +144,7 @@ public class ElasticsearchOutputPlugin
     @Override
     public void cleanup(TaskSource taskSource,
                         Schema schema, int processorCount,
-                        List<CommitReport> successCommitReports)
+                        List<TaskReport> successTaskReports)
     { }
 
     private Client createClient(final PluginTask task)
@@ -392,9 +392,9 @@ public class ElasticsearchOutputPlugin
         }
 
         @Override
-        public CommitReport commit()
+        public TaskReport commit()
         {
-            CommitReport report = Exec.newCommitReport();
+            TaskReport report = Exec.newTaskReport();
             //  TODO
             return report;
         }
