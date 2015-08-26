@@ -23,6 +23,7 @@ dependencies {
     compile  "org.embulk:embulk-core:0.7.5"
     provided  "org.embulk:embulk-core:0.7.5"
     compile 'org.elasticsearch:elasticsearch:2.0.0'
+
     testCompile "junit:junit:4.+"
     testCompile "org.mockito:mockito-core:1.+"
 }
