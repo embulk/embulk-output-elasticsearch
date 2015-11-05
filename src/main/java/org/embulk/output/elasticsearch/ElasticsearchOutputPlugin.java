@@ -2,7 +2,6 @@ package org.embulk.output.elasticsearch;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkProcessor;
@@ -12,33 +11,18 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.Requests;
 import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.unit.ByteSizeValue;
-import org.elasticsearch.common.unit.ByteSizeUnit;
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.node.Node;
-import org.elasticsearch.node.NodeBuilder;
-import org.embulk.config.TaskReport;
-import org.embulk.config.Config;
-import org.embulk.config.ConfigDefault;
-import org.embulk.config.ConfigDiff;
-import org.embulk.config.ConfigSource;
-import org.embulk.config.Task;
-import org.embulk.config.TaskSource;
-import org.embulk.spi.Column;
-import org.embulk.spi.Exec;
-import org.embulk.spi.OutputPlugin;
-import org.embulk.spi.Page;
-import org.embulk.spi.PageReader;
-import org.embulk.spi.Schema;
-import org.embulk.spi.ColumnVisitor;
-import org.embulk.spi.TransactionalPageOutput;
+import org.embulk.config.*;
+import org.embulk.spi.*;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -150,14 +134,17 @@ public class ElasticsearchOutputPlugin
     private Client createClient(final PluginTask task)
     {
         //  @see http://www.elasticsearch.org/guide/en/elasticsearch/client/java-api/current/client.html
-        Settings settings = ImmutableSettings.settingsBuilder()
-                .classLoader(Settings.class.getClassLoader())
+        Settings settings = Settings.settingsBuilder()
                 .put("cluster.name", task.getClusterName())
                 .build();
-        TransportClient client = new TransportClient(settings);
+        TransportClient client = TransportClient.builder().settings(settings).build();
         List<NodeAddressTask> nodes = task.getNodes();
         for (NodeAddressTask node : nodes) {
-            client.addTransportAddress(new InetSocketTransportAddress(node.getHost(), node.getPort()));
+            try {
+                client.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(node.getHost()), node.getPort()));
+            } catch (UnknownHostException e) {
+                Throwables.propagate(e);
+            }
         }
         return client;
     }
