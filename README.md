@@ -20,9 +20,22 @@
 
 ## Example
 
+### Elasticsearch 2.x
+
 ```yaml
 out:
-  type: elasticsearch
+  type: elasticsearch_2x
+  nodes:
+  - {host: localhost, port: 9300}
+  index: <index name>
+  index_type: <index type>
+```
+
+### Elasticsearch 1.x
+
+```yaml
+out:
+  type: elasticsearch_1x
   nodes:
   - {host: localhost, port: 9300}
   index: <index name>

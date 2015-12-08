@@ -1,1 +1,4 @@
-rootProject.name = 'embulk-output-elasticsearch'
+rootProject.name = 'embulk-output-elasticsearch-root'
+include 'embulk-output-elasticsearch'
+include 'embulk-output-elasticsearch_1x'
+include 'embulk-output-elasticsearch_2x'

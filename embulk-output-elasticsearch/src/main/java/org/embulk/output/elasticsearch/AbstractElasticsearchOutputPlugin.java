@@ -12,14 +12,9 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.Requests;
-import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 import org.embulk.config.Config;
 import org.embulk.config.ConfigDefault;
@@ -43,7 +38,7 @@ import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 
-public class ElasticsearchOutputPlugin
+public abstract class AbstractElasticsearchOutputPlugin
         implements OutputPlugin
 {
     public interface NodeAddressTask
@@ -93,7 +88,7 @@ public class ElasticsearchOutputPlugin
     private final Logger log;
 
     @Inject
-    public ElasticsearchOutputPlugin()
+    public AbstractElasticsearchOutputPlugin()
     {
         log = Exec.getLogger(getClass());
     }
@@ -102,7 +97,7 @@ public class ElasticsearchOutputPlugin
     public ConfigDiff transaction(ConfigSource config, Schema schema,
                                   int processorCount, Control control)
     {
-        final PluginTask task = config.loadConfig(PluginTask.class);
+        final PluginTask task = config.loadConfig(getTaskClass());
 
         // confirm that a client can be initialized
         try (Client client = createClient(task)) {
@@ -133,23 +128,13 @@ public class ElasticsearchOutputPlugin
                         List<TaskReport> successTaskReports)
     { }
 
-    private Client createClient(final PluginTask task)
+    // for subclasses to add @Config
+    protected Class<? extends PluginTask> getTaskClass()
     {
-        //  @see http://www.elasticsearch.org/guide/en/elasticsearch/client/java-api/current/client.html
-        Settings settings = Settings.settingsBuilder()
-                .put("cluster.name", task.getClusterName())
-                .build();
-        TransportClient client = TransportClient.builder().settings(settings).build();
-        List<NodeAddressTask> nodes = task.getNodes();
-        for (NodeAddressTask node : nodes) {
-            try {
-                client.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(node.getHost()), node.getPort()));
-            } catch (UnknownHostException e) {
-                Throwables.propagate(e);
-            }
-        }
-        return client;
+        return PluginTask.class;
     }
+
+    protected abstract <T> T createClient(final PluginTask task);
 
     private BulkProcessor newBulkProcessor(final PluginTask task, final Client client)
     {
@@ -196,7 +181,7 @@ public class ElasticsearchOutputPlugin
     public TransactionalPageOutput open(TaskSource taskSource, Schema schema,
                                         int processorIndex)
     {
-        final PluginTask task = taskSource.loadTask(PluginTask.class);
+        final PluginTask task = taskSource.loadTask(getTaskClass());
         Client client = createClient(task);
         BulkProcessor bulkProcessor = newBulkProcessor(task, client);
         ElasticsearchPageOutput pageOutput = new ElasticsearchPageOutput(task, client, bulkProcessor);

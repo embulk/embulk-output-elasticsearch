@@ -2,6 +2,6 @@
 *.iml
 .idea
 build/
-/classpath/
+classpath/
 /.gradle
 /pkg/

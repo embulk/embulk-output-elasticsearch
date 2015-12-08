@@ -4,49 +4,49 @@ plugins {
     id "java"
 }
 import com.github.jrubygradle.JRubyExec
-repositories {
-    mavenCentral()
-    jcenter()
-    mavenLocal()
-}
-configurations {
-    provided
+
+allprojects {
+    group = 'org.embulk.output.elasticsearch'
+    version = "0.1.8"
 }
 
-version = "0.1.8"
+subprojects {
+    apply plugin: 'maven'  // install jar files to the local repo: $ gradle install
+    apply plugin: 'java'
+    apply plugin: 'com.github.jruby-gradle.base'
 
-compileJava.options.encoding = 'UTF-8' // source encoding
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+    repositories {
+        mavenCentral()
+        jcenter()
+        mavenLocal()
+    }
 
-dependencies {
-    compile  "org.embulk:embulk-core:0.7.7"
-    provided  "org.embulk:embulk-core:0.7.7"
-    compile 'org.elasticsearch:elasticsearch:2.0.0'
+    configurations {
+        provided
+    }
 
-    testCompile "junit:junit:4.+"
-    testCompile "org.mockito:mockito-core:1.+"
-}
+    dependencies {
+        compile  "org.embulk:embulk-core:0.7.7"
+        provided  "org.embulk:embulk-core:0.7.7"
 
-task classpath(type: Copy, dependsOn: ["jar"]) {
-    doFirst { file("classpath").deleteDir() }
-    from (configurations.runtime - configurations.provided + files(jar.archivePath))
-    into "classpath"
-}
-clean { delete 'classpath' }
+        testCompile "junit:junit:4.+"
+        testCompile "org.mockito:mockito-core:1.+"
+    }
 
-//task copyDependencies(type:Copy) {
-//    new File("$buildDir/libs/dependencies").mkdirs()
-//    into "$buildDir/libs/dependencies" from configurations.runtime
-//}
+    task classpath(type: Copy, dependsOn: ["jar"]) {
+        doFirst { file("classpath").deleteDir() }
+        from (configurations.runtime - configurations.provided + files(jar.archivePath))
+        into "classpath"
+    }
+    clean { delete 'classpath' }
 
-task gem(type: JRubyExec, dependsOn: ["build", "gemspec", "classpath"]) {
-    jrubyArgs "-rrubygems/gem_runner", "-eGem::GemRunner.new.run(ARGV)", "build"
-    script "build/gemspec"
-    doLast { ant.move(file: "${project.name}-${project.version}.gem", todir: "pkg") }
-}
+    task gem(type: JRubyExec, dependsOn: ["build", "gemspec", "classpath"]) {
+        jrubyArgs "-rrubygems/gem_runner", "-eGem::GemRunner.new.run(ARGV)", "build"
+        script "${project.projectDir.absolutePath}/build/gemspec"
+        doLast { ant.move(file: "${project.name}-${project.version}.gem", todir: "${parent.projectDir}/pkg") }
+    }
 
-task gemspec << { file("build/gemspec").write($/
+    task gemspec << { file("build/gemspec").write($/
 Gem::Specification.new do |spec|
   spec.name          = "${project.name}"
   spec.version       = "${project.version}"
@@ -68,4 +68,15 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "test-unit", ["~> 3.0.2"]
 end
 /$)
+    }
+}
+
+compileJava.options.encoding = 'UTF-8' // source encoding
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+task gempush << {
+    "gem push pkg/embulk-output-elasticsearch-${project.version}.gem".execute().waitFor()
+    "gem push pkg/embulk-output-elasticsearch_1x-${project.version}.gem".execute().waitFor()
+    "gem push pkg/embulk-output-elasticsearch_2x-${project.version}.gem".execute().waitFor()
 }
