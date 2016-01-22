@@ -166,12 +166,12 @@ public class ElasticsearchOutputPlugin
                         List<TaskReport> successTaskReports)
     {
         final PluginTask task = taskSource.loadTask(PluginTask.class);
-        try (Client client = createClient(task)) {
-            reAssignAlias(task.getAlias().orNull(), task.getIndex(), client);
-        } catch (IndexNotFoundException | InvalidAliasNameException e) {
-            throw new ConfigException(e);
-        } catch (Exception e) {
-            throw Throwables.propagate(e);
+        if (task.getMode().equals(Mode.REPLACE)) {
+            try (Client client = createClient(task)) {
+                reAssignAlias(task.getAlias().orNull(), task.getIndex(), client);
+            } catch (IndexNotFoundException | InvalidAliasNameException e) {
+                throw new ConfigException(e);
+            }
         }
     }
 
