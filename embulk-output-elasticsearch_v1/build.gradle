@@ -1,0 +1,15 @@
+dependencies {
+    compile project(':embulk-output-elasticsearch')
+    provided project(':embulk-output-elasticsearch')
+
+    compile 'org.elasticsearch:elasticsearch:1.7.4'
+
+    testCompile project(':embulk-output-elasticsearch').sourceSets.test.output
+}
+
+task classpath(type: Copy, dependsOn: ["jar"]) {
+    doFirst { file('../classpath_v1').deleteDir() }
+    from (configurations.runtime - configurations.provided + files(jar.archivePath))
+    into '../classpath_v1'
+}
+clean { delete '../classpath_v1' }
