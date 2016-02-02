@@ -1,14 +1,29 @@
 package org.embulk.output.elasticsearch;
 
+import org.embulk.output.elasticsearch.ElasticsearchOutputPlugin.PluginTask;
 import org.slf4j.Logger;
 
 public interface ElasticsearchClient
     extends AutoCloseable
 {
-    interface Builder
+    abstract class Builder
     {
-        Builder setLogger(Logger log);
-        ElasticsearchClient build(ElasticsearchOutputPlugin.PluginTask task);
+        protected Logger log;
+        protected PluginTask task;
+
+        public Builder setLogger(Logger log)
+        {
+            this.log = log;
+            return this;
+        }
+
+        public Builder setPluginTask(PluginTask task)
+        {
+            this.task = task;
+            return this;
+        }
+
+        public abstract ElasticsearchClient build();
     }
 
     void reassignAlias(String aliasName, String newIndexName);

@@ -28,17 +28,9 @@ public class ElasticsearchClient
         implements org.embulk.output.elasticsearch.ElasticsearchClient
 {
     public static class Builder
-            implements org.embulk.output.elasticsearch.ElasticsearchClient.Builder
+            extends org.embulk.output.elasticsearch.ElasticsearchClient.Builder
     {
-        private Logger log;
-
-        public Builder setLogger(Logger log)
-        {
-            this.log = log;
-            return this;
-        }
-
-        public org.embulk.output.elasticsearch.ElasticsearchClient build(PluginTask task)
+        public org.embulk.output.elasticsearch.ElasticsearchClient build()
         {
             //  @see http://www.elasticsearch.org/guide/en/elasticsearch/client/java-api/current/client.html
             Settings settings = Settings.settingsBuilder()

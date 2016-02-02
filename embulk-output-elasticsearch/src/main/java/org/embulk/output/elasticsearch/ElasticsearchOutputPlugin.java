@@ -35,6 +35,8 @@ import org.embulk.spi.PageReader;
 import org.embulk.spi.Schema;
 import org.embulk.spi.TransactionalPageOutput;
 import org.embulk.spi.time.Timestamp;
+import org.embulk.spi.type.Type;
+import org.embulk.spi.type.Types;
 import org.jruby.embed.ScriptingContainer;
 import org.slf4j.Logger;
 
@@ -294,15 +296,20 @@ public class ElasticsearchOutputPlugin
     private ElasticsearchClient newClient(PluginTask task, URLClassLoader cl)
     {
         String clientName = task.getVersion().getClientBuilderClassName();
-        ElasticsearchClient.Builder builder = (ElasticsearchClient.Builder) newInstance(clientName, cl);
-        return builder.setLogger(log).build(task); // TODO
+        return ((ElasticsearchClient.Builder) newInstance(clientName, cl))
+                .setLogger(log)
+                .setPluginTask(task)
+                .build();
     }
 
     private ElasticsearchBulkProcessor newBulkProcessor(PluginTask task, ElasticsearchClient client, URLClassLoader cl)
     {
         String bulkProcessorName = task.getVersion().getBulkProcessorBuilderClassName();
-        ElasticsearchBulkProcessor.Builder builder = (ElasticsearchBulkProcessor.Builder) newInstance(bulkProcessorName, cl);
-        return builder.setLogger(log).setClient(client).build(task);
+        return ((ElasticsearchBulkProcessor.Builder) newInstance(bulkProcessorName, cl))
+                .setLogger(log)
+                .setPluginTask(task)
+                .setClient(client)
+                .build();
     }
 
     private URLClassLoader newURLClassLoader(PluginTask task)
@@ -317,6 +324,36 @@ public class ElasticsearchOutputPlugin
         }
         catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
             throw new ConfigException(e);
+        }
+    }
+
+    public static String getIdValue(PageReader pageReader, Column inputColumn)
+    {
+        if (inputColumn == null) {
+            return null;
+        }
+        if (pageReader.isNull(inputColumn)) {
+            return null;
+        }
+
+        Type columnType = inputColumn.getType();
+        if (Types.STRING.equals(columnType)) {
+            return pageReader.getString(inputColumn);
+        }
+        else if (Types.BOOLEAN.equals(columnType)) {
+            return Boolean.toString(pageReader.getBoolean(inputColumn));
+        }
+        else if (Types.DOUBLE.equals(columnType)) {
+            return Double.toString(pageReader.getDouble(inputColumn));
+        }
+        else if (Types.LONG.equals(columnType)) {
+            return Long.toString(pageReader.getLong(inputColumn));
+        }
+        else if (Types.TIMESTAMP.equals(columnType)) {
+            return pageReader.getTimestamp(inputColumn).toString();
+        }
+        else {
+            return null;
         }
     }
 
