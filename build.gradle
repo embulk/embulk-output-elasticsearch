@@ -2,50 +2,69 @@ plugins {
     id "com.jfrog.bintray" version "1.1"
     id "com.github.jruby-gradle.base" version "0.1.5"
     id "java"
-    id "jacoco"
 }
 import com.github.jrubygradle.JRubyExec
-repositories {
-    mavenCentral()
-    jcenter()
-    mavenLocal()
-}
-configurations {
-    provided
-}
 
-version = "0.2.0"
+allprojects {
+    group = 'org.embulk.output.elasticsearch'
+    version = '0.2.0'
 
-compileJava.options.encoding = 'UTF-8' // source encoding
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
-
-dependencies {
-    compile  "org.embulk:embulk-core:0.7.7"
-    provided  "org.embulk:embulk-core:0.7.7"
-    compile 'org.elasticsearch:elasticsearch:2.0.0'
-
-    testCompile "junit:junit:4.+"
-    testCompile "org.embulk:embulk-core:0.7.7:tests"
-    testCompile "org.embulk:embulk-standards:0.7.7"
+    apply plugin: 'jacoco'
+    jacoco {
+        toolVersion = '0.7.1.201405082137'
+    }
 }
 
-task classpath(type: Copy, dependsOn: ["jar"]) {
-    doFirst { file("classpath").deleteDir() }
-    from (configurations.runtime - configurations.provided + files(jar.archivePath))
-    into "classpath"
-}
-clean { delete 'classpath' }
+subprojects {
+    apply plugin: 'maven'
+    apply plugin: 'java'
+    apply plugin: 'com.github.jruby-gradle.base'
 
-//task copyDependencies(type:Copy) {
-//    new File("$buildDir/libs/dependencies").mkdirs()
-//    into "$buildDir/libs/dependencies" from configurations.runtime
-//}
+    repositories {
+        mavenCentral()
+        jcenter()
+        mavenLocal()
+    }
 
-task gem(type: JRubyExec, dependsOn: ["build", "gemspec", "classpath"]) {
-    jrubyArgs "-rrubygems/gem_runner", "-eGem::GemRunner.new.run(ARGV)", "build"
-    script "build/gemspec"
-    doLast { ant.move(file: "${project.name}-${project.version}.gem", todir: "pkg") }
+    configurations {
+        provided
+    }
+
+    compileJava.options.encoding = 'UTF-8' // source encoding
+    sourceCompatibility = 1.7
+    targetCompatibility = 1.7
+
+    dependencies {
+        compile  "org.embulk:embulk-core:0.7.7"
+        provided  "org.embulk:embulk-core:0.7.7"
+
+        testCompile "junit:junit:4.+"
+        testCompile "org.embulk:embulk-core:0.7.7:tests"
+        testCompile "org.embulk:embulk-standards:0.7.7"
+    }
+
+    jacocoTestReport {
+        additionalSourceDirs = files(sourceSets.main.allSource.srcDirs)
+        sourceDirectories = files(sourceSets.main.allSource.srcDirs)
+        classDirectories =  files(sourceSets.main.output)
+        reports {
+            html.enabled = true
+            xml.enabled = true
+            csv.enabled = false
+        }
+
+        afterEvaluate {
+            classDirectories = files(classDirectories.files.collect {
+                fileTree(dir: it, exclude: 'org/embulk/output/elasticsearch/ElasticsearchOutputPlugin$1.class')
+            })
+        }
+    }
+
+    gradle.projectsEvaluated {
+        tasks.withType(JavaCompile) {
+            options.compilerArgs << "-Xlint:unchecked" //<< "-Xlint:deprecation"
+        }
+    }
 }
 
 task gemspec << { file("build/gemspec").write($/
@@ -59,7 +78,7 @@ Gem::Specification.new do |spec|
   spec.licenses      = ["Apache 2.0"]
   spec.homepage      = "https://github.com/muga/embulk-output-elasticsearch"
 
-  spec.files         = `git ls-files`.split("\n") + Dir["classpath/*.jar"]
+  spec.files         = `git ls-files`.split("\n") + Dir["classpath/*.jar"] + Dir["classpath_v1/*.jar"] + Dir["classpath_v2/*.jar"]
   spec.test_files    = spec.files.grep(%r"^(test|spec)/")
   spec.require_paths = ["lib"]
   spec.executables   = spec.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
@@ -72,10 +91,8 @@ end
 /$)
 }
 
-jacocoTestReport {
-    afterEvaluate {
-        classDirectories = files(classDirectories.files.collect {
-            fileTree(dir: it, exclude: 'org/embulk/output/elasticsearch/ElasticsearchOutputPlugin$1.class')
-        })
-    }
+task gem(type: JRubyExec, dependsOn: ["build", "gemspec", "classpath"]) {
+    jrubyArgs "-rrubygems/gem_runner", "-eGem::GemRunner.new.run(ARGV)", "build"
+    script "build/gemspec"
+    doLast { ant.move(file: "${project.name}-${project.version}.gem", todir: "pkg") }
 }
