@@ -145,6 +145,16 @@ public class ElasticsearchOutputPlugin
             }
             log.info(String.format("Inserting data into index[%s]", task.getIndex()));
             control.run(task.dump());
+
+            if (task.getMode().equals(Mode.REPLACE)) {
+                try {
+                    reAssignAlias(task.getAlias().orNull(), task.getIndex(), client);
+                } catch (IndexNotFoundException | InvalidAliasNameException e) {
+                    throw new ConfigException(e);
+                } catch (NoNodeAvailableException e) {
+                    throw new ConnectionException(e);
+                }
+            }
         } catch (Exception e) {
             throw Throwables.propagate(e);
         }
@@ -166,18 +176,7 @@ public class ElasticsearchOutputPlugin
     public void cleanup(TaskSource taskSource,
                         Schema schema, int processorCount,
                         List<TaskReport> successTaskReports)
-    {
-        final PluginTask task = taskSource.loadTask(PluginTask.class);
-        if (task.getMode().equals(Mode.REPLACE)) {
-            try (Client client = createClient(task)) {
-                reAssignAlias(task.getAlias().orNull(), task.getIndex(), client);
-            } catch (IndexNotFoundException | InvalidAliasNameException e) {
-                throw new ConfigException(e);
-            } catch (NoNodeAvailableException e) {
-                throw new ConnectionException(e);
-            }
-        }
-    }
+    {}
 
     private Client createClient(final PluginTask task)
     {
@@ -558,7 +557,7 @@ public class ElasticsearchOutputPlugin
         protected ConnectionException()
         {
         }
-        
+
         public ConnectionException(Throwable cause)
         {
             super(cause);
