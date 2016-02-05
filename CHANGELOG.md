@@ -1,3 +1,7 @@
+## 0.2.1 - 2016-02-05
+
+* [maintenance] Fix bug. Force to fail jobs if nodes down while executing [#19](https://github.com/muga/embulk-output-elasticsearch/pull/19)
+
 ## 0.2.0 - 2016-01-26
 
 * [new feature] Support Elasticsearch 2.x [#12](https://github.com/muga/embulk-output-elasticsearch/pull/12)
