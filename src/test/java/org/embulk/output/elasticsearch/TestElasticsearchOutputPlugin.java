@@ -168,6 +168,22 @@ public class TestElasticsearchOutputPlugin
     }
 
     @Test
+    public void testTransaction()
+    {
+        ConfigSource config = config();
+        Schema schema = config.getNested("parser").loadConfig(CsvParserPlugin.PluginTask.class).getSchemaConfig().toSchema();
+        plugin.transaction(config, schema, 0, new OutputPlugin.Control()
+        {
+            @Override
+            public List<TaskReport> run(TaskSource taskSource)
+            {
+                return Lists.newArrayList(Exec.newTaskReport());
+            }
+        });
+        // no error happens
+    }
+
+    @Test
     public void testResume()
     {
         ConfigSource config = config();
@@ -184,31 +200,12 @@ public class TestElasticsearchOutputPlugin
     }
 
     @Test
-    public void testTransaction()
+    public void testCleanup()
     {
-        ConfigSource config = Exec.newConfigSource()
-            .set("in", inputConfig())
-            .set("parser", parserConfig(schemaConfig()))
-            .set("type", "elasticsearch")
-            .set("mode", "replace")
-            .set("nodes", ES_NODES)
-            .set("cluster_name", ES_CLUSTER_NAME)
-            .set("index", ES_INDEX)
-            .set("index_type", ES_INDEX_TYPE)
-            .set("id", ES_ID)
-            .set("bulk_actions", ES_BULK_ACTIONS)
-            .set("bulk_size", ES_BULK_SIZE)
-            .set("concurrent_requests", ES_CONCURRENT_REQUESTS
-            );
+        ConfigSource config = config();
         Schema schema = config.getNested("parser").loadConfig(CsvParserPlugin.PluginTask.class).getSchemaConfig().toSchema();
-        plugin.transaction(config, schema, 0, new OutputPlugin.Control()
-        {
-            @Override
-            public List<TaskReport> run(TaskSource taskSource)
-            {
-                return Lists.newArrayList(Exec.newTaskReport());
-            }
-        });
+        PluginTask task = config.loadConfig(PluginTask.class);
+        plugin.cleanup(task.dump(), schema, 0, Arrays.asList(Exec.newTaskReport()));
         // no error happens
     }
 

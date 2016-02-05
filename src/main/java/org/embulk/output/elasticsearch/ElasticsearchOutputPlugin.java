@@ -20,6 +20,7 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.Requests;
+import org.elasticsearch.client.transport.NoNodeAvailableException;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.cluster.metadata.AliasMetaData;
 import org.elasticsearch.cluster.metadata.AliasOrIndex;
@@ -43,6 +44,7 @@ import org.embulk.config.ConfigSource;
 import org.embulk.config.Task;
 import org.embulk.config.TaskReport;
 import org.embulk.config.TaskSource;
+import org.embulk.config.UserDataException;
 import org.embulk.spi.Column;
 import org.embulk.spi.ColumnVisitor;
 import org.embulk.spi.Exec;
@@ -143,6 +145,16 @@ public class ElasticsearchOutputPlugin
             }
             log.info(String.format("Inserting data into index[%s]", task.getIndex()));
             control.run(task.dump());
+
+            if (task.getMode().equals(Mode.REPLACE)) {
+                try {
+                    reAssignAlias(task.getAlias().orNull(), task.getIndex(), client);
+                } catch (IndexNotFoundException | InvalidAliasNameException e) {
+                    throw new ConfigException(e);
+                } catch (NoNodeAvailableException e) {
+                    throw new ConnectionException(e);
+                }
+            }
         } catch (Exception e) {
             throw Throwables.propagate(e);
         }
@@ -164,16 +176,7 @@ public class ElasticsearchOutputPlugin
     public void cleanup(TaskSource taskSource,
                         Schema schema, int processorCount,
                         List<TaskReport> successTaskReports)
-    {
-        final PluginTask task = taskSource.loadTask(PluginTask.class);
-        if (task.getMode().equals(Mode.REPLACE)) {
-            try (Client client = createClient(task)) {
-                reAssignAlias(task.getAlias().orNull(), task.getIndex(), client);
-            } catch (IndexNotFoundException | InvalidAliasNameException e) {
-                throw new ConfigException(e);
-            }
-        }
-    }
+    {}
 
     private Client createClient(final PluginTask task)
     {
@@ -186,8 +189,8 @@ public class ElasticsearchOutputPlugin
         for (NodeAddressTask node : nodes) {
             try {
                 client.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(node.getHost()), node.getPort()));
-            } catch (UnknownHostException e) {
-                Throwables.propagate(e);
+            } catch (UnknownHostException | NoNodeAvailableException e) {
+                throw new ConnectionException(e);
             }
         }
         return client;
@@ -226,7 +229,12 @@ public class ElasticsearchOutputPlugin
             @Override
             public void afterBulk(long executionId, BulkRequest request, Throwable failure)
             {
-                log.warn("Got the error during bulk processing", failure);
+                if (failure.getClass() == NoNodeAvailableException.class) {
+                    log.error("Got the error during bulk processing", failure);
+                    throw new ConnectionException(failure);
+                } else {
+                    log.warn("Got the error during bulk processing", failure);
+                }
             }
         }).setBulkActions(task.getBulkActions())
           .setBulkSize(new ByteSizeValue(task.getBulkSize()))
@@ -376,7 +384,7 @@ public class ElasticsearchOutputPlugin
                     contextBuilder.endObject();
                     bulkProcessor.add(newIndexRequest(getIdValue(idColumn)).source(contextBuilder));
 
-                } catch (IOException e) {
+                } catch (ConnectionException | IOException e) {
                     Throwables.propagate(e); //  TODO error handling
                 }
             }
@@ -543,4 +551,17 @@ public class ElasticsearchOutputPlugin
         Timestamp time = Exec.getTransactionTime();
         return indexName + new SimpleDateFormat("_yyyyMMdd-HHmmss").format(time.toEpochMilli());
     }
+
+    public class ConnectionException extends RuntimeException implements UserDataException
+    {
+        protected ConnectionException()
+        {
+        }
+
+        public ConnectionException(Throwable cause)
+        {
+            super(cause);
+        }
+    }
+
 }
