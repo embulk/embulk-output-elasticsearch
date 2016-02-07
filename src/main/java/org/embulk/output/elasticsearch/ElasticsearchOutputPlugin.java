@@ -364,6 +364,23 @@ public class ElasticsearchOutputPlugin
                         }
 
                         @Override
+                        public void jsonColumn(Column column) {
+                            try {
+                                if (pageReader.isNull(column)) {
+                                    contextBuilder.nullField(column.getName());
+                                } else {
+                                    contextBuilder.field(column.getName(), pageReader.getJson(column).toJson());
+                                }
+                            } catch (IOException e) {
+                                try {
+                                    contextBuilder.nullField(column.getName());
+                                } catch (IOException ex) {
+                                    throw Throwables.propagate(ex);
+                                }
+                            }
+                        }
+
+                        @Override
                         public void timestampColumn(Column column) {
                             try {
                                 if (pageReader.isNull(column)) {
@@ -406,6 +423,8 @@ public class ElasticsearchOutputPlugin
                 idValue = pageReader.getDouble(inputColumn) + "";
             } else if (Types.LONG.equals(inputColumn.getType())) {
                 idValue = pageReader.getLong(inputColumn) + "";
+            } else if (Types.JSON.equals(inputColumn.getType())) {
+                idValue = pageReader.getJson(inputColumn).toJson();
             } else if (Types.TIMESTAMP.equals(inputColumn.getType())) {
                 idValue = pageReader.getTimestamp(inputColumn).toString();
             } else {
