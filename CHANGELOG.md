@@ -1,3 +1,7 @@
+## 0.3.0 - 2016-02-22
+
+* [maintenance] Upgrade Embulk v08 [#21](https://github.com/muga/embulk-output-elasticsearch/pull/21)
+
 ## 0.2.1 - 2016-02-05
 
 * [maintenance] Fix bug. Force to fail jobs if nodes down while executing [#19](https://github.com/muga/embulk-output-elasticsearch/pull/19)
