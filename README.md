@@ -1,5 +1,10 @@
 # Elasticsearch output plugin for Embulk
 
+**Notice** This plugin doesn't support [Amazon(AWS) Elasticsearch Service](https://aws.amazon.com/elasticsearch-service/).
+Plugin uses [Transport Client](https://www.elastic.co/guide/en/elasticsearch/client/java-api/2.0/transport-client.html) but AWS Elasticsearch doesn't support this method.
+> The service supports HTTP on port 80, but does not support TCP transport.
+- *[Amazon Elasticsearch Service Limits](http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/aes-limits.html)*
+
 ## Overview
 
 * **Plugin type**: output
