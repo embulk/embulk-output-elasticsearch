@@ -48,6 +48,11 @@ task gem(type: JRubyExec, dependsOn: ["build", "gemspec", "classpath"]) {
     doLast { ant.move(file: "${project.name}-${project.version}.gem", todir: "pkg") }
 }
 
+task "package"(dependsOn: ["gemspec", "classpath"]) << {
+    println "> Build succeeded."
+    println "> You can run embulk with '-L ${file(".").absolutePath}' argument."
+}
+
 task gemspec << { file("build/gemspec").write($/
 Gem::Specification.new do |spec|
   spec.name          = "${project.name}"
