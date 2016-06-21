@@ -1,3 +1,7 @@
+## 0.3.1 - 2016-06-21
+
+* [maintenance] Update Elasticsearch client to 2.3.3 [#25](https://github.com/muga/embulk-output-elasticsearch/pull/25)
+
 ## 0.3.0 - 2016-02-22
 
 * [maintenance] Upgrade Embulk v08 [#21](https://github.com/muga/embulk-output-elasticsearch/pull/21)
