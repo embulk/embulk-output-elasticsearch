@@ -1,18 +1,14 @@
 package org.embulk.output.elasticsearch;
 
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.concurrent.TimeUnit;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-
+import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-
+import com.google.common.base.Optional;
+import com.google.common.base.Throwables;
+import com.google.inject.Inject;
+import org.elasticsearch.action.admin.cluster.state.ClusterStateRequest;
+import org.elasticsearch.action.admin.indices.alias.get.GetAliasesRequest;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -30,12 +26,8 @@ import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.action.admin.cluster.state.ClusterStateRequest;
-import org.elasticsearch.action.admin.indices.alias.get.GetAliasesRequest;
-import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.indices.InvalidAliasNameException;
-
 import org.embulk.config.Config;
 import org.embulk.config.ConfigDefault;
 import org.embulk.config.ConfigDiff;
@@ -57,10 +49,15 @@ import org.embulk.spi.time.Timestamp;
 import org.embulk.spi.type.Types;
 import org.slf4j.Logger;
 
-import com.google.common.base.Optional;
-import com.google.common.base.Throwables;
-import com.google.inject.Inject;
-import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 public class ElasticsearchOutputPlugin
         implements OutputPlugin
@@ -149,9 +146,11 @@ public class ElasticsearchOutputPlugin
             if (task.getMode().equals(Mode.REPLACE)) {
                 try {
                     reAssignAlias(task.getAlias().orNull(), task.getIndex(), client);
-                } catch (IndexNotFoundException | InvalidAliasNameException e) {
+                }
+                catch (IndexNotFoundException | InvalidAliasNameException e) {
                     throw new ConfigException(e);
-                } catch (NoNodeAvailableException e) {
+                }
+                catch (NoNodeAvailableException e) {
                     throw new ConnectionException(e);
                 }
             }
@@ -189,7 +188,8 @@ public class ElasticsearchOutputPlugin
         for (NodeAddressTask node : nodes) {
             try {
                 client.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(node.getHost()), node.getPort()));
-            } catch (UnknownHostException | NoNodeAvailableException e) {
+            }
+            catch (UnknownHostException | NoNodeAvailableException e) {
                 throw new ConnectionException(e);
             }
         }
@@ -221,7 +221,8 @@ public class ElasticsearchOutputPlugin
                         }
                     }
                     log.warn("{} bulk actions failed: {}", items, response.buildFailureMessage());
-                } else {
+                }
+                else {
                     log.info("{} bulk actions succeeded", request.numberOfActions());
                 }
             }
@@ -232,7 +233,8 @@ public class ElasticsearchOutputPlugin
                 if (failure.getClass() == NoNodeAvailableException.class) {
                     log.error("Got the error during bulk processing", failure);
                     throw new ConnectionException(failure);
-                } else {
+                }
+                else {
                     log.warn("Got the error during bulk processing", failure);
                 }
             }
@@ -296,102 +298,126 @@ public class ElasticsearchOutputPlugin
                     final XContentBuilder contextBuilder = XContentFactory.jsonBuilder().startObject(); //  TODO reusable??
                     pageReader.getSchema().visitColumns(new ColumnVisitor() {
                         @Override
-                        public void booleanColumn(Column column) {
+                        public void booleanColumn(Column column)
+                        {
                             try {
                                 if (pageReader.isNull(column)) {
                                     contextBuilder.nullField(column.getName());
-                                } else {
+                                }
+                                else {
                                     contextBuilder.field(column.getName(), pageReader.getBoolean(column));
                                 }
-                            } catch (IOException e) {
+                            }
+                            catch (IOException e) {
                                 try {
                                     contextBuilder.nullField(column.getName());
-                                } catch (IOException ex) {
+                                }
+                                catch (IOException ex) {
                                     throw Throwables.propagate(ex);
                                 }
                             }
                         }
 
                         @Override
-                        public void longColumn(Column column) {
+                        public void longColumn(Column column)
+                        {
                             try {
                                 if (pageReader.isNull(column)) {
                                     contextBuilder.nullField(column.getName());
-                                } else {
+                                }
+                                else {
                                     contextBuilder.field(column.getName(), pageReader.getLong(column));
                                 }
-                            } catch (IOException e) {
+                            }
+                            catch (IOException e) {
                                 try {
                                     contextBuilder.nullField(column.getName());
-                                } catch (IOException ex) {
+                                }
+                                catch (IOException ex) {
                                     throw Throwables.propagate(ex);
                                 }
                             }
                         }
 
                         @Override
-                        public void doubleColumn(Column column) {
+                        public void doubleColumn(Column column)
+                        {
                             try {
                                 if (pageReader.isNull(column)) {
                                     contextBuilder.nullField(column.getName());
-                                } else {
+                                }
+                                else {
                                     contextBuilder.field(column.getName(), pageReader.getDouble(column));
                                 }
-                            } catch (IOException e) {
+                            }
+                            catch (IOException e) {
                                 try {
                                     contextBuilder.nullField(column.getName());
-                                } catch (IOException ex) {
+                                }
+                                catch (IOException ex) {
                                     throw Throwables.propagate(ex);
                                 }
                             }
                         }
 
                         @Override
-                        public void stringColumn(Column column) {
+                        public void stringColumn(Column column)
+                        {
                             try {
                                 if (pageReader.isNull(column)) {
                                     contextBuilder.nullField(column.getName());
-                                } else {
+                                }
+                                else {
                                     contextBuilder.field(column.getName(), pageReader.getString(column));
                                 }
-                            } catch (IOException e) {
+                            }
+                            catch (IOException e) {
                                 try {
                                     contextBuilder.nullField(column.getName());
-                                } catch (IOException ex) {
+                                }
+                                catch (IOException ex) {
                                     throw Throwables.propagate(ex);
                                 }
                             }
                         }
 
                         @Override
-                        public void jsonColumn(Column column) {
+                        public void jsonColumn(Column column)
+                        {
                             try {
                                 if (pageReader.isNull(column)) {
                                     contextBuilder.nullField(column.getName());
-                                } else {
+                                }
+                                else {
                                     contextBuilder.field(column.getName(), pageReader.getJson(column).toJson());
                                 }
-                            } catch (IOException e) {
+                            }
+                            catch (IOException e) {
                                 try {
                                     contextBuilder.nullField(column.getName());
-                                } catch (IOException ex) {
+                                }
+                                catch (IOException ex) {
                                     throw Throwables.propagate(ex);
                                 }
                             }
                         }
 
                         @Override
-                        public void timestampColumn(Column column) {
+                        public void timestampColumn(Column column)
+                        {
                             try {
                                 if (pageReader.isNull(column)) {
                                     contextBuilder.nullField(column.getName());
-                                } else {
+                                }
+                                else {
                                     contextBuilder.field(column.getName(), new Date(pageReader.getTimestamp(column).toEpochMilli()));
                                 }
-                            } catch (IOException e) {
+                            }
+                            catch (IOException e) {
                                 try {
                                     contextBuilder.nullField(column.getName());
-                                } catch (IOException ex) {
+                                }
+                                catch (IOException ex) {
                                     throw Throwables.propagate(ex);
                                 }
                             }
@@ -400,8 +426,8 @@ public class ElasticsearchOutputPlugin
 
                     contextBuilder.endObject();
                     bulkProcessor.add(newIndexRequest(getIdValue(idColumn)).source(contextBuilder));
-
-                } catch (ConnectionException | IOException e) {
+                }
+                catch (ConnectionException | IOException e) {
                     Throwables.propagate(e); //  TODO error handling
                 }
             }
@@ -411,23 +437,34 @@ public class ElasticsearchOutputPlugin
          * @param inputColumn
          * @return
          */
-        private String getIdValue(Column inputColumn) {
-            if (inputColumn == null) return null;
-            if (pageReader.isNull(inputColumn)) return null;
+        private String getIdValue(Column inputColumn)
+        {
+            if (inputColumn == null) {
+                return null;
+            }
+            if (pageReader.isNull(inputColumn)) {
+                return null;
+            }
             String idValue = null;
             if (Types.STRING.equals(inputColumn.getType())) {
                 idValue = pageReader.getString(inputColumn);
-            } else if (Types.BOOLEAN.equals(inputColumn.getType())) {
+            }
+            else if (Types.BOOLEAN.equals(inputColumn.getType())) {
                 idValue = pageReader.getBoolean(inputColumn) + "";
-            } else if (Types.DOUBLE.equals(inputColumn.getType())) {
+            }
+            else if (Types.DOUBLE.equals(inputColumn.getType())) {
                 idValue = pageReader.getDouble(inputColumn) + "";
-            } else if (Types.LONG.equals(inputColumn.getType())) {
+            }
+            else if (Types.LONG.equals(inputColumn.getType())) {
                 idValue = pageReader.getLong(inputColumn) + "";
-            } else if (Types.JSON.equals(inputColumn.getType())) {
+            }
+            else if (Types.JSON.equals(inputColumn.getType())) {
                 idValue = pageReader.getJson(inputColumn).toJson();
-            } else if (Types.TIMESTAMP.equals(inputColumn.getType())) {
+            }
+            else if (Types.TIMESTAMP.equals(inputColumn.getType())) {
                 idValue = pageReader.getTimestamp(inputColumn).toString();
-            } else {
+            }
+            else {
                 idValue = null;
             }
             return idValue;
@@ -443,7 +480,8 @@ public class ElasticsearchOutputPlugin
         {
             try {
                 bulkProcessor.flush();
-            } finally {
+            }
+            finally {
                 close();
             }
         }
@@ -456,7 +494,8 @@ public class ElasticsearchOutputPlugin
                     while (!bulkProcessor.awaitClose(3, TimeUnit.SECONDS)) {
                         log.debug("wait for closing the bulk processing..");
                     }
-                } catch (InterruptedException e) {
+                }
+                catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
                 bulkProcessor = null;
@@ -481,7 +520,6 @@ public class ElasticsearchOutputPlugin
             //  TODO
             return report;
         }
-
     }
 
     public enum Mode
@@ -518,7 +556,8 @@ public class ElasticsearchOutputPlugin
                     .addAlias(newIndexName, aliasName)
                     .execute().actionGet();
             log.info(String.format("Assigned alias[%s] to index[%s]", aliasName, newIndexName));
-        } else {
+        }
+        else {
             List<String> oldIndices = getIndexByAlias(aliasName, client);
             client.admin().indices().prepareAliases()
                     .removeAlias(oldIndices.toArray(new String[oldIndices.size()]), aliasName)
@@ -582,5 +621,4 @@ public class ElasticsearchOutputPlugin
             super(cause);
         }
     }
-
 }

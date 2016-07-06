@@ -1,21 +1,8 @@
 package org.embulk.output.elasticsearch;
 
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.net.UnknownHostException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.security.GeneralSecurityException;
-
-import com.google.common.collect.Lists;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import org.elasticsearch.action.admin.cluster.state.ClusterStateRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
@@ -23,23 +10,36 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
 import org.embulk.EmbulkTestRuntime;
 import org.embulk.config.ConfigException;
+import org.embulk.config.ConfigSource;
 import org.embulk.config.TaskReport;
 import org.embulk.config.TaskSource;
-import org.embulk.config.ConfigSource;
+import org.embulk.output.elasticsearch.ElasticsearchOutputPlugin.PluginTask;
 import org.embulk.spi.Exec;
 import org.embulk.spi.OutputPlugin;
 import org.embulk.spi.Page;
 import org.embulk.spi.PageTestUtils;
 import org.embulk.spi.Schema;
-import org.embulk.spi.time.Timestamp;
-import org.embulk.spi.TransactionalPageOutput;
 import org.embulk.spi.TestPageBuilderReader.MockPageOutput;
+import org.embulk.spi.TransactionalPageOutput;
+import org.embulk.spi.time.Timestamp;
 import org.embulk.standards.CsvParserPlugin;
-import org.embulk.output.elasticsearch.ElasticsearchOutputPlugin.PluginTask;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.UnknownHostException;
+import java.security.GeneralSecurityException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeNotNull;
@@ -60,9 +60,9 @@ public class TestElasticsearchOutputPlugin
 
     private MockPageOutput pageOutput;
 
-    final String ES_TEST_INDEX = "index_for_unittest";
-    final String ES_TEST_INDEX2 = "index_for_unittest2";
-    final String ES_TEST_ALIAS = "alias_for_unittest";
+    private static String ES_TEST_INDEX = "index_for_unittest";
+    private static String ES_TEST_INDEX2 = "index_for_unittest2";
+    private static String ES_TEST_ALIAS = "alias_for_unittest";
 
     /*
      * This test case requires environment variables
@@ -90,7 +90,6 @@ public class TestElasticsearchOutputPlugin
 
         PATH_PREFIX = ElasticsearchOutputPlugin.class.getClassLoader().getResource("sample_01.csv").getPath();
     }
-
 
     @Rule
     public EmbulkTestRuntime runtime = new EmbulkTestRuntime();
@@ -160,7 +159,8 @@ public class TestElasticsearchOutputPlugin
                     return Lists.newArrayList(Exec.newTaskReport());
                 }
             });
-        } catch (Throwable t) {
+        }
+        catch (Throwable t) {
             if (t instanceof RuntimeException) {
                 assertTrue(t.getCause().getCause() instanceof ConfigException);
             }
@@ -219,7 +219,8 @@ public class TestElasticsearchOutputPlugin
         PluginTask task = config.loadConfig(PluginTask.class);
         plugin.transaction(config, schema, 0, new OutputPlugin.Control() {
             @Override
-            public List<TaskReport> run(TaskSource taskSource) {
+            public List<TaskReport> run(TaskSource taskSource)
+            {
                 return Lists.newArrayList(Exec.newTaskReport());
             }
         });
@@ -287,6 +288,7 @@ public class TestElasticsearchOutputPlugin
         Method createClient = ElasticsearchOutputPlugin.class.getDeclaredMethod("createClient", PluginTask.class);
         createClient.setAccessible(true);
         try (Client client = (Client) createClient.invoke(plugin, task)) {
+            // do nothing
         } catch (Throwable t) {
             if (t instanceof InvocationTargetException) {
                 assertTrue(t.getCause().getCause() instanceof UnknownHostException);
@@ -340,7 +342,6 @@ public class TestElasticsearchOutputPlugin
         Method createClient = ElasticsearchOutputPlugin.class.getDeclaredMethod("createClient", PluginTask.class);
         createClient.setAccessible(true);
         try (Client client = (Client) createClient.invoke(plugin, task)) {
-
             Method isAlias = ElasticsearchOutputPlugin.class.getDeclaredMethod("isAlias", String.class, Client.class);
             isAlias.setAccessible(true);
 
@@ -414,9 +415,9 @@ public class TestElasticsearchOutputPlugin
     {
         ByteArrayOutputStream bo = new ByteArrayOutputStream();
         byte [] buffer = new byte[1024];
-        while(true) {
+        while (true) {
             int len = is.read(buffer);
-            if(len < 0) {
+            if (len < 0) {
                 break;
             }
             bo.write(buffer, 0, len);
