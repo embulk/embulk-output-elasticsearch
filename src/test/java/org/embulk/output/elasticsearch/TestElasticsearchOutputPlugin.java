@@ -60,9 +60,9 @@ public class TestElasticsearchOutputPlugin
 
     private MockPageOutput pageOutput;
 
-    final String ES_TEST_INDEX = "index_for_unittest";
-    final String ES_TEST_INDEX2 = "index_for_unittest2";
-    final String ES_TEST_ALIAS = "alias_for_unittest";
+    private static String ES_TEST_INDEX = "index_for_unittest";
+    private static String ES_TEST_INDEX2 = "index_for_unittest2";
+    private static String ES_TEST_ALIAS = "alias_for_unittest";
 
     /*
      * This test case requires environment variables
