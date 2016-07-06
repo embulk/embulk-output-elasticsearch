@@ -91,7 +91,6 @@ public class TestElasticsearchOutputPlugin
         PATH_PREFIX = ElasticsearchOutputPlugin.class.getClassLoader().getResource("sample_01.csv").getPath();
     }
 
-
     @Rule
     public EmbulkTestRuntime runtime = new EmbulkTestRuntime();
     private ElasticsearchOutputPlugin plugin;
@@ -160,7 +159,8 @@ public class TestElasticsearchOutputPlugin
                     return Lists.newArrayList(Exec.newTaskReport());
                 }
             });
-        } catch (Throwable t) {
+        }
+        catch (Throwable t) {
             if (t instanceof RuntimeException) {
                 assertTrue(t.getCause().getCause() instanceof ConfigException);
             }
@@ -219,7 +219,8 @@ public class TestElasticsearchOutputPlugin
         PluginTask task = config.loadConfig(PluginTask.class);
         plugin.transaction(config, schema, 0, new OutputPlugin.Control() {
             @Override
-            public List<TaskReport> run(TaskSource taskSource) {
+            public List<TaskReport> run(TaskSource taskSource)
+            {
                 return Lists.newArrayList(Exec.newTaskReport());
             }
         });
@@ -287,6 +288,7 @@ public class TestElasticsearchOutputPlugin
         Method createClient = ElasticsearchOutputPlugin.class.getDeclaredMethod("createClient", PluginTask.class);
         createClient.setAccessible(true);
         try (Client client = (Client) createClient.invoke(plugin, task)) {
+            // do nothing
         } catch (Throwable t) {
             if (t instanceof InvocationTargetException) {
                 assertTrue(t.getCause().getCause() instanceof UnknownHostException);
@@ -340,7 +342,6 @@ public class TestElasticsearchOutputPlugin
         Method createClient = ElasticsearchOutputPlugin.class.getDeclaredMethod("createClient", PluginTask.class);
         createClient.setAccessible(true);
         try (Client client = (Client) createClient.invoke(plugin, task)) {
-
             Method isAlias = ElasticsearchOutputPlugin.class.getDeclaredMethod("isAlias", String.class, Client.class);
             isAlias.setAccessible(true);
 
@@ -414,9 +415,9 @@ public class TestElasticsearchOutputPlugin
     {
         ByteArrayOutputStream bo = new ByteArrayOutputStream();
         byte [] buffer = new byte[1024];
-        while(true) {
+        while (true) {
             int len = is.read(buffer);
-            if(len < 0) {
+            if (len < 0) {
                 break;
             }
             bo.write(buffer, 0, len);
