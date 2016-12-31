@@ -15,7 +15,7 @@ configurations {
     provided
 }
 
-version = "0.3.1"
+version = "1.0.0"
 
 compileJava.options.encoding = 'UTF-8' // source encoding
 sourceCompatibility = 1.7
@@ -24,7 +24,8 @@ targetCompatibility = 1.7
 dependencies {
     compile  "org.embulk:embulk-core:0.8.5"
     provided  "org.embulk:embulk-core:0.8.5"
-    compile 'org.elasticsearch:elasticsearch:2.3.3'
+    compile "org.elasticsearch:elasticsearch:5.1.1"
+    compile "org.elasticsearch.client:transport:5.1.1"
 
     testCompile "junit:junit:4.+"
     testCompile "org.embulk:embulk-core:0.8.5:tests"

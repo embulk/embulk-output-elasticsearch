@@ -28,6 +28,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.indices.InvalidAliasNameException;
+import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.embulk.config.Config;
 import org.embulk.config.ConfigDefault;
 import org.embulk.config.ConfigDiff;
@@ -90,6 +91,9 @@ public class ElasticsearchOutputPlugin
         @Config("index")
         public String getIndex();
         public void setIndex(String indexName);
+
+        @Config("pipeline")
+        public Optional<String> getPipeline();
 
         @Config("alias")
         @ConfigDefault("null")
@@ -180,10 +184,10 @@ public class ElasticsearchOutputPlugin
     private Client createClient(final PluginTask task)
     {
         //  @see http://www.elasticsearch.org/guide/en/elasticsearch/client/java-api/current/client.html
-        Settings settings = Settings.settingsBuilder()
+        Settings settings = Settings.builder()
                 .put("cluster.name", task.getClusterName())
                 .build();
-        TransportClient client = TransportClient.builder().settings(settings).build();
+        TransportClient client = new PreBuiltTransportClient(settings);
         List<NodeAddressTask> nodes = task.getNodes();
         for (NodeAddressTask node : nodes) {
             try {
@@ -269,6 +273,7 @@ public class ElasticsearchOutputPlugin
         private final String index;
         private final String type;
         private final String id;
+        private final String pipeline;
 
         public ElasticsearchPageOutput(PluginTask task, Client client, BulkProcessor bulkProcessor)
         {
@@ -280,6 +285,7 @@ public class ElasticsearchOutputPlugin
             this.index = task.getIndex();
             this.type = task.getType();
             this.id = task.getId().orNull();
+            this.pipeline = task.getPipeline().orNull();
         }
 
         void open(final Schema schema)
@@ -472,7 +478,7 @@ public class ElasticsearchOutputPlugin
 
         private IndexRequest newIndexRequest(String idValue)
         {
-            return Requests.indexRequest(index).type(type).id(idValue);
+            return Requests.indexRequest(index).type(type).id(idValue).setPipeline(pipeline);
         }
 
         @Override
