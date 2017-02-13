@@ -22,13 +22,13 @@ sourceCompatibility = 1.7
 targetCompatibility = 1.7
 
 dependencies {
-    compile  "org.embulk:embulk-core:0.8.5"
-    provided  "org.embulk:embulk-core:0.8.5"
+    compile  "org.embulk:embulk-core:0.8.16"
+    provided  "org.embulk:embulk-core:0.8.16"
     compile 'org.elasticsearch:elasticsearch:2.3.3'
 
     testCompile "junit:junit:4.+"
-    testCompile "org.embulk:embulk-core:0.8.5:tests"
-    testCompile "org.embulk:embulk-standards:0.8.5"
+    testCompile "org.embulk:embulk-core:0.8.16:tests"
+    testCompile "org.embulk:embulk-standards:0.8.16"
 }
 
 task classpath(type: Copy, dependsOn: ["jar"]) {
