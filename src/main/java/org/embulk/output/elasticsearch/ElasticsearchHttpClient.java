@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-public class ElasticsearchUtils
+public class ElasticsearchHttpClient
 {
     private final Logger log;
 
@@ -35,7 +35,7 @@ public class ElasticsearchUtils
             .configure(com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS, false)
             .configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-    public ElasticsearchUtils()
+    public ElasticsearchHttpClient()
     {
         this.log = Exec.getLogger(getClass());
     }

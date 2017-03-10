@@ -35,12 +35,12 @@ public class ElasticsearchOutputPluginDelegate
         implements RestClientOutputPluginDelegate<ElasticsearchOutputPluginDelegate.PluginTask>
 {
     private final Logger log;
-    private final ElasticsearchUtils utils;
+    private final ElasticsearchHttpClient client;
 
     public ElasticsearchOutputPluginDelegate()
     {
         this.log = Exec.getLogger(getClass());
-        this.utils = new ElasticsearchUtils();
+        this.client = new ElasticsearchHttpClient();
     }
 
     public interface NodeAddressTask
@@ -151,12 +151,12 @@ public class ElasticsearchOutputPluginDelegate
         }
 
         try (Jetty92RetryHelper retryHelper = createRetryHelper(task)) {
-            log.info(String.format("Connecting to Elasticsearch version:%s", utils.getEsVersion(task, retryHelper)));
+            log.info(String.format("Connecting to Elasticsearch version:%s", client.getEsVersion(task, retryHelper)));
 
             if (task.getMode().equals(Mode.REPLACE)) {
                 task.setAlias(Optional.of(task.getIndex()));
-                task.setIndex(utils.generateNewIndexName(task.getIndex()));
-                if (utils.isExistsIndex(task.getAlias().orNull(), task, retryHelper) && !utils.isExistsAlias(task.getAlias().orNull(), task, retryHelper)) {
+                task.setIndex(client.generateNewIndexName(task.getIndex()));
+                if (client.isExistsIndex(task.getAlias().orNull(), task, retryHelper) && !client.isExistsAlias(task.getAlias().orNull(), task, retryHelper)) {
                     throw new ConfigException(String.format("Invalid alias name [%s], an index exists with the same name as the alias", task.getAlias().orNull()));
                 }
             }
@@ -190,11 +190,11 @@ public class ElasticsearchOutputPluginDelegate
         }
 
         try (Jetty92RetryHelper retryHelper = createRetryHelper(task)) {
-            utils.push(records, task, retryHelper);
+            client.push(records, task, retryHelper);
 
             // Re assign alias only when repale mode
             if (task.getMode().equals(Mode.REPLACE)) {
-                utils.reAssignAlias(task.getAlias().orNull(), task.getIndex(), task, retryHelper);
+                client.reAssignAlias(task.getAlias().orNull(), task.getIndex(), task, retryHelper);
             }
         }
 
