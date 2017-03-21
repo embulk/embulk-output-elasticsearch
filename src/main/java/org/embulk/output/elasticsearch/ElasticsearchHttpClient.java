@@ -90,25 +90,6 @@ public class ElasticsearchHttpClient
         }
     }
 
-    private String createIndexRequest(String idColumn, JsonNode record) throws JsonProcessingException
-    {
-        // index name and type are set at path("/{index}/{type}"). So no need to set
-        if (idColumn != null && record.get("record").hasNonNull(idColumn)) {
-            // {"index" : {"_id" : "v"}}
-            Map<String, Map> indexRequest = new HashMap<>();
-
-            Map<String, JsonNode> idRequest = new HashMap<>();
-            idRequest.put("_id", record.get("record").get(idColumn));
-
-            indexRequest.put("index", idRequest);
-            return jsonMapper.writeValueAsString(indexRequest);
-        }
-        else {
-            // {"index" : {}}
-            return "{\"index\" : {}}";
-        }
-    }
-
     public List<String> getIndexByAlias(String aliasName, PluginTask task, Jetty92RetryHelper retryHelper)
     {
         // curl -XGET localhost:9200/_alias/{alias}
@@ -124,6 +105,26 @@ public class ElasticsearchHttpClient
         }
 
         return indices;
+    }
+
+    public boolean isIndexExisting(String indexName, PluginTask task, Jetty92RetryHelper retryHelper)
+    {
+        // curl -XGET localhost:9200/{index}
+        // No index: 404
+        // Index found: 200
+        try {
+            sendRequest(indexName, HttpMethod.GET, task, retryHelper);
+            return true;
+        }
+        catch (ResourceNotFoundException ex) {
+            return false;
+        }
+    }
+
+    public String generateNewIndexName(String indexName)
+    {
+        Timestamp time = Exec.getTransactionTime();
+        return indexName + new SimpleDateFormat("_yyyyMMdd-HHmmss").format(time.toEpochMilli());
     }
 
     public boolean isAliasExisting(String aliasName, PluginTask task, Jetty92RetryHelper retryHelper)
@@ -143,7 +144,47 @@ public class ElasticsearchHttpClient
         return false;
     }
 
-    public void assignAlias(String indexName, String aliasName, PluginTask task, Jetty92RetryHelper retryHelper)
+    public void reassignAlias(String aliasName, String newIndexName, PluginTask task, Jetty92RetryHelper retryHelper)
+    {
+        if (!isAliasExisting(aliasName, task, retryHelper)) {
+            assignAlias(newIndexName, aliasName, task, retryHelper);
+        }
+        else {
+            List<String> oldIndices = getIndexByAlias(aliasName, task, retryHelper);
+            assignAlias(newIndexName, aliasName, task, retryHelper);
+            for (String index : oldIndices) {
+                deleteIndex(index, task, retryHelper);
+            }
+        }
+    }
+
+    public String getEsVersion(PluginTask task, Jetty92RetryHelper retryHelper)
+    {
+        // curl -XGET 'http://localhost:9200’
+        JsonNode response = sendRequest("", HttpMethod.GET, task, retryHelper);
+        return response.get("version").get("number").asText();
+    }
+
+    private String createIndexRequest(String idColumn, JsonNode record) throws JsonProcessingException
+    {
+        // index name and type are set at path("/{index}/{type}"). So no need to set
+        if (idColumn != null && record.get("record").hasNonNull(idColumn)) {
+            // {"index" : {"_id" : "v"}}
+            Map<String, Map> indexRequest = new HashMap<>();
+
+            Map<String, JsonNode> idRequest = new HashMap<>();
+            idRequest.put("_id", record.get("record").get(idColumn));
+
+            indexRequest.put("index", idRequest);
+            return jsonMapper.writeValueAsString(indexRequest);
+        }
+        else {
+            // {"index" : {}}
+            return "{\"index\" : {}}";
+        }
+    }
+
+    private void assignAlias(String indexName, String aliasName, PluginTask task, Jetty92RetryHelper retryHelper)
     {
         try {
             if (isIndexExisting(indexName, task, retryHelper)) {
@@ -195,35 +236,7 @@ public class ElasticsearchHttpClient
         }
     }
 
-    public void reassignAlias(String aliasName, String newIndexName, PluginTask task, Jetty92RetryHelper retryHelper)
-    {
-        if (!isAliasExisting(aliasName, task, retryHelper)) {
-            assignAlias(newIndexName, aliasName, task, retryHelper);
-        }
-        else {
-            List<String> oldIndices = getIndexByAlias(aliasName, task, retryHelper);
-            assignAlias(newIndexName, aliasName, task, retryHelper);
-            for (String index : oldIndices) {
-                deleteIndex(index, task, retryHelper);
-            }
-        }
-    }
-
-    public boolean isIndexExisting(String indexName, PluginTask task, Jetty92RetryHelper retryHelper)
-    {
-        // curl -XGET localhost:9200/{index}
-        // No index: 404
-        // Index found: 200
-        try {
-            sendRequest(indexName, HttpMethod.GET, task, retryHelper);
-            return true;
-        }
-        catch (ResourceNotFoundException ex) {
-            return false;
-        }
-    }
-
-    public void deleteIndex(String indexName, PluginTask task, Jetty92RetryHelper retryHelper)
+    private void deleteIndex(String indexName, PluginTask task, Jetty92RetryHelper retryHelper)
     {
         // curl -XDELETE localhost:9200/{index}
         // Success: {"acknowledged":true}
@@ -231,19 +244,6 @@ public class ElasticsearchHttpClient
             sendRequest(indexName, HttpMethod.DELETE, task, retryHelper);
             log.info("Deleted Index [{}]", indexName);
         }
-    }
-
-    public String getEsVersion(PluginTask task, Jetty92RetryHelper retryHelper)
-    {
-        // curl -XGET 'http://localhost:9200’
-        JsonNode response = sendRequest("", HttpMethod.GET, task, retryHelper);
-        return response.get("version").get("number").asText();
-    }
-
-    public String generateNewIndexName(String indexName)
-    {
-        Timestamp time = Exec.getTransactionTime();
-        return indexName + new SimpleDateFormat("_yyyyMMdd-HHmmss").format(time.toEpochMilli());
     }
 
     private JsonNode sendRequest(String path, final HttpMethod method, PluginTask task, Jetty92RetryHelper retryHelper)
