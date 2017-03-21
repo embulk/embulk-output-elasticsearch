@@ -157,7 +157,7 @@ public class ElasticsearchOutputPluginDelegate
             if (task.getMode().equals(Mode.REPLACE)) {
                 task.setAlias(Optional.of(task.getIndex()));
                 task.setIndex(client.generateNewIndexName(task.getIndex()));
-                if (client.isExistsIndex(task.getAlias().orNull(), task, retryHelper) && !client.isExistsAlias(task.getAlias().orNull(), task, retryHelper)) {
+                if (client.isIndexExisting(task.getAlias().orNull(), task, retryHelper) && !client.isAliasExisting(task.getAlias().orNull(), task, retryHelper)) {
                     throw new ConfigException(String.format("Invalid alias name [%s], an index exists with the same name as the alias", task.getAlias().orNull()));
                 }
             }
@@ -195,7 +195,7 @@ public class ElasticsearchOutputPluginDelegate
 
             // Re assign alias only when repale mode
             if (task.getMode().equals(Mode.REPLACE)) {
-                client.reAssignAlias(task.getAlias().orNull(), task.getIndex(), task, retryHelper);
+                client.reassignAlias(task.getAlias().orNull(), task.getIndex(), task, retryHelper);
             }
         }
 

@@ -126,7 +126,7 @@ public class ElasticsearchHttpClient
         return indices;
     }
 
-    public boolean isExistsAlias(String aliasName, PluginTask task, Jetty92RetryHelper retryHelper)
+    public boolean isAliasExisting(String aliasName, PluginTask task, Jetty92RetryHelper retryHelper)
     {
         // curl -XGET localhost:9200/_aliases  // List all aliases
         // No aliases: {}
@@ -146,8 +146,8 @@ public class ElasticsearchHttpClient
     public void assignAlias(String indexName, String aliasName, PluginTask task, Jetty92RetryHelper retryHelper)
     {
         try {
-            if (isExistsIndex(indexName, task, retryHelper)) {
-                if (isExistsAlias(aliasName, task, retryHelper)) {
+            if (isIndexExisting(indexName, task, retryHelper)) {
+                if (isAliasExisting(aliasName, task, retryHelper)) {
                     // curl -XPUT http://localhost:9200/_alias -d\
                     // "actions" : [
                     //   {"remove" : {"alias" : "{alias}", "index" : "{index_old}"}},
@@ -195,9 +195,9 @@ public class ElasticsearchHttpClient
         }
     }
 
-    public void reAssignAlias(String aliasName, String newIndexName, PluginTask task, Jetty92RetryHelper retryHelper)
+    public void reassignAlias(String aliasName, String newIndexName, PluginTask task, Jetty92RetryHelper retryHelper)
     {
-        if (!isExistsAlias(aliasName, task, retryHelper)) {
+        if (!isAliasExisting(aliasName, task, retryHelper)) {
             assignAlias(newIndexName, aliasName, task, retryHelper);
         }
         else {
@@ -209,7 +209,7 @@ public class ElasticsearchHttpClient
         }
     }
 
-    public boolean isExistsIndex(String indexName, PluginTask task, Jetty92RetryHelper retryHelper)
+    public boolean isIndexExisting(String indexName, PluginTask task, Jetty92RetryHelper retryHelper)
     {
         // curl -XGET localhost:9200/{index}
         // No index: 404
@@ -227,7 +227,7 @@ public class ElasticsearchHttpClient
     {
         // curl -XDELETE localhost:9200/{index}
         // Success: {"acknowledged":true}
-        if (isExistsIndex(indexName, task, retryHelper)) {
+        if (isIndexExisting(indexName, task, retryHelper)) {
             sendRequest(indexName, HttpMethod.DELETE, task, retryHelper);
             log.info("Deleted Index [{}]", indexName);
         }
