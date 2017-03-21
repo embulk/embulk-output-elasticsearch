@@ -14,8 +14,6 @@ import org.embulk.base.restclient.jackson.JacksonServiceRequestMapper;
 import org.embulk.base.restclient.jackson.JacksonTaskReportRecordBuffer;
 import org.embulk.base.restclient.jackson.JacksonTopLevelValueLocator;
 import org.embulk.base.restclient.jackson.scope.JacksonAllInObjectScope;
-import org.embulk.base.restclient.jackson.scope.JacksonDirectIntegerScope;
-import org.embulk.base.restclient.jackson.scope.JacksonDirectStringScope;
 import org.embulk.base.restclient.record.RecordBuffer;
 import org.embulk.config.Config;
 import org.embulk.config.ConfigDefault;
@@ -153,6 +151,8 @@ public class ElasticsearchOutputPluginDelegate
 
         try (Jetty92RetryHelper retryHelper = createRetryHelper(task)) {
             log.info(String.format("Connecting to Elasticsearch version:%s", client.getEsVersion(task, retryHelper)));
+            client.validateIndexOrAliasName(task.getIndex(), "index");
+            client.validateIndexOrAliasName(task.getType(), "index_type");
 
             if (task.getMode().equals(Mode.REPLACE)) {
                 task.setAlias(Optional.of(task.getIndex()));

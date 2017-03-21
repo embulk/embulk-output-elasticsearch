@@ -21,9 +21,11 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 
@@ -34,6 +36,9 @@ public class ElasticsearchHttpClient
     private final ObjectMapper jsonMapper = new ObjectMapper()
             .configure(com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS, false)
             .configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+    private final long maxIndexNameBytes = 255;
+    private final List<Character> inalidIndexCharaters = Arrays.asList('\\', '/', '*', '?', '"', '<', '>', '|', '#', ' ', ',');
 
     public ElasticsearchHttpClient()
     {
@@ -163,6 +168,31 @@ public class ElasticsearchHttpClient
         // curl -XGET 'http://localhost:9200’
         JsonNode response = sendRequest("", HttpMethod.GET, task, retryHelper);
         return response.get("version").get("number").asText();
+    }
+
+    public void validateIndexOrAliasName(String index, String type)
+    {
+        for (int i = 0; i < index.length(); i++) {
+            if (inalidIndexCharaters.contains(index.charAt(i))) {
+                throw new ConfigException(String.format("%s '%s' must not contain the invalid characters " + inalidIndexCharaters.toString(), type, index));
+            }
+        }
+
+        if (!index.toLowerCase(Locale.ROOT).equals(index)) {
+            throw new ConfigException(String.format("%s '%s' must be lowercase", type, index));
+        }
+
+        if (index.startsWith("_") || index.startsWith("-") || index.startsWith("+")) {
+            throw new ConfigException(String.format("%s '%s' must not start with '_', '-', or '+'", type, index));
+        }
+
+        if (index.length() > maxIndexNameBytes) {
+            throw new ConfigException(String.format("%s name is too long, (%s > %s)", type, index.length(), maxIndexNameBytes));
+        }
+
+        if (index.equals(".") || index.equals("..")) {
+            throw new ConfigException("index must not be '.' or '..'");
+        }
     }
 
     private String createIndexRequest(String idColumn, JsonNode record) throws JsonProcessingException
