@@ -149,6 +149,9 @@ public class ElasticsearchHttpClient
         return false;
     }
 
+    // Should be called just once while Embulk transaction.
+    // Be sure to call after all exporting tasks completed
+    // This method will delete existing index
     public void reassignAlias(String aliasName, String newIndexName, PluginTask task, Jetty92RetryHelper retryHelper)
     {
         if (!isAliasExisting(aliasName, task, retryHelper)) {
