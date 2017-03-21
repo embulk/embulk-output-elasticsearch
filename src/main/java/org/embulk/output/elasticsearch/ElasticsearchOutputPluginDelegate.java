@@ -187,7 +187,9 @@ public class ElasticsearchOutputPluginDelegate
     {
         ArrayNode records = JsonNodeFactory.instance.arrayNode();
         for (TaskReport taskReport : taskReports) {
-            records.addAll(JacksonTaskReportRecordBuffer.resumeFromTaskReport(taskReport, "records"));
+            if (taskReport.has("records")) {
+                records.addAll(JacksonTaskReportRecordBuffer.resumeFromTaskReport(taskReport, "records"));
+            }
         }
 
         try (Jetty92RetryHelper retryHelper = createRetryHelper(task)) {
