@@ -85,6 +85,22 @@ public class ElasticsearchOutputPluginDelegate
         @ConfigDefault("null")
         Optional<String> getId();
 
+        @Config("use_ssl")
+        @ConfigDefault("false")
+        boolean getUseSsl();
+
+        @Config("auth_method")
+        @ConfigDefault("\"none\"")
+        AuthMethod getAuthMethod();
+
+        @Config("user")
+        @ConfigDefault("null")
+        Optional<String> getUser();
+
+        @Config("password")
+        @ConfigDefault("null")
+        Optional<String> getPassword();
+
         @Config("bulk_actions")
         @ConfigDefault("1000")
         int getBulkActions();
@@ -144,6 +160,32 @@ public class ElasticsearchOutputPluginDelegate
         }
     }
 
+    public enum AuthMethod
+    {
+        NONE,
+        BASIC;
+
+        @JsonValue
+        @Override
+        public String toString()
+        {
+            return name().toLowerCase(Locale.ENGLISH);
+        }
+
+        @JsonCreator
+        public static AuthMethod fromString(String value)
+        {
+            switch (value) {
+                case "none":
+                    return NONE;
+                case "basic":
+                    return BASIC;
+                default:
+                    throw new ConfigException(String.format("Unknown auth_method '%s'. Supported auth_method are none, basic", value));
+            }
+        }
+    }
+
     @Override  // Overridden from |OutputTaskValidatable|
     public void validateOutputTask(PluginTask task, Schema embulkSchema, int taskCount)
     {
@@ -170,6 +212,12 @@ public class ElasticsearchOutputPluginDelegate
                 if (client.isIndexExisting(task.getAlias().orNull(), task, retryHelper) && !client.isAliasExisting(task.getAlias().orNull(), task, retryHelper)) {
                     throw new ConfigException(String.format("Invalid alias name [%s], an index exists with the same name as the alias", task.getAlias().orNull()));
                 }
+            }
+        }
+
+        if (task.getAuthMethod() == AuthMethod.BASIC) {
+            if (!task.getUser().isPresent() || !task.getPassword().isPresent()) {
+                throw new ConfigException("'user' and 'password' are required when auth_method='basic'");
             }
         }
     }

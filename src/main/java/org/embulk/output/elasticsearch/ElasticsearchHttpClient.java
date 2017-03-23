@@ -8,6 +8,7 @@ import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpMethod;
 import org.embulk.config.ConfigException;
 import org.embulk.config.UserDataException;
+import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.AuthMethod;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.NodeAddressTask;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
 import org.embulk.spi.DataException;
@@ -17,6 +18,8 @@ import org.embulk.util.retryhelper.jetty92.Jetty92RetryHelper;
 import org.embulk.util.retryhelper.jetty92.Jetty92SingleRequester;
 import org.embulk.util.retryhelper.jetty92.StringJetty92ResponseEntityReader;
 import org.slf4j.Logger;
+
+import javax.xml.bind.DatatypeConverter;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -292,6 +295,7 @@ public class ElasticsearchHttpClient
     private JsonNode sendRequest(String path, final HttpMethod method, PluginTask task, Jetty92RetryHelper retryHelper, final String content)
     {
         final String uri = createRequestUri(task, path);
+        final String authorizationHeader = getAuthorizationHeader(task);
 
         try {
             String responseBody = retryHelper.requestWithRetry(
@@ -306,6 +310,10 @@ public class ElasticsearchHttpClient
                                     .method(method);
                             if (method == HttpMethod.POST) {
                                 request.content(new StringContentProvider(content), "application/json");
+                            }
+
+                            if (!authorizationHeader.isEmpty()) {
+                                request.header("Authorization", authorizationHeader);
                             }
                             request.send(responseListener);
                         }
@@ -335,8 +343,9 @@ public class ElasticsearchHttpClient
         if (!path.startsWith("/")) {
             path = "/" + path;
         }
+        String protocol = task.getUseSsl() ? "https" : "http";
         String nodeAddress = getRandomNodeAddress(task);
-        return String.format("%s://%s%s", "http", nodeAddress, path);
+        return String.format("%s://%s%s", protocol, nodeAddress, path);
     }
 
     // Return node address (RoundRobin)
@@ -357,6 +366,16 @@ public class ElasticsearchHttpClient
         catch (IOException ex) {
             throw new DataException(ex);
         }
+    }
+
+    private String getAuthorizationHeader(PluginTask task)
+    {
+        String header = "";
+        if (task.getAuthMethod() == AuthMethod.BASIC) {
+            String authString = task.getUser().get() + ":" + task.getPassword().get();
+            header = "Basic " + DatatypeConverter.printBase64Binary(authString.getBytes());
+        }
+        return header;
     }
 
     public class ResourceNotFoundException extends RuntimeException implements UserDataException
