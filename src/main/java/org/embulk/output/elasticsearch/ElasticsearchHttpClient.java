@@ -253,7 +253,7 @@ public class ElasticsearchHttpClient
 
                     String content = jsonMapper.writeValueAsString(rootTree);
                     sendRequest("/_aliases", HttpMethod.POST, task, retryHelper, content);
-                    log.info("Re-Assigned alias [{}] to index[{}]", aliasName, indexName);
+                    log.info("Reassigned alias [{}] to index[{}]", aliasName, indexName);
                 }
                 else {
                     // curl -XPUT http://localhost:9200/{index}/_alias/{alias}
@@ -295,19 +295,12 @@ public class ElasticsearchHttpClient
                         @Override
                         public void requestOnce(org.eclipse.jetty.client.HttpClient client, org.eclipse.jetty.client.api.Response.Listener responseListener)
                         {
-                            org.eclipse.jetty.client.api.Request request;
+                            org.eclipse.jetty.client.api.Request request = client
+                                    .newRequest(uri)
+                                    .accept("application/json")
+                                    .method(method);
                             if (method == HttpMethod.POST) {
-                                request = client
-                                        .newRequest(uri)
-                                        .accept("application/json")
-                                        .content(new StringContentProvider(content), "application/json")
-                                        .method(method);
-                            }
-                            else {
-                                request = client
-                                        .newRequest(uri)
-                                        .accept("application/json")
-                                        .method(method);
+                                request.content(new StringContentProvider(content), "application/json");
                             }
                             request.send(responseListener);
                         }
