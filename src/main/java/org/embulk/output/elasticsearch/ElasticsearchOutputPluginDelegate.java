@@ -23,8 +23,10 @@ import org.embulk.config.Task;
 import org.embulk.config.TaskReport;
 import org.embulk.spi.Exec;
 import org.embulk.spi.Schema;
+import org.embulk.spi.time.TimestampFormatter;
 import org.embulk.util.retryhelper.jetty92.Jetty92ClientCreator;
 import org.embulk.util.retryhelper.jetty92.Jetty92RetryHelper;
+import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 
 import java.util.List;
@@ -54,7 +56,7 @@ public class ElasticsearchOutputPluginDelegate
     }
 
     public interface PluginTask
-            extends RestClientOutputTaskBase
+            extends RestClientOutputTaskBase, TimestampFormatter.Task
     {
         @Config("mode")
         @ConfigDefault("\"insert\"")
@@ -110,6 +112,10 @@ public class ElasticsearchOutputPluginDelegate
         @Config("timeout_millis")
         @ConfigDefault("60000")
         int getTimeoutMills();
+
+        @Config("time_zone")
+        @ConfigDefault("\"UTC\"")
+        String getTimeZone();
     }
 
     public enum Mode
@@ -171,8 +177,10 @@ public class ElasticsearchOutputPluginDelegate
     @Override  // Overridden from |ServiceRequestMapperBuildable|
     public JacksonServiceRequestMapper buildServiceRequestMapper(PluginTask task)
     {
+        TimestampFormatter formatter = new TimestampFormatter(task.getJRuby(), "%Y-%m-%dT%H:%M:%S.%3N%z", DateTimeZone.forID(task.getTimeZone()));
+
         return JacksonServiceRequestMapper.builder()
-                .add(new JacksonAllInObjectScope(), new JacksonTopLevelValueLocator("record"))
+                .add(new JacksonAllInObjectScope(formatter), new JacksonTopLevelValueLocator("record"))
                 .build();
     }
 
