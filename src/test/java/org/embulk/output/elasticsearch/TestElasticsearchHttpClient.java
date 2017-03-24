@@ -112,10 +112,10 @@ public class TestElasticsearchHttpClient
             Method sendRequest = ElasticsearchHttpClient.class.getDeclaredMethod("sendRequest", String.class, HttpMethod.class, PluginTask.class, Jetty92RetryHelper.class);
             sendRequest.setAccessible(true);
             String path = String.format("/%s/", ES_INDEX);
-            sendRequest.invoke(client, path, HttpMethod.POST, task, retryHelper);
+            sendRequest.invoke(client, path, HttpMethod.PUT, task, retryHelper);
 
             path = String.format("/%s/", ES_TEST_INDEX2);
-            sendRequest.invoke(client, path, HttpMethod.POST, task, retryHelper);
+            sendRequest.invoke(client, path, HttpMethod.PUT, task, retryHelper);
 
             // create alias
             client.reassignAlias(ES_TEST_ALIAS, ES_INDEX, task, retryHelper);
