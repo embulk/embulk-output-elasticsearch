@@ -3,6 +3,7 @@ package org.embulk.output.elasticsearch;
 import org.eclipse.jetty.http.HttpMethod;
 import org.embulk.EmbulkTestRuntime;
 import org.embulk.config.ConfigException;
+import org.embulk.config.ConfigSource;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
 import org.embulk.spi.Exec;
 import org.embulk.spi.time.Timestamp;
@@ -16,6 +17,7 @@ import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 
 import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_INDEX;
+import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_NODES;
 import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_TEST_ALIAS;
 import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_TEST_INDEX2;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -148,5 +150,24 @@ public class TestElasticsearchHttpClient
             PluginTask task = utils.config().loadConfig(PluginTask.class);
             assertThat(client.isAliasExisting("non-existing-alias", task, retryHelper), is(false));
         }
+    }
+
+    @Test
+    public void testGetAuthorizationHeader() throws Exception
+    {
+        ElasticsearchHttpClient client = new ElasticsearchHttpClient();
+
+        ConfigSource config = Exec.newConfigSource()
+                .set("auth_method", "basic")
+                .set("user", "username")
+                .set("password", "password")
+                .set("index", "idx")
+                .set("index_type", "idx_type")
+                .set("nodes", ES_NODES);
+        PluginTask task = config.loadConfig(PluginTask.class);
+
+        Method method = ElasticsearchHttpClient.class.getDeclaredMethod("getAuthorizationHeader", PluginTask.class);
+        method.setAccessible(true);
+        assertThat(method.invoke(client, task).toString(), is("Basic dXNlcm5hbWU6cGFzc3dvcmQ="));
     }
 }
