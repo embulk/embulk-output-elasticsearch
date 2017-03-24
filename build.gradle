@@ -11,7 +11,7 @@ repositories {
     jcenter()
     // TODO: Remove this after embulk-base-restclient goes to jcenter.
     maven {
-        url "http://dl.bintray.com/embulk-base-restclient/maven"
+        url "https://dl.bintray.com/embulk-base-restclient/maven"
     }
 }
 configurations {
