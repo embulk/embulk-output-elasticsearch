@@ -28,10 +28,8 @@ public class ElasticsearchTestUtils
     public static int ES_BULK_SIZE;
     public static int ES_CONCURRENT_REQUESTS;
     public static String PATH_PREFIX;
-
-    public static String ES_TEST_INDEX = "index_for_unittest";
-    public static String ES_TEST_INDEX2 = "index_for_unittest2";
-    public static String ES_TEST_ALIAS = "alias_for_unittest";
+    public static String ES_INDEX2;
+    public static String ES_ALIAS;
 
     /*
      * This test case requires environment variables
@@ -45,6 +43,8 @@ public class ElasticsearchTestUtils
         ES_PORT = System.getenv("ES_PORT") != null ? Integer.valueOf(System.getenv("ES_PORT")) : 9200;
 
         ES_INDEX = System.getenv("ES_INDEX");
+        ES_INDEX2 = ES_INDEX + "_02";
+        ES_ALIAS = ES_INDEX + "_alias";
         ES_INDEX_TYPE = System.getenv("ES_INDEX_TYPE");
         ES_ID = "id";
         ES_BULK_ACTIONS = System.getenv("ES_BULK_ACTIONS") != null ? Integer.valueOf(System.getenv("ES_BULK_ACTIONS")) : 1000;
@@ -66,17 +66,17 @@ public class ElasticsearchTestUtils
             deleteIndex.setAccessible(true);
 
             // Delete alias
-            if (client.isAliasExisting(ES_TEST_ALIAS, task, retryHelper)) {
-                deleteIndex.invoke(client, ES_TEST_ALIAS, task, retryHelper);
+            if (client.isAliasExisting(ES_ALIAS, task, retryHelper)) {
+                deleteIndex.invoke(client, ES_ALIAS, task, retryHelper);
             }
 
             // Delete index
-            if (client.isIndexExisting(ES_TEST_INDEX, task, retryHelper)) {
-                deleteIndex.invoke(client, ES_TEST_INDEX, task, retryHelper);
+            if (client.isIndexExisting(ES_INDEX, task, retryHelper)) {
+                deleteIndex.invoke(client, ES_INDEX, task, retryHelper);
             }
 
-            if (client.isIndexExisting(ES_TEST_INDEX2, task, retryHelper)) {
-                deleteIndex.invoke(client, ES_TEST_INDEX2, task, retryHelper);
+            if (client.isIndexExisting(ES_INDEX2, task, retryHelper)) {
+                deleteIndex.invoke(client, ES_INDEX2, task, retryHelper);
             }
         }
     }

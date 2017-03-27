@@ -16,10 +16,10 @@ import org.junit.Test;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 
+import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_ALIAS;
 import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_INDEX;
+import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_INDEX2;
 import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_NODES;
-import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_TEST_ALIAS;
-import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_TEST_INDEX2;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -116,19 +116,19 @@ public class TestElasticsearchHttpClient
             String path = String.format("/%s/", ES_INDEX);
             sendRequest.invoke(client, path, HttpMethod.PUT, task, retryHelper);
 
-            path = String.format("/%s/", ES_TEST_INDEX2);
+            path = String.format("/%s/", ES_INDEX2);
             sendRequest.invoke(client, path, HttpMethod.PUT, task, retryHelper);
 
             // create alias
-            client.reassignAlias(ES_TEST_ALIAS, ES_INDEX, task, retryHelper);
+            client.reassignAlias(ES_ALIAS, ES_INDEX, task, retryHelper);
 
             // check alias
-            assertThat(client.isAliasExisting(ES_TEST_ALIAS, task, retryHelper), is(true));
-            assertThat(client.getIndexByAlias(ES_TEST_ALIAS, task, retryHelper).toString(), is("[" + ES_INDEX + "]"));
+            assertThat(client.isAliasExisting(ES_ALIAS, task, retryHelper), is(true));
+            assertThat(client.getIndexByAlias(ES_ALIAS, task, retryHelper).toString(), is("[" + ES_INDEX + "]"));
 
             // reassign index
-            client.reassignAlias(ES_TEST_ALIAS, ES_TEST_INDEX2, task, retryHelper);
-            assertThat(client.getIndexByAlias(ES_TEST_ALIAS, task, retryHelper).toString(), is("[" + ES_TEST_INDEX2 + "]"));
+            client.reassignAlias(ES_ALIAS, ES_INDEX2, task, retryHelper);
+            assertThat(client.getIndexByAlias(ES_ALIAS, task, retryHelper).toString(), is("[" + ES_INDEX2 + "]"));
         }
     }
 
