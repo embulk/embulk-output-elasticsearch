@@ -164,10 +164,7 @@ public class TestElasticsearchHttpClient
                 .set("index", "idx")
                 .set("index_type", "idx_type")
                 .set("nodes", ES_NODES);
-        PluginTask task = config.loadConfig(PluginTask.class);
 
-        Method method = ElasticsearchHttpClient.class.getDeclaredMethod("getAuthorizationHeader", PluginTask.class);
-        method.setAccessible(true);
-        assertThat(method.invoke(client, task).toString(), is("Basic dXNlcm5hbWU6cGFzc3dvcmQ="));
+        assertThat(client.getAuthorizationHeader(config.loadConfig(PluginTask.class)), is("Basic dXNlcm5hbWU6cGFzc3dvcmQ="));
     }
 }

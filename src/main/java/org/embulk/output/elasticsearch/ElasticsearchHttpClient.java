@@ -3,6 +3,7 @@ package org.embulk.output.elasticsearch;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 import org.eclipse.jetty.client.HttpResponseException;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpMethod;
@@ -368,7 +369,8 @@ public class ElasticsearchHttpClient
         }
     }
 
-    private String getAuthorizationHeader(PluginTask task)
+    @VisibleForTesting
+    protected String getAuthorizationHeader(PluginTask task)
     {
         String header = "";
         if (task.getAuthMethod() == AuthMethod.BASIC) {
