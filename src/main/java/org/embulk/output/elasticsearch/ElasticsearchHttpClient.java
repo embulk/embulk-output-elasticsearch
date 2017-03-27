@@ -33,10 +33,15 @@ public class ElasticsearchHttpClient
 {
     private final Logger log;
 
+    // ALLOW_UNQUOTED_CONTROL_CHARS - Not expected but whether parser will allow JSON Strings to contain unquoted control characters
+    // FAIL_ON_UNKNOWN_PROPERTIES - Feature that determines whether encountering of unknown properties
     private final ObjectMapper jsonMapper = new ObjectMapper()
             .configure(com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS, false)
             .configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
+    // Elasticsearch maximum index byte size
+    // public static final int MAX_INDEX_NAME_BYTES = 255;
+    // @see https://github.com/elastic/elasticsearch/blob/master/core/src/main/java/org/elasticsearch/cluster/metadata/MetaDataCreateIndexService.java#L108
     private final long maxIndexNameBytes = 255;
     private final List<Character> inalidIndexCharaters = Arrays.asList('\\', '/', '*', '?', '"', '<', '>', '|', '#', ' ', ',');
 
