@@ -8,6 +8,7 @@ import org.embulk.config.ConfigException;
 import org.embulk.config.ConfigSource;
 import org.embulk.config.TaskReport;
 import org.embulk.config.TaskSource;
+import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.AuthMethod;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.Mode;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
 import org.embulk.spi.Exec;
@@ -211,6 +212,13 @@ public class TestElasticsearchOutputPlugin
     {
         assertThat(Mode.values().length, is(2));
         assertThat(Mode.valueOf("INSERT"), is(Mode.INSERT));
+    }
+
+    @Test
+    public void testAuthMethod()
+    {
+        assertThat(AuthMethod.values().length, is(2));
+        assertThat(AuthMethod.valueOf("BASIC"), is(AuthMethod.BASIC));
     }
 
     @Test(expected = ConfigException.class)
