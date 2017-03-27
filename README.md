@@ -1,6 +1,7 @@
 # Elasticsearch output plugin for Embulk
 
 **Notice** This plugin doesn't support [Amazon(AWS) Elasticsearch Service](https://aws.amazon.com/elasticsearch-service/).
+This plugin uses HTTP/REST Client and haven't be implemented AWS authentication.
 - *[Amazon Elasticsearch Service Limits](http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/aes-limits.html)*
 
 ## Overview
@@ -15,6 +16,10 @@
 - **mode**: "insert" or "replace". See below(string, optional, default is insert)
 - **nodes**: list of nodes. nodes are pairs of host and port (list, required)
   - NOTE: This plugin uses HTTP/REST Clients and uses TCP:9200 as a default. TCP:9300 is usually used for Transport Client.
+- **use_ssl** Use SSL encryption (boolean, default is false)
+- **auth_method** (string, default is 'none') 'none'/'basic'. See also [Authentication](#authentication).
+- **user** Username for basic authentication (string, default is null)
+- **password** Password for above user (string, default is null)
 - ~~**cluster_name**: name of the cluster (string, default is "elasticsearch")~~ Not used now. May use in the future
 - **index**: index name (string, required)
 - **index_type**: index type (string, required)
@@ -47,6 +52,18 @@ out:
   - {host: localhost, port: 9200}
   index: <alias name> # plugin generates index name like <index>_%Y%m%d-%H%M%S 
   index_type: <index type>
+```
+
+### Authentication
+
+This plugin supports Basic authentication and works with [Elastic Cloud](https://cloud.elastic.co/) and 'Security'(formally Sield).
+'Security' also supports LDAP and Active Directory. This plugin doesn't supports these auth methods.
+
+```
+use_ssl: true
+auth_method: basic
+user: <username>
+password: <password>
 ```
 
 ## Example
