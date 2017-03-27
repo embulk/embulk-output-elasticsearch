@@ -8,7 +8,7 @@ jdk:
 env:
   global:
     - ES_HOST=localhost
-    - ES_PORT=9300
+    - ES_PORT=9200
     - ES_INDEX=embulk
     - ES_INDEX_TYPE=embulk
 
