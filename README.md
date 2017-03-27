@@ -1,8 +1,6 @@
 # Elasticsearch output plugin for Embulk
 
 **Notice** This plugin doesn't support [Amazon(AWS) Elasticsearch Service](https://aws.amazon.com/elasticsearch-service/).
-Plugin uses [Transport Client](https://www.elastic.co/guide/en/elasticsearch/client/java-api/2.0/transport-client.html) but AWS Elasticsearch doesn't support this method.
-> The service supports HTTP on port 80, but does not support TCP transport.
 - *[Amazon Elasticsearch Service Limits](http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/aes-limits.html)*
 
 ## Overview
@@ -16,13 +14,14 @@ Plugin uses [Transport Client](https://www.elastic.co/guide/en/elasticsearch/cli
 
 - **mode**: "insert" or "replace". See below(string, optional, default is insert)
 - **nodes**: list of nodes. nodes are pairs of host and port (list, required)
-- **cluster_name**: name of the cluster (string, default is "elasticsearch")
+  - NOTE: This plugin uses HTTP/REST Clients and uses TCP:9200 as a default. TCP:9300 is usually used for Transport Client.
+- ~~**cluster_name**: name of the cluster (string, default is "elasticsearch")~~ Not used now. May use in the future
 - **index**: index name (string, required)
 - **index_type**: index type (string, required)
 - **id**: document id column (string, default is null)
 - **bulk_actions**: Sets when to flush a new bulk request based on the number of actions currently added. (int, default is 1000)
 - **bulk_size**: Sets when to flush a new bulk request based on the size of actions currently added. (long, default is 5242880)
-- **concurrent_requests**: concurrent_requests (int, default is 5)
+- ~~**concurrent_requests**: concurrent_requests (int, default is 5)~~  Not used now. May use in the future
 
 ### Modes
 
@@ -45,7 +44,7 @@ out:
   type: elasticsearch
   mode: replace
   nodes:
-  - {host: localhost, port: 9300}
+  - {host: localhost, port: 9200}
   index: <alias name> # plugin generates index name like <index>_%Y%m%d-%H%M%S 
   index_type: <index type>
 ```
@@ -57,7 +56,7 @@ out:
   type: elasticsearch
   mode: insert
   nodes:
-  - {host: localhost, port: 9300}
+  - {host: localhost, port: 9200}
   index: <index name>
   index_type: <index type>
 ```
