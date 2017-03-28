@@ -169,7 +169,7 @@ public class TestElasticsearchOutputPlugin
 
         output.finish();
         output.commit();
-        Thread.sleep(1000); // Need to wait until index done
+        Thread.sleep(1500); // Need to wait until index done
 
         try (Jetty92RetryHelper retryHelper = utils.createRetryHelper()) {
             ElasticsearchHttpClient client = new ElasticsearchHttpClient();
