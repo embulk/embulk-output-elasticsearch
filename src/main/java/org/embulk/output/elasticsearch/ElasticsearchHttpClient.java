@@ -70,33 +70,15 @@ public class ElasticsearchHttpClient
             String idColumn = task.getId().orNull();
             if (recordSize > 0) {
                 StringBuilder sb = new StringBuilder();
-                int insertedCount = 0;
-                int requestCount = 0;
-                long requestBytes = 0;
                 for (JsonNode record : records) {
                     sb.append(createIndexRequest(idColumn, record));
 
-                    String requestString = jsonMapper.writeValueAsString(record.get("record"));
+                    String requestString = jsonMapper.writeValueAsString(record);
                     sb.append("\n")
                             .append(requestString)
                             .append("\n");
-                    requestBytes += requestString.getBytes().length;
-                    requestCount++;
-                    insertedCount++;
-                    if (requestCount >= bulkActions || requestBytes >= bulkSize) {
-                        sendRequest(path, HttpMethod.POST, task, retryHelper, sb.toString());
-                        if (insertedCount % 10000 == 0) {
-                            log.info("Inserted {}/{} records", insertedCount, recordSize);
-                        }
-                        sb = new StringBuilder();
-                        requestBytes = 0;
-                        requestCount = 0;
-                    }
                 }
-                if (!sb.toString().isEmpty()) {
-                    sendRequest(path, HttpMethod.POST, task, retryHelper, sb.toString());
-                    log.info("Inserted {}/{} records", insertedCount, records.size());
-                }
+                sendRequest(path, HttpMethod.POST, task, retryHelper, sb.toString());
             }
         }
         catch (JsonProcessingException ex) {
@@ -210,12 +192,12 @@ public class ElasticsearchHttpClient
     private String createIndexRequest(String idColumn, JsonNode record) throws JsonProcessingException
     {
         // index name and type are set at path("/{index}/{type}"). So no need to set
-        if (idColumn != null && record.get("record").hasNonNull(idColumn)) {
+        if (idColumn != null && record.hasNonNull(idColumn)) {
             // {"index" : {"_id" : "v"}}
             Map<String, Map> indexRequest = new HashMap<>();
 
             Map<String, JsonNode> idRequest = new HashMap<>();
-            idRequest.put("_id", record.get("record").get(idColumn));
+            idRequest.put("_id", record.get(idColumn));
 
             indexRequest.put("index", idRequest);
             return jsonMapper.writeValueAsString(indexRequest);

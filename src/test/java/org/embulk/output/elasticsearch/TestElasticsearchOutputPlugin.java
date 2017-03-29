@@ -146,55 +146,51 @@ public class TestElasticsearchOutputPlugin
         // no error happens
     }
 
-//    @Test
-//    public void testOutputByOpen() throws Exception
-//    {
-//        ConfigSource config = utils.config();
-//        Schema schema = config.getNested("parser").loadConfig(CsvParserPlugin.PluginTask.class).getSchemaConfig().toSchema();
-//        PluginTask task = config.loadConfig(PluginTask.class);
-//        plugin.transaction(config, schema, 0, new OutputPlugin.Control() {
-//            @Override
-//            public List<TaskReport> run(TaskSource taskSource)
-//            {
-//                return Lists.newArrayList(Exec.newTaskReport());
-//            }
-//        });
-//        TransactionalPageOutput output = plugin.open(task.dump(), schema, 0);
-//
-//        List<Page> pages = PageTestUtils.buildPage(runtime.getBufferAllocator(), schema, 1L, 32864L, Timestamp.ofEpochSecond(1422386629), Timestamp.ofEpochSecond(1422316800),  true, 123.45, "embulk");
-//        assertThat(pages.size(), is(1));
-//        for (Page page : pages) {
-//            output.add(page);
-//        }
-//
-//        output.finish();
-//        output.commit();
-//
-//        try (Jetty92RetryHelper retryHelper = utils.createRetryHelper()) {
-//            ElasticsearchHttpClient client = new ElasticsearchHttpClient();
-//            Method sendRequest = ElasticsearchHttpClient.class.getDeclaredMethod("sendRequest", String.class, HttpMethod.class, PluginTask.class, Jetty92RetryHelper.class, String.class);
-//            sendRequest.setAccessible(true);
-//            String path = String.format("/%s/%s/_search", ES_INDEX, ES_INDEX_TYPE);
-//            String content = "{\"sort\" : \"id\"}";
-//            JsonNode response = (JsonNode) sendRequest.invoke(client, path, HttpMethod.POST, task, retryHelper, content);
-//            assertThat(response.get("hits").get("total").asInt(), is(4));
-//            System.out.println(response.get("hits").get("hits").get(0));
-//            if (response.size() > 0) {
-//                JsonNode record = response.get("hits").get("hits").get(0).get("_source");
-//                assertThat(record.get("id").asInt(), is(1));
-//                assertThat(record.get("account").asInt(), is(32864));
-//                //assertThat(record.get("time").asText(), is("2015-01-27T19:23:49.000Z")); // TODO
-//                assertThat(record.get("time").asInt(), is(1422386629));
-//                //assertThat(record.get("purchase").asText(), is("2015-01-27T00:00:00.000Z")); // TODO
-//                assertThat(record.get("purchase").asInt(), is(1422316800));
-//                //assertThat(record.get("flg").asBoolean(), is(true)); // TODO
-//                assertThat(record.get("flg"), null);
-//                //assertThat(record.get("score").asDouble(), is(123.45)); // TODO
-//                assertThat(record.get("score"), null);
-//                assertThat(record.get("comment").toString(), is("embulk"));
-//            }
-//        }
-//    }
+    @Test
+    public void testOutputByOpen() throws Exception
+    {
+        ConfigSource config = utils.config();
+        Schema schema = config.getNested("parser").loadConfig(CsvParserPlugin.PluginTask.class).getSchemaConfig().toSchema();
+        PluginTask task = config.loadConfig(PluginTask.class);
+        plugin.transaction(config, schema, 0, new OutputPlugin.Control() {
+            @Override
+            public List<TaskReport> run(TaskSource taskSource)
+            {
+                return Lists.newArrayList(Exec.newTaskReport());
+            }
+        });
+        TransactionalPageOutput output = plugin.open(task.dump(), schema, 0);
+
+        List<Page> pages = PageTestUtils.buildPage(runtime.getBufferAllocator(), schema, 1L, 32864L, Timestamp.ofEpochSecond(1422386629), Timestamp.ofEpochSecond(1422316800),  true, 123.45, "embulk");
+        assertThat(pages.size(), is(1));
+        for (Page page : pages) {
+            output.add(page);
+        }
+
+        output.finish();
+        output.commit();
+        Thread.sleep(1500); // Need to wait until index done
+
+        try (Jetty92RetryHelper retryHelper = utils.createRetryHelper()) {
+            ElasticsearchHttpClient client = new ElasticsearchHttpClient();
+            Method sendRequest = ElasticsearchHttpClient.class.getDeclaredMethod("sendRequest", String.class, HttpMethod.class, PluginTask.class, Jetty92RetryHelper.class, String.class);
+            sendRequest.setAccessible(true);
+            String path = String.format("/%s/%s/_search", ES_INDEX, ES_INDEX_TYPE);
+            String sort = "{\"sort\" : \"id\"}";
+            JsonNode response = (JsonNode) sendRequest.invoke(client, path, HttpMethod.POST, task, retryHelper, sort);
+            assertThat(response.get("hits").get("total").asInt(), is(1));
+            if (response.size() > 0) {
+                JsonNode record = response.get("hits").get("hits").get(0).get("_source");
+                assertThat(record.get("id").asInt(), is(1));
+                assertThat(record.get("account").asInt(), is(32864));
+                assertThat(record.get("time").asText(), is("2015-01-27T19:23:49.000+0000"));
+                assertThat(record.get("purchase").asText(), is("2015-01-27T00:00:00.000+0000"));
+                assertThat(record.get("flg").asBoolean(), is(true));
+                assertThat(record.get("score").asDouble(), is(123.45));
+                assertThat(record.get("comment").asText(), is("embulk"));
+            }
+        }
+    }
 
     @Test
     public void testOpenAbort()

@@ -2,8 +2,6 @@ package org.embulk.output.elasticsearch;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
@@ -11,7 +9,6 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.embulk.base.restclient.RestClientOutputPluginDelegate;
 import org.embulk.base.restclient.RestClientOutputTaskBase;
 import org.embulk.base.restclient.jackson.JacksonServiceRequestMapper;
-import org.embulk.base.restclient.jackson.JacksonTaskReportRecordBuffer;
 import org.embulk.base.restclient.jackson.JacksonTopLevelValueLocator;
 import org.embulk.base.restclient.jackson.scope.JacksonAllInObjectScope;
 import org.embulk.base.restclient.record.RecordBuffer;
@@ -213,6 +210,7 @@ public class ElasticsearchOutputPluginDelegate
                     throw new ConfigException(String.format("Invalid alias name [%s], an index exists with the same name as the alias", task.getAlias().orNull()));
                 }
             }
+            log.info(String.format("Inserting data into index[%s]", task.getIndex()));
         }
 
         if (task.getAuthMethod() == AuthMethod.BASIC) {
@@ -235,7 +233,8 @@ public class ElasticsearchOutputPluginDelegate
     @Override  // Overridden from |RecordBufferBuildable|
     public RecordBuffer buildRecordBuffer(PluginTask task)
     {
-        return new JacksonTaskReportRecordBuffer("records");
+        Jetty92RetryHelper retryHelper = createRetryHelper(task);
+        return new ElasticsearchRecordBuffer("records", task, retryHelper);
     }
 
     @Override
@@ -244,22 +243,18 @@ public class ElasticsearchOutputPluginDelegate
                                       int taskIndex,
                                       List<TaskReport> taskReports)
     {
-        ArrayNode records = JsonNodeFactory.instance.arrayNode();
+        long totalInserted = 0;
         for (TaskReport taskReport : taskReports) {
-            if (taskReport.has("records")) {
-                records.addAll(JacksonTaskReportRecordBuffer.resumeFromTaskReport(taskReport, "records"));
+            if (taskReport.has("inserted")) {
+                totalInserted += taskReport.get(Long.class, "inserted");
             }
         }
 
-        if (records.size() > 0) {
-            try (Jetty92RetryHelper retryHelper = createRetryHelper(task)) {
-                log.info(String.format("Inserting data into index[%s]", task.getIndex()));
-                client.push(records, task, retryHelper);
-
-                // Re assign alias only when repale mode
-                if (task.getMode().equals(Mode.REPLACE)) {
-                    client.reassignAlias(task.getAlias().orNull(), task.getIndex(), task, retryHelper);
-                }
+        log.info("Insert completed. {} records", totalInserted);
+        try (Jetty92RetryHelper retryHelper = createRetryHelper(task)) {
+            // Re assign alias only when repale mode
+            if (task.getMode().equals(Mode.REPLACE)) {
+                client.reassignAlias(task.getAlias().orNull(), task.getIndex(), task, retryHelper);
             }
         }
 
