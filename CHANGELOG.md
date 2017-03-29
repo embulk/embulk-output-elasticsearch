@@ -1,3 +1,9 @@
+## 0.4.0 - 2017-03-28
+
+* [new feature] Support multiple Elasticsearch version [#32](https://github.com/muga/embulk-output-elasticsearch/pull/32)
+* [new feature] Support SSL and Basic authentication including 'Security'(formally 'Shield') [#33](https://github.com/muga/embulk-output-elasticsearch/pull/33)
+* [maintenance] Improve export logic [#34](https://github.com/muga/embulk-output-elasticsearch/pull/34)
+
 ## 0.3.1 - 2016-06-21
 
 * [maintenance] Update Elasticsearch client to 2.3.3 [#25](https://github.com/muga/embulk-output-elasticsearch/pull/25)
