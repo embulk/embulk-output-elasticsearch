@@ -250,13 +250,11 @@ public class ElasticsearchOutputPluginDelegate
             }
         }
 
-        if (totalInserted > 0) {
-            log.info("Insert completed. {} records", totalInserted);
-            try (Jetty92RetryHelper retryHelper = createRetryHelper(task)) {
-                // Re assign alias only when repale mode
-                if (task.getMode().equals(Mode.REPLACE)) {
-                    client.reassignAlias(task.getAlias().orNull(), task.getIndex(), task, retryHelper);
-                }
+        log.info("Insert completed. {} records", totalInserted);
+        try (Jetty92RetryHelper retryHelper = createRetryHelper(task)) {
+            // Re assign alias only when repale mode
+            if (task.getMode().equals(Mode.REPLACE)) {
+                client.reassignAlias(task.getAlias().orNull(), task.getIndex(), task, retryHelper);
             }
         }
 
