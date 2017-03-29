@@ -59,7 +59,7 @@ out:
 This plugin supports Basic authentication and works with [Elastic Cloud](https://cloud.elastic.co/) and 'Security'(formally Sield).
 'Security' also supports LDAP and Active Directory. This plugin doesn't supports these auth methods.
 
-```
+```yaml
 use_ssl: true
 auth_method: basic
 user: <username>
