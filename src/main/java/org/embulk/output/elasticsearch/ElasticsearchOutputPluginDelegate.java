@@ -243,10 +243,10 @@ public class ElasticsearchOutputPluginDelegate
                                       int taskIndex,
                                       List<TaskReport> taskReports)
     {
-        int totalInserted = 0;
+        long totalInserted = 0;
         for (TaskReport taskReport : taskReports) {
             if (taskReport.has("inserted")) {
-                totalInserted += taskReport.get(int.class, "inserted");
+                totalInserted += taskReport.get(Long.class, "inserted");
             }
         }
 

@@ -31,7 +31,7 @@ public class ElasticsearchRecordBuffer
     private final Jetty92RetryHelper retryHelper;
     private final ObjectMapper mapper;
     private final Logger log;
-    private int totalCount;
+    private long totalCount;
     private int requestCount;
     private long requestBytes;
     private ArrayNode records;
@@ -68,10 +68,11 @@ public class ElasticsearchRecordBuffer
 
             records.add(record);
             if (requestCount >= bulkActions || requestBytes >= bulkSize) {
-                client.push(record, task, retryHelper);
+                client.push(records, task, retryHelper);
                 if (totalCount % 10000 == 0) {
-                    log.info("Inserted {} total records", totalCount);
+                    log.info("Inserted {} records", totalCount);
                 }
+                records = JsonNodeFactory.instance.arrayNode();
                 requestBytes = 0;
                 requestCount = 0;
             }
@@ -87,9 +88,9 @@ public class ElasticsearchRecordBuffer
     @Override
     public TaskReport commitWithTaskReportUpdated(TaskReport taskReport)
     {
-        if (!records.toString().isEmpty()) {
+        if (records.size() > 0) {
             client.push(records, task, retryHelper);
-            log.info("Inserted {} total records", records.size());
+            log.info("Inserted {} records", records.size());
         }
 
         this.retryHelper.close();
