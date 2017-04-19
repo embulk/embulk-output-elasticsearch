@@ -48,6 +48,7 @@ public class ElasticsearchHttpClient
     // @see https://github.com/elastic/elasticsearch/blob/master/core/src/main/java/org/elasticsearch/cluster/metadata/MetaDataCreateIndexService.java#L108
     private final long maxIndexNameBytes = 255;
     private final List<Character> inalidIndexCharaters = Arrays.asList('\\', '/', '*', '?', '"', '<', '>', '|', '#', ' ', ',');
+    private final long maxSnapshotWaitingTime = 1800;
 
     public ElasticsearchHttpClient()
     {
@@ -265,9 +266,41 @@ public class ElasticsearchHttpClient
         // curl -XDELETE localhost:9200/{index}
         // Success: {"acknowledged":true}
         if (isIndexExisting(indexName, task, retryHelper)) {
+            getSnapshotStatusUntilDone(task, retryHelper);
             sendRequest(indexName, HttpMethod.DELETE, task, retryHelper);
             log.info("Deleted Index [{}]", indexName);
         }
+    }
+
+    private void getSnapshotStatusUntilDone(PluginTask task, Jetty92RetryHelper retryHelper)
+    {
+        long execCount = 1;
+        long totalWaitingTime = 0;
+        while (isSnapshotProgressing(task, retryHelper)) {
+            try {
+                Thread.sleep(1000 * execCount);
+            }
+            catch (InterruptedException ex) {
+                // do nothing
+            }
+            if (execCount > 1) {
+                log.info("Waiting for snapshot completed.");
+            }
+            execCount++;
+            totalWaitingTime += 1000 * execCount;
+            if (totalWaitingTime > maxSnapshotWaitingTime) {
+                throw new ConfigException(String.format("Waiting creating snapshot is expired. %s sec.", maxSnapshotWaitingTime));
+            }
+        }
+    }
+
+    private boolean isSnapshotProgressing(PluginTask task, Jetty92RetryHelper retryHelper)
+    {
+        // https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-snapshots.html#_snapshot_status
+        // curl -XGET localhost:9200/_snapshot/_status
+        JsonNode response = sendRequest("/_snapshot/_status", HttpMethod.GET, task, retryHelper);
+        String snapshots = response.get("snapshots").asText();
+        return !snapshots.equals("");
     }
 
     private JsonNode sendRequest(String path, final HttpMethod method, PluginTask task, Jetty92RetryHelper retryHelper)
