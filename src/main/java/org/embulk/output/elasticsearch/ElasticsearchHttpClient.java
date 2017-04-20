@@ -48,7 +48,7 @@ public class ElasticsearchHttpClient
     // @see https://github.com/elastic/elasticsearch/blob/master/core/src/main/java/org/elasticsearch/cluster/metadata/MetaDataCreateIndexService.java#L108
     private final long maxIndexNameBytes = 255;
     private final List<Character> inalidIndexCharaters = Arrays.asList('\\', '/', '*', '?', '"', '<', '>', '|', '#', ' ', ',');
-    private final long maxSnapshotWaitingTime = 1800;
+    private final long maxSnapshotWaitingTime = 30 * 60 * 1000; // 30 minutes
 
     public ElasticsearchHttpClient()
     {
@@ -277,8 +277,9 @@ public class ElasticsearchHttpClient
         long execCount = 1;
         long totalWaitingTime = 0;
         while (isSnapshotProgressing(task, retryHelper)) {
+            long sleepTime = ((long) Math.pow(2, execCount) * 1000);
             try {
-                Thread.sleep(1000 * execCount);
+                Thread.sleep(sleepTime);
             }
             catch (InterruptedException ex) {
                 // do nothing
@@ -287,7 +288,7 @@ public class ElasticsearchHttpClient
                 log.info("Waiting for snapshot completed.");
             }
             execCount++;
-            totalWaitingTime += 1000 * execCount;
+            totalWaitingTime += sleepTime;
             if (totalWaitingTime > maxSnapshotWaitingTime) {
                 throw new ConfigException(String.format("Waiting creating snapshot is expired. %s sec.", maxSnapshotWaitingTime));
             }
