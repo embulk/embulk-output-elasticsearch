@@ -266,13 +266,13 @@ public class ElasticsearchHttpClient
         // curl -XDELETE localhost:9200/{index}
         // Success: {"acknowledged":true}
         if (isIndexExisting(indexName, task, retryHelper)) {
-            getSnapshotStatusUntilDone(task, retryHelper);
+            waitSnapshot(task, retryHelper);
             sendRequest(indexName, HttpMethod.DELETE, task, retryHelper);
             log.info("Deleted Index [{}]", indexName);
         }
     }
 
-    private void getSnapshotStatusUntilDone(PluginTask task, Jetty92RetryHelper retryHelper)
+    private void waitSnapshot(PluginTask task, Jetty92RetryHelper retryHelper)
     {
         long execCount = 1;
         long totalWaitingTime = 0;
