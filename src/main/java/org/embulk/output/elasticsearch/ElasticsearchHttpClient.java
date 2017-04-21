@@ -265,9 +265,44 @@ public class ElasticsearchHttpClient
         // curl -XDELETE localhost:9200/{index}
         // Success: {"acknowledged":true}
         if (isIndexExisting(indexName, task, retryHelper)) {
+            waitSnapshot(task, retryHelper);
             sendRequest(indexName, HttpMethod.DELETE, task, retryHelper);
             log.info("Deleted Index [{}]", indexName);
         }
+    }
+
+    private void waitSnapshot(PluginTask task, Jetty92RetryHelper retryHelper)
+    {
+        int maxSnapshotWaitingMills = task.getMaxSnapshotWaitingSecs() * 1000;
+        long execCount = 1;
+        long totalWaitingTime = 0;
+        // Since only needs exponential backoff, don't need exception handling and others, I don't use Embulk RetryExecutor
+        while (isSnapshotProgressing(task, retryHelper)) {
+            long sleepTime = ((long) Math.pow(2, execCount) * 1000);
+            try {
+                Thread.sleep(sleepTime);
+            }
+            catch (InterruptedException ex) {
+                // do nothing
+            }
+            if (execCount > 1) {
+                log.info("Waiting for snapshot completed.");
+            }
+            execCount++;
+            totalWaitingTime += sleepTime;
+            if (totalWaitingTime > maxSnapshotWaitingMills) {
+                throw new ConfigException(String.format("Waiting creating snapshot is expired. %s sec.", maxSnapshotWaitingMills));
+            }
+        }
+    }
+
+    private boolean isSnapshotProgressing(PluginTask task, Jetty92RetryHelper retryHelper)
+    {
+        // https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-snapshots.html#_snapshot_status
+        // curl -XGET localhost:9200/_snapshot/_status
+        JsonNode response = sendRequest("/_snapshot/_status", HttpMethod.GET, task, retryHelper);
+        String snapshots = response.get("snapshots").asText();
+        return !snapshots.equals("");
     }
 
     private JsonNode sendRequest(String path, final HttpMethod method, PluginTask task, Jetty92RetryHelper retryHelper)

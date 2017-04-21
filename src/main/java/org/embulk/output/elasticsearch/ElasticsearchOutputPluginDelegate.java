@@ -126,6 +126,10 @@ public class ElasticsearchOutputPluginDelegate
         @ConfigDefault("60000")
         int getTimeoutMills();
 
+        @Config("max_snapshot_waiting_secs")
+        @ConfigDefault("1800")
+        int getMaxSnapshotWaitingSecs();
+
         @Config("time_zone")
         @ConfigDefault("\"UTC\"")
         String getTimeZone();
