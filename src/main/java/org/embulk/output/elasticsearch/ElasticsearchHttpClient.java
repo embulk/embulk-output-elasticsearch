@@ -48,7 +48,6 @@ public class ElasticsearchHttpClient
     // @see https://github.com/elastic/elasticsearch/blob/master/core/src/main/java/org/elasticsearch/cluster/metadata/MetaDataCreateIndexService.java#L108
     private final long maxIndexNameBytes = 255;
     private final List<Character> inalidIndexCharaters = Arrays.asList('\\', '/', '*', '?', '"', '<', '>', '|', '#', ' ', ',');
-    private final long maxSnapshotWaitingTime = 30 * 60 * 1000; // 30 minutes
 
     public ElasticsearchHttpClient()
     {
@@ -274,6 +273,7 @@ public class ElasticsearchHttpClient
 
     private void waitSnapshot(PluginTask task, Jetty92RetryHelper retryHelper)
     {
+        int maxSnapshotWaitingMills = task.getMaxSnapshotWaitingSecs() * 1000;
         long execCount = 1;
         long totalWaitingTime = 0;
         // Since only needs exponential backoff, don't need exception handling and others, I don't use Embulk RetryExecutor
@@ -290,8 +290,8 @@ public class ElasticsearchHttpClient
             }
             execCount++;
             totalWaitingTime += sleepTime;
-            if (totalWaitingTime > maxSnapshotWaitingTime) {
-                throw new ConfigException(String.format("Waiting creating snapshot is expired. %s sec.", maxSnapshotWaitingTime));
+            if (totalWaitingTime > maxSnapshotWaitingMills) {
+                throw new ConfigException(String.format("Waiting creating snapshot is expired. %s sec.", maxSnapshotWaitingMills));
             }
         }
     }
