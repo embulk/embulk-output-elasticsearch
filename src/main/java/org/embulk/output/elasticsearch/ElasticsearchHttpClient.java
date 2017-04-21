@@ -276,6 +276,7 @@ public class ElasticsearchHttpClient
     {
         long execCount = 1;
         long totalWaitingTime = 0;
+        // Since only needs exponential backoff, don't need exception handling and others, I don't use Embulk RetryExecutor
         while (isSnapshotProgressing(task, retryHelper)) {
             long sleepTime = ((long) Math.pow(2, execCount) * 1000);
             try {
