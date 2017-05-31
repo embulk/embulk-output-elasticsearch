@@ -235,7 +235,7 @@ public class ElasticsearchOutputPluginDelegate
     }
 
     @Override  // Overridden from |RecordBufferBuildable|
-    public RecordBuffer buildRecordBuffer(PluginTask task)
+    public RecordBuffer buildRecordBuffer(PluginTask task, Schema schema, int taskIndex)
     {
         Jetty92RetryHelper retryHelper = createRetryHelper(task);
         return new ElasticsearchRecordBuffer("records", task, retryHelper);
