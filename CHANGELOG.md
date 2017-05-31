@@ -1,3 +1,7 @@
+## 0.4.2 - 2017-05-31
+
+* [maintenance] Update embulk-base-restclient to fix ArrayIndexOutOfBoundsException [#37](https://github.com/muga/embulk-output-elasticsearch/pull/37)
+
 ## 0.4.1 - 2017-04-21
 
 * [maintenance] Check snapshot progress status before delete index [#36](https://github.com/muga/embulk-output-elasticsearch/pull/36)
