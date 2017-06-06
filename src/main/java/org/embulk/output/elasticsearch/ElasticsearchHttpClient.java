@@ -337,6 +337,12 @@ public class ElasticsearchHttpClient
                         }
 
                         @Override
+                        public boolean isExceptionToRetry(Exception exception)
+                        {
+                            return true;
+                        }
+
+                        @Override
                         public boolean isResponseStatusToRetry(org.eclipse.jetty.client.api.Response response)
                         {
                             int status = response.getStatus();
