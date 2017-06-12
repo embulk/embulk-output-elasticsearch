@@ -310,7 +310,7 @@ public class ElasticsearchHttpClient
         return sendRequest(path, method, task, retryHelper, "");
     }
 
-    private JsonNode sendRequest(String path, final HttpMethod method, PluginTask task, Jetty92RetryHelper retryHelper, final String content)
+    private JsonNode sendRequest(String path, final HttpMethod method, final PluginTask task, Jetty92RetryHelper retryHelper, final String content)
     {
         final String uri = createRequestUri(task, path);
         final String authorizationHeader = getAuthorizationHeader(task);
@@ -338,7 +338,7 @@ public class ElasticsearchHttpClient
                     @Override
                     public boolean isExceptionToRetry(Exception exception)
                     {
-                        return true;
+                        return task.getId().isPresent();
                     }
 
                     @Override
@@ -347,7 +347,8 @@ public class ElasticsearchHttpClient
                         int status = response.getStatus();
                         if (status == 404) {
                             throw new ResourceNotFoundException("Requested resource was not found");
-                        } else if (status == 429) {
+                        }
+                        else if (status == 429) {
                             return true;  // Retry if 429.
                         }
                         return status / 100 != 4;  // Retry unless 4xx except for 429.
