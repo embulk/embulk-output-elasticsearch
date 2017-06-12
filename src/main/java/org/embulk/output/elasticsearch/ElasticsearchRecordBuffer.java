@@ -88,16 +88,15 @@ public class ElasticsearchRecordBuffer
     @Override
     public TaskReport commitWithTaskReportUpdated(TaskReport taskReport)
     {
-	try {
-	    if (records.size() > 0) {
-		client.push(records, task, retryHelper);
-		log.info("Inserted {} records", records.size());
-	    }
-
-	    return Exec.newTaskReport().set("inserted", totalCount);
-	}
-	finally {
-	    this.retryHelper.close();
-	}
+        try {
+            if (records.size() > 0) {
+                client.push(records, task, retryHelper);
+                log.info("Inserted {} records", records.size());
+            }
+            return Exec.newTaskReport().set("inserted", totalCount);
+        }
+        finally {
+            this.retryHelper.close();
+        }
     }
 }
