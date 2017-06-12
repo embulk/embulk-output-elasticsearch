@@ -310,50 +310,51 @@ public class ElasticsearchHttpClient
         return sendRequest(path, method, task, retryHelper, "");
     }
 
-    private JsonNode sendRequest(String path, final HttpMethod method, PluginTask task, Jetty92RetryHelper retryHelper, final String content)
+    private JsonNode sendRequest(String path, final HttpMethod method, final PluginTask task, Jetty92RetryHelper retryHelper, final String content)
     {
         final String uri = createRequestUri(task, path);
         final String authorizationHeader = getAuthorizationHeader(task);
 
-        try {
-            String responseBody = retryHelper.requestWithRetry(
-                    new StringJetty92ResponseEntityReader(task.getTimeoutMills()),
-                    new Jetty92SingleRequester() {
-                        @Override
-                        public void requestOnce(org.eclipse.jetty.client.HttpClient client, org.eclipse.jetty.client.api.Response.Listener responseListener)
-                        {
-                            org.eclipse.jetty.client.api.Request request = client
-                                    .newRequest(uri)
-                                    .accept("application/json")
-                                    .method(method);
-                            if (method == HttpMethod.POST) {
-                                request.content(new StringContentProvider(content), "application/json");
-                            }
-
-                            if (!authorizationHeader.isEmpty()) {
-                                request.header("Authorization", authorizationHeader);
-                            }
-                            request.send(responseListener);
+        String responseBody = retryHelper.requestWithRetry(
+                new StringJetty92ResponseEntityReader(task.getTimeoutMills()),
+                new Jetty92SingleRequester() {
+                    @Override
+                    public void requestOnce(org.eclipse.jetty.client.HttpClient client, org.eclipse.jetty.client.api.Response.Listener responseListener)
+                    {
+                        org.eclipse.jetty.client.api.Request request = client
+                                .newRequest(uri)
+                                .accept("application/json")
+                                .method(method);
+                        if (method == HttpMethod.POST) {
+                            request.content(new StringContentProvider(content), "application/json");
                         }
 
-                        @Override
-                        public boolean isResponseStatusToRetry(org.eclipse.jetty.client.api.Response response)
-                        {
-                            int status = response.getStatus();
-                            if (status == 429) {
-                                return true;  // Retry if 429.
-                            }
-                            return status / 100 != 4;  // Retry unless 4xx except for 429.
+                        if (!authorizationHeader.isEmpty()) {
+                            request.header("Authorization", authorizationHeader);
                         }
-                    });
-            return parseJson(responseBody);
-        }
-        catch (HttpResponseException ex) {
-            if (ex.getMessage().startsWith("Response not 2xx: 404 Not Found")) {
-                throw new ResourceNotFoundException(ex);
-            }
-            throw ex;
-        }
+                        request.send(responseListener);
+                    }
+
+                    @Override
+                    public boolean isExceptionToRetry(Exception exception)
+                    {
+                        return task.getId().isPresent();
+                    }
+
+                    @Override
+                    public boolean isResponseStatusToRetry(org.eclipse.jetty.client.api.Response response)
+                    {
+                        int status = response.getStatus();
+                        if (status == 404) {
+                            throw new ResourceNotFoundException("Requested resource was not found");
+                        }
+                        else if (status == 429) {
+                            return true;  // Retry if 429.
+                        }
+                        return status / 100 != 4;  // Retry unless 4xx except for 429.
+                    }
+                });
+        return parseJson(responseBody);
     }
 
     private String createRequestUri(PluginTask task, String path)
@@ -401,6 +402,11 @@ public class ElasticsearchHttpClient
     {
         protected ResourceNotFoundException()
         {
+        }
+
+        public ResourceNotFoundException(String message)
+        {
+            super(message);
         }
 
         public ResourceNotFoundException(Throwable cause)
