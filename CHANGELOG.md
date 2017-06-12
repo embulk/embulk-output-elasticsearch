@@ -1,3 +1,8 @@
+## 0.4.3 - 2017-06-12
+
+* [maintenance] Improve exception handling [#38](https://github.com/muga/embulk-output-elasticsearch/pull/38)
+* [maintenance] Fix ElasticsearchRecordBuffer to call retryHelper.close() [#39](https://github.com/muga/embulk-output-elasticsearch/pull/39)
+
 ## 0.4.2 - 2017-05-31
 
 * [maintenance] Update embulk-base-restclient to fix ArrayIndexOutOfBoundsException [#37](https://github.com/muga/embulk-output-elasticsearch/pull/37)
