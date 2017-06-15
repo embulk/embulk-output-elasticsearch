@@ -86,6 +86,16 @@ public class ElasticsearchRecordBuffer
     }
 
     @Override
+    public void finish()
+    {
+    }
+
+    @Override
+    public void close()
+    {
+    }
+
+    @Override
     public TaskReport commitWithTaskReportUpdated(TaskReport taskReport)
     {
         try {
