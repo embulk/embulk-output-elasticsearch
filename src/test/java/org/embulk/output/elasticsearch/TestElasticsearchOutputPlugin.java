@@ -19,7 +19,6 @@ import org.embulk.spi.Schema;
 import org.embulk.spi.TransactionalPageOutput;
 import org.embulk.spi.time.Timestamp;
 import org.embulk.standards.CsvParserPlugin;
-import org.embulk.util.retryhelper.jetty92.Jetty92RetryHelper;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -171,24 +170,22 @@ public class TestElasticsearchOutputPlugin
         output.commit();
         Thread.sleep(1500); // Need to wait until index done
 
-        try (Jetty92RetryHelper retryHelper = utils.createRetryHelper()) {
-            ElasticsearchHttpClient client = new ElasticsearchHttpClient();
-            Method sendRequest = ElasticsearchHttpClient.class.getDeclaredMethod("sendRequest", String.class, HttpMethod.class, PluginTask.class, Jetty92RetryHelper.class, String.class);
-            sendRequest.setAccessible(true);
-            String path = String.format("/%s/%s/_search", ES_INDEX, ES_INDEX_TYPE);
-            String sort = "{\"sort\" : \"id\"}";
-            JsonNode response = (JsonNode) sendRequest.invoke(client, path, HttpMethod.POST, task, retryHelper, sort);
-            assertThat(response.get("hits").get("total").asInt(), is(1));
-            if (response.size() > 0) {
-                JsonNode record = response.get("hits").get("hits").get(0).get("_source");
-                assertThat(record.get("id").asInt(), is(1));
-                assertThat(record.get("account").asInt(), is(32864));
-                assertThat(record.get("time").asText(), is("2015-01-27T19:23:49.000+0000"));
-                assertThat(record.get("purchase").asText(), is("2015-01-27T00:00:00.000+0000"));
-                assertThat(record.get("flg").asBoolean(), is(true));
-                assertThat(record.get("score").asDouble(), is(123.45));
-                assertThat(record.get("comment").asText(), is("embulk"));
-            }
+        ElasticsearchHttpClient client = new ElasticsearchHttpClient();
+        Method sendRequest = ElasticsearchHttpClient.class.getDeclaredMethod("sendRequest", String.class, HttpMethod.class, PluginTask.class, String.class);
+        sendRequest.setAccessible(true);
+        String path = String.format("/%s/%s/_search", ES_INDEX, ES_INDEX_TYPE);
+        String sort = "{\"sort\" : \"id\"}";
+        JsonNode response = (JsonNode) sendRequest.invoke(client, path, HttpMethod.POST, task, sort);
+        assertThat(response.get("hits").get("total").asInt(), is(1));
+        if (response.size() > 0) {
+            JsonNode record = response.get("hits").get("hits").get(0).get("_source");
+            assertThat(record.get("id").asInt(), is(1));
+            assertThat(record.get("account").asInt(), is(32864));
+            assertThat(record.get("time").asText(), is("2015-01-27T19:23:49.000+0000"));
+            assertThat(record.get("purchase").asText(), is("2015-01-27T00:00:00.000+0000"));
+            assertThat(record.get("flg").asBoolean(), is(true));
+            assertThat(record.get("score").asDouble(), is(123.45));
+            assertThat(record.get("comment").asText(), is("embulk"));
         }
     }
 

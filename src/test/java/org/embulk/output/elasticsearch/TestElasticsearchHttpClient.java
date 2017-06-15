@@ -7,7 +7,6 @@ import org.embulk.config.ConfigSource;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
 import org.embulk.spi.Exec;
 import org.embulk.spi.time.Timestamp;
-import org.embulk.util.retryhelper.jetty92.Jetty92RetryHelper;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -103,53 +102,47 @@ public class TestElasticsearchHttpClient
     public void testCreateAlias() throws Exception
     {
         ElasticsearchHttpClient client = new ElasticsearchHttpClient();
-        try (Jetty92RetryHelper retryHelper = utils.createRetryHelper()) {
-            PluginTask task = utils.config().loadConfig(PluginTask.class);
-            // delete index
-            Method method = ElasticsearchHttpClient.class.getDeclaredMethod("deleteIndex", String.class, PluginTask.class, Jetty92RetryHelper.class);
-            method.setAccessible(true);
-            method.invoke(client, "newindex", task, retryHelper);
+        PluginTask task = utils.config().loadConfig(PluginTask.class);
+        // delete index
+        Method method = ElasticsearchHttpClient.class.getDeclaredMethod("deleteIndex", String.class, PluginTask.class);
+        method.setAccessible(true);
+        method.invoke(client, "newindex", task);
 
-            // create index
-            Method sendRequest = ElasticsearchHttpClient.class.getDeclaredMethod("sendRequest", String.class, HttpMethod.class, PluginTask.class, Jetty92RetryHelper.class);
-            sendRequest.setAccessible(true);
-            String path = String.format("/%s/", ES_INDEX);
-            sendRequest.invoke(client, path, HttpMethod.PUT, task, retryHelper);
+        // create index
+        Method sendRequest = ElasticsearchHttpClient.class.getDeclaredMethod("sendRequest", String.class, HttpMethod.class, PluginTask.class);
+        sendRequest.setAccessible(true);
+        String path = String.format("/%s/", ES_INDEX);
+        sendRequest.invoke(client, path, HttpMethod.PUT, task);
 
-            path = String.format("/%s/", ES_INDEX2);
-            sendRequest.invoke(client, path, HttpMethod.PUT, task, retryHelper);
+        path = String.format("/%s/", ES_INDEX2);
+        sendRequest.invoke(client, path, HttpMethod.PUT, task);
 
-            // create alias
-            client.reassignAlias(ES_ALIAS, ES_INDEX, task, retryHelper);
+        // create alias
+        client.reassignAlias(ES_ALIAS, ES_INDEX, task);
 
-            // check alias
-            assertThat(client.isAliasExisting(ES_ALIAS, task, retryHelper), is(true));
-            assertThat(client.getIndexByAlias(ES_ALIAS, task, retryHelper).toString(), is("[" + ES_INDEX + "]"));
+        // check alias
+        assertThat(client.isAliasExisting(ES_ALIAS, task), is(true));
+        assertThat(client.getIndexByAlias(ES_ALIAS, task).toString(), is("[" + ES_INDEX + "]"));
 
-            // reassign index
-            client.reassignAlias(ES_ALIAS, ES_INDEX2, task, retryHelper);
-            assertThat(client.getIndexByAlias(ES_ALIAS, task, retryHelper).toString(), is("[" + ES_INDEX2 + "]"));
-        }
+        // reassign index
+        client.reassignAlias(ES_ALIAS, ES_INDEX2, task);
+        assertThat(client.getIndexByAlias(ES_ALIAS, task).toString(), is("[" + ES_INDEX2 + "]"));
     }
 
     @Test
     public void testIsIndexExistingWithNonExistsIndex()
     {
         ElasticsearchHttpClient client = new ElasticsearchHttpClient();
-        try (Jetty92RetryHelper retryHelper = utils.createRetryHelper()) {
-            PluginTask task = utils.config().loadConfig(PluginTask.class);
-            assertThat(client.isIndexExisting("non-existing-index", task, retryHelper), is(false));
-        }
+        PluginTask task = utils.config().loadConfig(PluginTask.class);
+        assertThat(client.isIndexExisting("non-existing-index", task), is(false));
     }
 
     @Test
     public void testIsAliasExistingWithNonExistsAlias()
     {
         ElasticsearchHttpClient client = new ElasticsearchHttpClient();
-        try (Jetty92RetryHelper retryHelper = utils.createRetryHelper()) {
-            PluginTask task = utils.config().loadConfig(PluginTask.class);
-            assertThat(client.isAliasExisting("non-existing-alias", task, retryHelper), is(false));
-        }
+        PluginTask task = utils.config().loadConfig(PluginTask.class);
+        assertThat(client.isAliasExisting("non-existing-alias", task), is(false));
     }
 
     @Test
