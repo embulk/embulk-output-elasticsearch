@@ -2,10 +2,7 @@ package org.embulk.output.elasticsearch;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
-import com.google.common.base.Throwables;
-import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.embulk.base.restclient.RestClientOutputPluginDelegate;
 import org.embulk.base.restclient.RestClientOutputTaskBase;
 import org.embulk.base.restclient.jackson.JacksonServiceRequestMapper;
@@ -21,8 +18,6 @@ import org.embulk.config.TaskReport;
 import org.embulk.spi.Exec;
 import org.embulk.spi.Schema;
 import org.embulk.spi.time.TimestampFormatter;
-import org.embulk.util.retryhelper.jetty92.Jetty92ClientCreator;
-import org.embulk.util.retryhelper.jetty92.Jetty92RetryHelper;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 
@@ -201,21 +196,19 @@ public class ElasticsearchOutputPluginDelegate
             }
         }
 
-        try (Jetty92RetryHelper retryHelper = createRetryHelper(task)) {
-            log.info(String.format("Connecting to Elasticsearch version:%s", client.getEsVersion(task, retryHelper)));
-            log.info("Executing plugin with '{}' mode.", task.getMode());
-            client.validateIndexOrAliasName(task.getIndex(), "index");
-            client.validateIndexOrAliasName(task.getType(), "index_type");
+        log.info(String.format("Connecting to Elasticsearch version:%s", client.getEsVersion(task)));
+        log.info("Executing plugin with '{}' mode.", task.getMode());
+        client.validateIndexOrAliasName(task.getIndex(), "index");
+        client.validateIndexOrAliasName(task.getType(), "index_type");
 
-            if (task.getMode().equals(Mode.REPLACE)) {
-                task.setAlias(Optional.of(task.getIndex()));
-                task.setIndex(client.generateNewIndexName(task.getIndex()));
-                if (client.isIndexExisting(task.getAlias().orNull(), task, retryHelper) && !client.isAliasExisting(task.getAlias().orNull(), task, retryHelper)) {
-                    throw new ConfigException(String.format("Invalid alias name [%s], an index exists with the same name as the alias", task.getAlias().orNull()));
-                }
+        if (task.getMode().equals(Mode.REPLACE)) {
+            task.setAlias(Optional.of(task.getIndex()));
+            task.setIndex(client.generateNewIndexName(task.getIndex()));
+            if (client.isIndexExisting(task.getAlias().orNull(), task) && !client.isAliasExisting(task.getAlias().orNull(), task)) {
+                throw new ConfigException(String.format("Invalid alias name [%s], an index exists with the same name as the alias", task.getAlias().orNull()));
             }
-            log.info(String.format("Inserting data into index[%s]", task.getIndex()));
         }
+        log.info(String.format("Inserting data into index[%s]", task.getIndex()));
 
         if (task.getAuthMethod() == AuthMethod.BASIC) {
             if (!task.getUser().isPresent() || !task.getPassword().isPresent()) {
@@ -237,8 +230,7 @@ public class ElasticsearchOutputPluginDelegate
     @Override  // Overridden from |RecordBufferBuildable|
     public RecordBuffer buildRecordBuffer(PluginTask task, Schema schema, int taskIndex)
     {
-        Jetty92RetryHelper retryHelper = createRetryHelper(task);
-        return new ElasticsearchRecordBuffer("records", task, retryHelper);
+        return new ElasticsearchRecordBuffer("records", task);
     }
 
     @Override
@@ -255,36 +247,11 @@ public class ElasticsearchOutputPluginDelegate
         }
 
         log.info("Insert completed. {} records", totalInserted);
-        try (Jetty92RetryHelper retryHelper = createRetryHelper(task)) {
-            // Re assign alias only when repale mode
-            if (task.getMode().equals(Mode.REPLACE)) {
-                client.reassignAlias(task.getAlias().orNull(), task.getIndex(), task, retryHelper);
-            }
+        // Re assign alias only when repale mode
+        if (task.getMode().equals(Mode.REPLACE)) {
+            client.reassignAlias(task.getAlias().orNull(), task.getIndex(), task);
         }
 
         return Exec.newConfigDiff();
-    }
-
-    @VisibleForTesting
-    protected Jetty92RetryHelper createRetryHelper(PluginTask task)
-    {
-        return new Jetty92RetryHelper(
-                task.getMaximumRetries(),
-                task.getInitialRetryIntervalMillis(),
-                task.getMaximumRetryIntervalMillis(),
-                new Jetty92ClientCreator() {
-                    @Override
-                    public org.eclipse.jetty.client.HttpClient createAndStart()
-                    {
-                        org.eclipse.jetty.client.HttpClient client = new org.eclipse.jetty.client.HttpClient(new SslContextFactory());
-                        try {
-                            client.start();
-                            return client;
-                        }
-                        catch (Exception e) {
-                            throw Throwables.propagate(e);
-                        }
-                    }
-                });
     }
 }
