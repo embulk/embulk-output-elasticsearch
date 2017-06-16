@@ -1,14 +1,10 @@
 package org.embulk.output.elasticsearch;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.embulk.config.ConfigSource;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
 import org.embulk.spi.Exec;
-import org.embulk.util.retryhelper.jetty92.Jetty92ClientCreator;
-import org.embulk.util.retryhelper.jetty92.Jetty92RetryHelper;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -61,23 +57,21 @@ public class ElasticsearchTestUtils
     public void prepareBeforeTest(PluginTask task) throws Exception
     {
         ElasticsearchHttpClient client = new ElasticsearchHttpClient();
-        try (Jetty92RetryHelper retryHelper = createRetryHelper()) {
-            Method deleteIndex = ElasticsearchHttpClient.class.getDeclaredMethod("deleteIndex", String.class, PluginTask.class, Jetty92RetryHelper.class);
-            deleteIndex.setAccessible(true);
+        Method deleteIndex = ElasticsearchHttpClient.class.getDeclaredMethod("deleteIndex", String.class, PluginTask.class);
+        deleteIndex.setAccessible(true);
 
-            // Delete alias
-            if (client.isAliasExisting(ES_ALIAS, task, retryHelper)) {
-                deleteIndex.invoke(client, ES_ALIAS, task, retryHelper);
-            }
+        // Delete alias
+        if (client.isAliasExisting(ES_ALIAS, task)) {
+            deleteIndex.invoke(client, ES_ALIAS, task);
+        }
 
-            // Delete index
-            if (client.isIndexExisting(ES_INDEX, task, retryHelper)) {
-                deleteIndex.invoke(client, ES_INDEX, task, retryHelper);
-            }
+        // Delete index
+        if (client.isIndexExisting(ES_INDEX, task)) {
+            deleteIndex.invoke(client, ES_INDEX, task);
+        }
 
-            if (client.isIndexExisting(ES_INDEX2, task, retryHelper)) {
-                deleteIndex.invoke(client, ES_INDEX2, task, retryHelper);
-            }
+        if (client.isIndexExisting(ES_INDEX2, task)) {
+            deleteIndex.invoke(client, ES_INDEX2, task);
         }
     }
 
@@ -94,7 +88,8 @@ public class ElasticsearchTestUtils
                 .set("id", ES_ID)
                 .set("bulk_actions", ES_BULK_ACTIONS)
                 .set("bulk_size", ES_BULK_SIZE)
-                .set("concurrent_requests", ES_CONCURRENT_REQUESTS);
+                .set("concurrent_requests", ES_CONCURRENT_REQUESTS)
+                .set("maximum_retries", 2);
     }
 
     public ImmutableMap<String, Object> inputConfig()
@@ -133,27 +128,5 @@ public class ElasticsearchTestUtils
         builder.add(ImmutableMap.of("name", "score", "type", "double"));
         builder.add(ImmutableMap.of("name", "comment", "type", "string"));
         return builder.build();
-    }
-
-    public Jetty92RetryHelper createRetryHelper()
-    {
-        return new Jetty92RetryHelper(
-                2,
-                1000,
-                32000,
-                new Jetty92ClientCreator() {
-                    @Override
-                    public org.eclipse.jetty.client.HttpClient createAndStart()
-                    {
-                        org.eclipse.jetty.client.HttpClient client = new org.eclipse.jetty.client.HttpClient(new SslContextFactory());
-                        try {
-                            client.start();
-                            return client;
-                        }
-                        catch (Exception e) {
-                            throw Throwables.propagate(e);
-                        }
-                    }
-                });
     }
 }
