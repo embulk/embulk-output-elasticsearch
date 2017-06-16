@@ -1,3 +1,7 @@
+## 0.4.4 - 2017-06-16
+
+* [maintenance] Improve retry logic - Create RetryHelper instance only at sendRequest() method [#41](https://github.com/muga/embulk-output-elasticsearch/pull/41)
+
 ## 0.4.3 - 2017-06-12
 
 * [maintenance] Improve exception handling [#38](https://github.com/muga/embulk-output-elasticsearch/pull/38)
