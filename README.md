@@ -87,6 +87,7 @@ out:
 
 ```
 $ ./gradlew gem  # -t to watch change of files and rebuild continuously
+$ ./gradlew bintrayUpload # release embulk-output-elasticsearch to Bintray maven repo
 ```
 
 ## Test

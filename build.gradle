@@ -1,5 +1,6 @@
 plugins {
-    id "com.jfrog.bintray" version "1.1"
+    id "com.jfrog.bintray" version "1.7"
+    id "maven-publish"
     id "com.github.jruby-gradle.base" version "0.1.5"
     id "java"
     id "jacoco"
@@ -18,6 +19,7 @@ configurations {
     provided
 }
 
+group = "org.embulk.output.elasticsearch"
 version = "0.4.4"
 
 compileJava.options.encoding = 'UTF-8' // source encoding
@@ -35,12 +37,70 @@ dependencies {
     testCompile "org.embulk:embulk-standards:0.8.16"
 }
 
+javadoc {
+    options {
+        locale = 'en_US'
+        encoding = 'UTF-8'
+    }
+}
+
+// bintray
+bintray {
+    // write at your bintray user name and api key to ~/.gradle/gradle.properties file:
+    user = project.hasProperty('bintray_user') ? bintray_user : ''
+    key = project.hasProperty('bintray_api_key') ? bintray_api_key : ''
+
+    publications = ['bintrayMavenRelease']
+    publish = true
+
+    pkg {
+        userOrg = 'embulk-output-elasticsearch'
+        repo = 'maven'
+        name = project.name
+        desc = 'Elasticsearch output plugin for Embulk'
+        websiteUrl = 'https://github.com/muga/embulk-output-elasticsearch'
+        issueTrackerUrl = 'https://github.com/muga/embulk-output-elasticsearch/issues'
+        vcsUrl = 'https://github.com/muga/embulk-output-elasticsearch.git'
+        licenses = ['Apache 2.0']
+        labels = ['embulk', 'java']
+        publicDownloadNumbers = true
+
+        version {
+            name = project.version
+        }
+    }
+}
+publishing {
+    publications {
+        bintrayMavenRelease(MavenPublication) {
+            from components.java
+            artifact testsJar
+            artifact sourcesJar
+            artifact javadocJar
+        }
+    }
+}
+
 task classpath(type: Copy, dependsOn: ["jar"]) {
     doFirst { file("classpath").deleteDir() }
     from (configurations.runtime - configurations.provided + files(jar.archivePath))
     into "classpath"
 }
 clean { delete 'classpath' }
+
+// add tests/javadoc/source jar tasks as artifacts to be released
+task testsJar(type: Jar, dependsOn: classes) {
+    classifier = 'tests'
+    from sourceSets.test.output
+}
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
 
 checkstyle {
     configFile = file("${project.rootDir}/config/checkstyle/checkstyle.xml")
