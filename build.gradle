@@ -58,9 +58,9 @@ bintray {
         repo = 'maven'
         name = project.name
         desc = 'Elasticsearch output plugin for Embulk'
-        websiteUrl = 'https://github.com/muga/embulk-output-elasticsearch'
-        issueTrackerUrl = 'https://github.com/muga/embulk-output-elasticsearch/issues'
-        vcsUrl = 'https://github.com/muga/embulk-output-elasticsearch.git'
+        websiteUrl = 'https://github.com/embulk/embulk-output-elasticsearch'
+        issueTrackerUrl = 'https://github.com/embulk/embulk-output-elasticsearch/issues'
+        vcsUrl = 'https://github.com/embulk/embulk-output-elasticsearch.git'
         licenses = ['Apache 2.0']
         labels = ['embulk', 'java']
         publicDownloadNumbers = true
@@ -144,7 +144,7 @@ Gem::Specification.new do |spec|
   spec.description   = %[Elasticsearch output plugin is an Embulk plugin that loads records to Elasticsearch read by any input plugins. Search the input plugins by "embulk-input" keyword.]
   spec.email         = ["muga.nishizawa@gmail.com"]
   spec.licenses      = ["Apache 2.0"]
-  spec.homepage      = "https://github.com/muga/embulk-output-elasticsearch"
+  spec.homepage      = "https://github.com/embulk/embulk-output-elasticsearch"
 
   spec.files         = `git ls-files`.split("\n") + Dir["classpath/*.jar"]
   spec.test_files    = spec.files.grep(%r"^(test|spec)/")
