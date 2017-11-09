@@ -223,7 +223,7 @@ public class ElasticsearchOutputPluginDelegate
         TimestampFormatter formatter = new TimestampFormatter(task.getJRuby(), "%Y-%m-%dT%H:%M:%S.%3N%z", DateTimeZone.forID(task.getTimeZone()));
 
         return JacksonServiceRequestMapper.builder()
-                .add(new JacksonAllInObjectScope(formatter), new JacksonTopLevelValueLocator("record"))
+                .add(new JacksonAllInObjectScope(formatter, true), new JacksonTopLevelValueLocator("record"))
                 .build();
     }
 
