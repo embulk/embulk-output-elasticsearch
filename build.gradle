@@ -29,7 +29,7 @@ targetCompatibility = 1.7
 dependencies {
     compile  "org.embulk:embulk-core:0.8.36"
     provided  "org.embulk:embulk-core:0.8.36"
-    compile  "org.embulk.base.restclient:embulk-base-restclient:0.5.3"
+    compile  "org.embulk.base.restclient:embulk-base-restclient:0.5.5"
     compile  "org.embulk.base.restclient:embulk-util-retryhelper-jetty92:0.5.3"
 
     testCompile "junit:junit:4.+"
