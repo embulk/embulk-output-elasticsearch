@@ -110,7 +110,8 @@ public class ElasticsearchTestUtils
                 .set("bulk_actions", ES_BULK_ACTIONS)
                 .set("bulk_size", ES_BULK_SIZE)
                 .set("concurrent_requests", ES_CONCURRENT_REQUESTS)
-                .set("maximum_retries", 2);
+                .set("maximum_retries", 2)
+                .set("accept_null_value", true);
     }
 
     public ImmutableMap<String, Object> inputConfig()
