@@ -5,6 +5,8 @@ import com.google.common.collect.ImmutableMap;
 import org.embulk.config.ConfigSource;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
 import org.embulk.spi.Exec;
+import org.embulk.spi.Schema;
+import org.embulk.spi.type.Types;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -24,6 +26,7 @@ public class ElasticsearchTestUtils
     public static int ES_BULK_SIZE;
     public static int ES_CONCURRENT_REQUESTS;
     public static String PATH_PREFIX;
+    public static String JSON_PATH_PREFIX;
     public static String ES_INDEX2;
     public static String ES_ALIAS;
 
@@ -52,6 +55,7 @@ public class ElasticsearchTestUtils
         ES_NODES = Arrays.asList(ImmutableMap.of("host", ES_HOST, "port", ES_PORT));
 
         PATH_PREFIX = ElasticsearchTestUtils.class.getClassLoader().getResource("sample_01.csv").getPath();
+        JSON_PATH_PREFIX = ElasticsearchTestUtils.class.getClassLoader().getResource("sample_01.json").getPath();
     }
 
     public void prepareBeforeTest(PluginTask task) throws Exception
@@ -92,11 +96,38 @@ public class ElasticsearchTestUtils
                 .set("maximum_retries", 2);
     }
 
+    public ConfigSource configJSON()
+    {
+        return Exec.newConfigSource()
+                .set("in", inputConfigJSON())
+                .set("parser", parserConfigJSON())
+                .set("type", "elasticsearch")
+                .set("mode", "insert")
+                .set("nodes", ES_NODES)
+                .set("index", ES_INDEX)
+                .set("index_type", ES_INDEX_TYPE)
+                .set("id", ES_ID)
+                .set("bulk_actions", ES_BULK_ACTIONS)
+                .set("bulk_size", ES_BULK_SIZE)
+                .set("concurrent_requests", ES_CONCURRENT_REQUESTS)
+                .set("maximum_retries", 2)
+                .set("accept_null_value", true);
+    }
+
     public ImmutableMap<String, Object> inputConfig()
     {
         ImmutableMap.Builder<String, Object> builder = new ImmutableMap.Builder<>();
         builder.put("type", "file");
         builder.put("path_prefix", PATH_PREFIX);
+        builder.put("last_path", "");
+        return builder.build();
+    }
+
+    public ImmutableMap<String, Object> inputConfigJSON()
+    {
+        ImmutableMap.Builder<String, Object> builder = new ImmutableMap.Builder<>();
+        builder.put("type", "file");
+        builder.put("path_prefix", JSON_PATH_PREFIX);
         builder.put("last_path", "");
         return builder.build();
     }
@@ -117,6 +148,12 @@ public class ElasticsearchTestUtils
         return builder.build();
     }
 
+    public ImmutableMap<String, Object> parserConfigJSON()
+    {
+        ImmutableMap.Builder<String, Object> builder = new ImmutableMap.Builder<>();
+        return builder.build();
+    }
+
     public ImmutableList<Object> schemaConfig()
     {
         ImmutableList.Builder<Object> builder = new ImmutableList.Builder<>();
@@ -128,5 +165,18 @@ public class ElasticsearchTestUtils
         builder.add(ImmutableMap.of("name", "score", "type", "double"));
         builder.add(ImmutableMap.of("name", "comment", "type", "string"));
         return builder.build();
+    }
+
+    public Schema JSONSchema()
+    {
+        return Schema.builder()
+                .add("id", Types.LONG)
+                .add("account", Types.LONG)
+                .add("time", Types.STRING)
+                .add("purchase", Types.STRING)
+                .add("flg", Types.BOOLEAN)
+                .add("score", Types.DOUBLE)
+                .add("comment", Types.STRING)
+                .build();
     }
 }

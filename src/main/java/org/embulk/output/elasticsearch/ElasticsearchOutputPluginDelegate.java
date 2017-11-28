@@ -129,6 +129,10 @@ public class ElasticsearchOutputPluginDelegate
         @Config("time_zone")
         @ConfigDefault("\"UTC\"")
         String getTimeZone();
+
+        @Config("accept_null_value")
+        @ConfigDefault("false")
+        boolean getAcceptNull();
     }
 
     public enum Mode
@@ -234,7 +238,7 @@ public class ElasticsearchOutputPluginDelegate
             Optional.fromNullable(configSource.loadConfig(FormatterIntlColumnOption.class)));
 
         return JacksonServiceRequestMapper.builder()
-                .add(new JacksonAllInObjectScope(formatter), new JacksonTopLevelValueLocator("record"))
+                .add(new JacksonAllInObjectScope(formatter, task.getAcceptNull()), new JacksonTopLevelValueLocator("record"))
                 .build();
     }
 

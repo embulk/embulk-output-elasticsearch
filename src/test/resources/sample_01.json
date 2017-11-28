@@ -1,0 +1,4 @@
+{"id":5, "account":32864, "time":"2015-01-27 19:23:49", "purchase":20150127, "flg": true, "score": 123.45, "comment": "embulk"}
+{"id":6, "account":14824, "time":"2015-01-27 19:01:23", "purchase":20150127, "flg": false, "score": 234.56, "comment": "embulk"}
+{"id":7, "account":55555, "time":"2015-01-28 02:20:02", "purchase":20150128, "flg": true, "score": 678.90, "comment": "embulk"}
+{"id":8, "account":11270, "time":"2015-01-29 11:54:36", "purchase":20150129, "flg": false, "score": 100.00, "comment": "embulk"}
