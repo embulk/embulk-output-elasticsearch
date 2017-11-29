@@ -26,13 +26,13 @@ This plugin uses HTTP/REST Client and haven't be implemented AWS authentication.
 - **id**: document id column (string, default is null)
 - **bulk_actions**: Sets when to flush a new bulk request based on the number of actions currently added. (int, default is 1000)
 - **bulk_size**: Sets when to flush a new bulk request based on the size of actions currently added. (long, default is 5242880)
+- **fill_null_for_empty_column**: Fill null value when column value is empty (boolean, optional, default is false)
 - ~~**concurrent_requests**: concurrent_requests (int, default is 5)~~  Not used now. May use in the future
 - **maximum_retries** Number of maximam retry times (int, optional, default is 7)
 - **initial_retry_interval_millis** Initial interval between retries in milliseconds (int, optional, default is 1000)
 - **maximum_retry_interval_millis** Maximum interval between retries in milliseconds (int, optional, default is 120000)
 - **timeout_millis** timeout in milliseconds for HTTP client(int, optional, default is 60000)
 - **max_snapshot_waiting_secs** maximam waiting time in second when snapshot is just creating before delete index. works when `mode: replace` (int, optional, default is 1800)
-
 ### Modes
 
 #### insert:

@@ -1,3 +1,6 @@
+## 0.4.5 - 2017-11-29
+* [new feature] Add "fill_null_for_empty_column" option and allow insert null value when column is empty [#47](https://github.com/embulk/embulk-output-elasticsearch/pull/47) Thanks! @kfitzgerald
+
 ## 0.4.4 - 2017-06-16
 
 * [maintenance] Improve retry logic - Create RetryHelper instance only at sendRequest() method [#41](https://github.com/muga/embulk-output-elasticsearch/pull/41)
