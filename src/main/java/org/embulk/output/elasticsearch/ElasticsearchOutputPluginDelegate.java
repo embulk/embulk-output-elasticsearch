@@ -193,7 +193,7 @@ public class ElasticsearchOutputPluginDelegate
         if (task.getNodes().size() > 0) {
             for (NodeAddressTask node : task.getNodes()) {
                 if (node.getHost().endsWith("es.amazonaws.com")) {
-                    throw new ConfigException("This plugin does't support AWS Elasticsearch Service.");
+                    log.warn("This plugin does't support AWS Elasticsearch Service.");
                 }
                 if (node.getPort() == 9300) {
                     log.warn("Port:9300 is usually used by TransportClient. HTTP/Rest Client uses 9200.");
