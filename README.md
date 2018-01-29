@@ -1,7 +1,9 @@
 # Elasticsearch output plugin for Embulk
 
-**Notice** This plugin doesn't support [Amazon(AWS) Elasticsearch Service](https://aws.amazon.com/elasticsearch-service/).
-This plugin uses HTTP/REST Client and haven't be implemented AWS authentication.
+**Notice** This plugin doesn't positively support [Amazon(AWS) Elasticsearch Service](https://aws.amazon.com/elasticsearch-service/).
+Actually, AWS Elasticsearch Service supported AWS VPC at Oct 2017 and user is able to access to Es from EC2 instances in VPC subnet without any authentication.
+You can use this plugin for AWS ES at your own risk.
+
 - *[Amazon Elasticsearch Service Limits](http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/aes-limits.html)*
 
 ## Overview
