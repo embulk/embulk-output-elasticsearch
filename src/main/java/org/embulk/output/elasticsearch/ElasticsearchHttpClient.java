@@ -404,7 +404,7 @@ public class ElasticsearchHttpClient
                     public org.eclipse.jetty.client.HttpClient createAndStart()
                     {
                         org.eclipse.jetty.client.HttpClient client = new org.eclipse.jetty.client.HttpClient(new SslContextFactory());
-                        client.setConnectTimeout(task.getSocketTimeoutMills());
+                        client.setConnectTimeout(task.getConnectTimeoutMills());
                         try {
                             client.start();
                             return client;

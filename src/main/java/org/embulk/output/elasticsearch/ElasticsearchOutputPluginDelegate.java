@@ -122,9 +122,9 @@ public class ElasticsearchOutputPluginDelegate
         @ConfigDefault("60000")
         int getTimeoutMills();
 
-        @Config("socket_timeout_millis")
+        @Config("connect_timeout_millis")
         @ConfigDefault("60000")
-        int getSocketTimeoutMills();
+        int getConnectTimeoutMills();
 
         @Config("max_snapshot_waiting_secs")
         @ConfigDefault("1800")
