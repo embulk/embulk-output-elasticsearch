@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 public class ElasticsearchHttpClient
 {
@@ -327,6 +328,7 @@ public class ElasticsearchHttpClient
                             org.eclipse.jetty.client.api.Request request = client
                                     .newRequest(uri)
                                     .accept("application/json")
+                                    .timeout(task.getTimeoutMills(), TimeUnit.MILLISECONDS)
                                     .method(method);
                             if (method == HttpMethod.POST) {
                                 request.content(new StringContentProvider(content), "application/json");
@@ -391,7 +393,7 @@ public class ElasticsearchHttpClient
         }
     }
 
-    private Jetty92RetryHelper createRetryHelper(final PluginTask task)
+    private Jetty92RetryHelper createRetryHelper(PluginTask task)
     {
         return new Jetty92RetryHelper(
                 task.getMaximumRetries(),
@@ -402,7 +404,6 @@ public class ElasticsearchHttpClient
                     public org.eclipse.jetty.client.HttpClient createAndStart()
                     {
                         org.eclipse.jetty.client.HttpClient client = new org.eclipse.jetty.client.HttpClient(new SslContextFactory());
-                        client.setConnectTimeout(task.getTimeoutMills());
                         try {
                             client.start();
                             return client;
