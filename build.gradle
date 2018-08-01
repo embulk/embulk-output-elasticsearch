@@ -23,8 +23,8 @@ group = "org.embulk.output.elasticsearch"
 version = "0.4.5"
 
 compileJava.options.encoding = 'UTF-8' // source encoding
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 dependencies {
     compile  "org.embulk:embulk-core:0.8.36"
