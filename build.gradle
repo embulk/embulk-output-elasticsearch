@@ -20,7 +20,7 @@ configurations {
 }
 
 group = "org.embulk.output.elasticsearch"
-version = "0.4.5"
+version = "0.4.6"
 
 compileJava.options.encoding = 'UTF-8' // source encoding
 sourceCompatibility = 1.8

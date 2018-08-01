@@ -1,3 +1,8 @@
+## 0.4.6 - 2018-08-01
+* [new feature] Add "connect_timeout_millis" option [#53](https://github.com/embulk/embulk-output-elasticsearch/pull/53)
+* [new feature] Only build with Java8 [#52](https://github.com/embulk/embulk-output-elasticsearch/pull/52)
+* [maintenance] Fix bug: "timeout_millis" option doesn't work as expected [#51](https://github.com/muga/embulk-output-elasticsearch/pull/51)
+
 ## 0.4.5 - 2017-11-29
 * [new feature] Add "fill_null_for_empty_column" option and allow insert null value when column is empty [#47](https://github.com/embulk/embulk-output-elasticsearch/pull/47) Thanks! @kfitzgerald
 
