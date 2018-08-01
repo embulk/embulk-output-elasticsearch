@@ -32,6 +32,7 @@ This plugin uses HTTP/REST Client and haven't be implemented AWS authentication.
 - **initial_retry_interval_millis** Initial interval between retries in milliseconds (int, optional, default is 1000)
 - **maximum_retry_interval_millis** Maximum interval between retries in milliseconds (int, optional, default is 120000)
 - **timeout_millis** timeout in milliseconds for each HTTP request(int, optional, default is 60000)
+- **socket_timeout_millis** socket timeout in milliseconds for HTTP client(int, optional, default is 60000)
 - **max_snapshot_waiting_secs** maximam waiting time in second when snapshot is just creating before delete index. works when `mode: replace` (int, optional, default is 1800)
 ### Modes
 

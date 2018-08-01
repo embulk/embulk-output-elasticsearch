@@ -393,7 +393,7 @@ public class ElasticsearchHttpClient
         }
     }
 
-    private Jetty92RetryHelper createRetryHelper(PluginTask task)
+    private Jetty92RetryHelper createRetryHelper(final PluginTask task)
     {
         return new Jetty92RetryHelper(
                 task.getMaximumRetries(),
@@ -404,6 +404,7 @@ public class ElasticsearchHttpClient
                     public org.eclipse.jetty.client.HttpClient createAndStart()
                     {
                         org.eclipse.jetty.client.HttpClient client = new org.eclipse.jetty.client.HttpClient(new SslContextFactory());
+                        client.setConnectTimeout(task.getSocketTimeoutMills());
                         try {
                             client.start();
                             return client;
