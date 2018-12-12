@@ -27,14 +27,14 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 dependencies {
-    compile  "org.embulk:embulk-core:0.8.36"
-    provided  "org.embulk:embulk-core:0.8.36"
+    compile  "org.embulk:embulk-core:0.9.11"
+    provided  "org.embulk:embulk-core:0.9.11"
     compile  "org.embulk.base.restclient:embulk-base-restclient:0.5.5"
     compile  "org.embulk.base.restclient:embulk-util-retryhelper-jetty92:0.5.3"
 
     testCompile "junit:junit:4.+"
-    testCompile "org.embulk:embulk-core:0.8.36:tests"
-    testCompile "org.embulk:embulk-standards:0.8.36"
+    testCompile "org.embulk:embulk-core:0.9.11:tests"
+    testCompile "org.embulk:embulk-standards:0.9.11"
 }
 
 javadoc {
