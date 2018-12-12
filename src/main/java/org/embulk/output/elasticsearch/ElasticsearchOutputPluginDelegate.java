@@ -2,7 +2,6 @@ package org.embulk.output.elasticsearch;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-import com.google.common.base.Optional;
 import org.embulk.base.restclient.RestClientOutputPluginDelegate;
 import org.embulk.base.restclient.RestClientOutputTaskBase;
 import org.embulk.base.restclient.jackson.JacksonServiceRequestMapper;
@@ -24,6 +23,7 @@ import org.slf4j.Logger;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 public class ElasticsearchOutputPluginDelegate
         implements RestClientOutputPluginDelegate<ElasticsearchOutputPluginDelegate.PluginTask>
@@ -213,8 +213,8 @@ public class ElasticsearchOutputPluginDelegate
         if (task.getMode().equals(Mode.REPLACE)) {
             task.setAlias(Optional.of(task.getIndex()));
             task.setIndex(client.generateNewIndexName(task.getIndex()));
-            if (client.isIndexExisting(task.getAlias().orNull(), task) && !client.isAliasExisting(task.getAlias().orNull(), task)) {
-                throw new ConfigException(String.format("Invalid alias name [%s], an index exists with the same name as the alias", task.getAlias().orNull()));
+            if (client.isIndexExisting(task.getAlias().orElse(null), task) && !client.isAliasExisting(task.getAlias().orElse(null), task)) {
+                throw new ConfigException(String.format("Invalid alias name [%s], an index exists with the same name as the alias", task.getAlias().orElse(null)));
             }
         }
         log.info(String.format("Inserting data into index[%s]", task.getIndex()));
@@ -237,9 +237,10 @@ public class ElasticsearchOutputPluginDelegate
         final ConfigSource configSource = Exec.newConfigSource();
         configSource.set("format", "%Y-%m-%dT%H:%M:%S.%3N%z");
         configSource.set("timezone", DateTimeZone.forID(task.getTimeZone()));
-        TimestampFormatter formatter = new TimestampFormatter(
+        TimestampFormatter formatter = TimestampFormatter.of(
             Exec.newConfigSource().loadConfig(FormatterIntlTask.class),
-            Optional.fromNullable(configSource.loadConfig(FormatterIntlColumnOption.class)));
+            com.google.common.base.Optional.fromNullable(configSource.loadConfig(FormatterIntlColumnOption.class))
+        );
 
         return JacksonServiceRequestMapper.builder()
                 .add(new JacksonAllInObjectScope(formatter, task.getFillNullForEmptyColumn()), new JacksonTopLevelValueLocator("record"))
@@ -268,7 +269,7 @@ public class ElasticsearchOutputPluginDelegate
         log.info("Insert completed. {} records", totalInserted);
         // Re assign alias only when repale mode
         if (task.getMode().equals(Mode.REPLACE)) {
-            client.reassignAlias(task.getAlias().orNull(), task.getIndex(), task);
+            client.reassignAlias(task.getAlias().orElse(null), task.getIndex(), task);
         }
 
         return Exec.newConfigDiff();
