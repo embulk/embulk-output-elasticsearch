@@ -3,21 +3,12 @@ language: java
 jdk:
   - oraclejdk8
 
-env:
-  global:
-    - ES_HOST=localhost
-    - ES_PORT=9200
-    - ES_INDEX=embulk
-    - ES_INDEX_TYPE=embulk
-
-before_install:
-  - wget https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/2.3.3/elasticsearch-2.3.3.tar.gz
-  - tar zxvf elasticsearch-2.3.3.tar.gz
-  - ./elasticsearch-2.3.3/bin/elasticsearch &
+services:
+  - docker
 
 before_script:
-  - echo "Wait Elasticsearch wakeup"
-  - sleep 10
+  - docker-compose up -d
+  - docker-compose ps
 
 script:
   - ./gradlew gem
