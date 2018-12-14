@@ -70,7 +70,7 @@ public class ElasticsearchHttpClient
         try {
             String path = String.format("/%s/%s/_bulk", task.getIndex(), task.getType());
             int recordSize = records.size();
-            String idColumn = task.getId().orNull();
+            String idColumn = task.getId().orElse(null);
             if (recordSize > 0) {
                 StringBuilder sb = new StringBuilder();
                 for (JsonNode record : records) {

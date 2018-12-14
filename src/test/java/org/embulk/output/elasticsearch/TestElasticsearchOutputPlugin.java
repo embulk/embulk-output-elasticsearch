@@ -98,7 +98,7 @@ public class TestElasticsearchOutputPlugin
         }
         catch (Throwable t) {
             if (t instanceof RuntimeException) {
-                assertTrue(t.getCause().getCause() instanceof ConfigException);
+                assertTrue(t instanceof ConfigException);
             }
         }
     }
