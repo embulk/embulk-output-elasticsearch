@@ -95,48 +95,18 @@ $ ./gradlew bintrayUpload # release embulk-output-elasticsearch to Bintray maven
 
 ## Test
 
-```
+Firstly install Docker and Docker compose then `docker-compose up -d`,
+so that an MongoDB server will be locally launched then you can run tests with `./gradlew test`.
+
+```sh
+$ docker-compose up -d
+Creating network "embulk-output-elasticsearch_default" with the default driver
+Creating embulk-output-elasticsearch_server ... done
+
+$ docker-compose ps
+               Name                             Command               State                        Ports
+------------------------------------------------------------------------------------------------------------------------------
+embulk-output-elasticsearch_server   /docker-entrypoint.sh elas ...   Up      0.0.0.0:19200->9200/tcp, 0.0.0.0:19300->9300/tcp
+
 $ ./gradlew test  # -t to watch change of files and rebuild continuously
-```
-
-To run unit tests, we need to configure the following environment variables.
-
-When environment variables are not set, skip almost test cases.
-
-```
-ES_HOST
-ES_PORT(optional, if needed, default: 9300)
-ES_INDEX
-ES_INDEX_TYPE
-```
-
-If you're using Mac OS X El Capitan and GUI Applications(IDE), like as follows.
-```
-$ vi ~/Library/LaunchAgents/environment.plist
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>Label</key>
-  <string>my.startup</string>
-  <key>ProgramArguments</key>
-  <array>
-    <string>sh</string>
-    <string>-c</string>
-    <string>
-      launchctl setenv ES_HOST example.com
-      launchctl setenv ES_PORT 9300
-      launchctl setenv ES_INDEX embulk
-      launchctl setenv ES_INDEX_TYPE embulk
-    </string>
-  </array>
-  <key>RunAtLoad</key>
-  <true/>
-</dict>
-</plist>
-
-$ launchctl load ~/Library/LaunchAgents/environment.plist
-$ launchctl getenv ES_INDEX //try to get value.
-
-Then start your applications.
 ```

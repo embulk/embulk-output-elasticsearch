@@ -5,3 +5,5 @@ build/
 /classpath/
 /.gradle
 /pkg/
+es-data
+out

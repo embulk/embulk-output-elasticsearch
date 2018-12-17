@@ -30,27 +30,19 @@ public class ElasticsearchTestUtils
     public static String ES_INDEX2;
     public static String ES_ALIAS;
 
-    /*
-     * This test case requires environment variables
-     *   ES_HOST
-     *   ES_INDEX
-     *   ES_INDEX_TYPE
-     */
     public void initializeConstant()
     {
-        ES_HOST = System.getenv("ES_HOST") != null ? System.getenv("ES_HOST") : "";
-        ES_PORT = System.getenv("ES_PORT") != null ? Integer.valueOf(System.getenv("ES_PORT")) : 9200;
+        ES_HOST = "localhost";
+        ES_PORT = 19200;
 
-        ES_INDEX = System.getenv("ES_INDEX");
+        ES_INDEX = "embulk";
         ES_INDEX2 = ES_INDEX + "_02";
         ES_ALIAS = ES_INDEX + "_alias";
-        ES_INDEX_TYPE = System.getenv("ES_INDEX_TYPE");
+        ES_INDEX_TYPE = "embulk";
         ES_ID = "id";
-        ES_BULK_ACTIONS = System.getenv("ES_BULK_ACTIONS") != null ? Integer.valueOf(System.getenv("ES_BULK_ACTIONS")) : 1000;
-        ES_BULK_SIZE = System.getenv("ES_BULK_SIZE") != null ? Integer.valueOf(System.getenv("ES_BULK_SIZE")) : 5242880;
-        ES_CONCURRENT_REQUESTS = System.getenv("ES_CONCURRENT_REQUESTS") != null ? Integer.valueOf(System.getenv("ES_CONCURRENT_REQUESTS")) : 5;
-
-        assumeNotNull(ES_HOST, ES_INDEX, ES_INDEX_TYPE);
+        ES_BULK_ACTIONS = 1000;
+        ES_BULK_SIZE = 5242880;
+        ES_CONCURRENT_REQUESTS = 5;
 
         ES_NODES = Arrays.asList(ImmutableMap.of("host", ES_HOST, "port", ES_PORT));
 

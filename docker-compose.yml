@@ -1,0 +1,10 @@
+version: '3.1'
+services:
+  elasticsearch:
+    container_name: embulk-output-elasticsearch_server
+    image: elasticsearch:5
+    ports:
+    - 19200:9200
+    - 19300:9300
+    volumes:
+    - ./es-data:/usr/share/elasticsearch/data/
