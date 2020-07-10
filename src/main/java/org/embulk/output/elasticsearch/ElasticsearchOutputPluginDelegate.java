@@ -18,7 +18,6 @@ import org.embulk.config.TaskReport;
 import org.embulk.spi.Exec;
 import org.embulk.spi.Schema;
 import org.embulk.spi.time.TimestampFormatter;
-import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 
 import java.util.List;
@@ -236,7 +235,7 @@ public class ElasticsearchOutputPluginDelegate
         // Traditional constructor is used here for compatibility.
         final ConfigSource configSource = Exec.newConfigSource();
         configSource.set("format", "%Y-%m-%dT%H:%M:%S.%3N%z");
-        configSource.set("timezone", DateTimeZone.forID(task.getTimeZone()));
+        configSource.set("timezone", task.getTimeZone());
         TimestampFormatter formatter = TimestampFormatter.of(
             Exec.newConfigSource().loadConfig(FormatterIntlTask.class),
             com.google.common.base.Optional.fromNullable(configSource.loadConfig(FormatterIntlColumnOption.class))
