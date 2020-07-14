@@ -225,22 +225,10 @@ public class ElasticsearchOutputPluginDelegate
         }
     }
 
-    private static interface FormatterIntlTask extends Task, TimestampFormatter.Task {}
-    private static interface FormatterIntlColumnOption extends Task, TimestampFormatter.TimestampColumnOption {}
-
     @Override  // Overridden from |ServiceRequestMapperBuildable|
     public JacksonServiceRequestMapper buildServiceRequestMapper(PluginTask task)
     {
-        // TODO: Switch to a newer TimestampFormatter constructor after a reasonable interval.
-        // Traditional constructor is used here for compatibility.
-        final ConfigSource configSource = Exec.newConfigSource();
-        configSource.set("format", "%Y-%m-%dT%H:%M:%S.%3N%z");
-        configSource.set("timezone", task.getTimeZone());
-        TimestampFormatter formatter = TimestampFormatter.of(
-            Exec.newConfigSource().loadConfig(FormatterIntlTask.class),
-            com.google.common.base.Optional.fromNullable(configSource.loadConfig(FormatterIntlColumnOption.class))
-        );
-
+        TimestampFormatter formatter = TimestampFormatter.of("%Y-%m-%dT%H:%M:%S.%3N%z", task.getTimeZone());
         return JacksonServiceRequestMapper.builder()
                 .add(new JacksonAllInObjectScope(formatter, task.getFillNullForEmptyColumn()), new JacksonTopLevelValueLocator("record"))
                 .build();
