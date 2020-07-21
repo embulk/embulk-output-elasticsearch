@@ -45,13 +45,13 @@ jobs:
           path: ./reports.zip
 
       - uses: actions/upload-artifact@v2
-          if: success()
-          with:
-            name: gem
-            path: ./pkg/*.gem
+        if: success()
+        with:
+          name: gem
+          path: ./pkg/*.gem
 
       - uses: actions/upload-artifact@v2
-          if: success()
-          with:
-            name: jar
-            path: ./build/libs/*.jar
+        if: success()
+        with:
+          name: jar
+          path: ./build/libs/*.jar
