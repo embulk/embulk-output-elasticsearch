@@ -30,18 +30,28 @@ jobs:
       - name: Check building
         run: ./gradlew gem --console rich --info
 
-      - uses: actions/upload-artifact@v2
-        if: always()
-        with:
-          name: tests
-          path: ./build/reports/tests/test
-
       - name: JaCoCo test report
         if: success()
         run: ./gradlew jacocoTestReport
 
+      - name: Pack reports
+        if: always()
+        run: zip -9 -r -q reports.zip ./build/reports
+
       - uses: actions/upload-artifact@v2
         if: success()
         with:
-          name: jacoco
-          path: ./build/reports/jacoco/test
+          name: reports
+          path: ./reports.zip
+
+      - uses: actions/upload-artifact@v2
+          if: success()
+          with:
+            name: gem
+            path: ./pkg/*.gem
+
+      - uses: actions/upload-artifact@v2
+          if: success()
+          with:
+            name: jar
+            path: ./build/libs/*.jar
