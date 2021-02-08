@@ -24,7 +24,7 @@ You can use this plugin for AWS ES at your own risk.
 - **password** Password for above user (string, default is null)
 - ~~**cluster_name**: name of the cluster (string, default is "elasticsearch")~~ Not used now. May use in the future
 - **index**: index name (string, required)
-- **index_type**: index type (string, required)
+- **index_type**: index type (string, default is _doc)
 - **id**: document id column (string, default is null)
 - **bulk_actions**: Sets when to flush a new bulk request based on the number of actions currently added. (int, default is 1000)
 - **bulk_size**: Sets when to flush a new bulk request based on the size of actions currently added. (long, default is 5242880)
