@@ -3,7 +3,6 @@ plugins {
     id "maven-publish"
     id "com.github.jruby-gradle.base" version "0.1.5"
     id "java"
-    id "jacoco"
     id "checkstyle"
 }
 import com.github.jrubygradle.JRubyExec
@@ -70,16 +69,6 @@ bintray {
         }
     }
 }
-publishing {
-    publications {
-        bintrayMavenRelease(MavenPublication) {
-            from components.java
-            artifact testsJar
-            artifact sourcesJar
-            artifact javadocJar
-        }
-    }
-}
 
 task classpath(type: Copy, dependsOn: ["jar"]) {
     doFirst { file("classpath").deleteDir() }
@@ -100,6 +89,17 @@ task sourcesJar(type: Jar, dependsOn: classes) {
 task javadocJar(type: Jar, dependsOn: javadoc) {
     classifier = 'javadoc'
     from javadoc.destinationDir
+}
+
+publishing {
+    publications {
+        bintrayMavenRelease(MavenPublication) {
+            from components.java
+            artifact testsJar
+            artifact sourcesJar
+            artifact javadocJar
+        }
+    }
 }
 
 checkstyle {
@@ -130,12 +130,15 @@ task gem(type: JRubyExec, dependsOn: ["build", "gemspec", "classpath"]) {
     doLast { ant.move(file: "${project.name}-${project.version}.gem", todir: "pkg") }
 }
 
-task "package"(dependsOn: ["gemspec", "classpath"]) << {
-    println "> Build succeeded."
-    println "> You can run embulk with '-L ${file(".").absolutePath}' argument."
+task "package"(dependsOn: ["gemspec", "classpath"]) {
+    doLast {
+        println "> Build succeeded."
+        println "> You can run embulk with '-L ${file(".").absolutePath}' argument."
+    }
 }
 
-task gemspec << { file("build/gemspec").write($/
+task gemspec {
+    doLast { file("build/gemspec").write($/
 Gem::Specification.new do |spec|
   spec.name          = "${project.name}"
   spec.version       = "${project.version}"
@@ -157,12 +160,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "test-unit", ["~> 3.0.2"]
 end
 /$)
-}
-
-jacocoTestReport {
-    afterEvaluate {
-        classDirectories = files(classDirectories.files.collect {
-            fileTree(dir: it, exclude: 'org/embulk/output/elasticsearch/ElasticsearchOutputPlugin$1.class')
-        })
     }
 }
