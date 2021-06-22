@@ -79,6 +79,18 @@ javadoc {
     }
 }
 
+jar {
+    from rootProject.file("LICENSE")
+}
+
+sourcesJar {
+    from rootProject.file("LICENSE")
+}
+
+javadocJar {
+    from rootProject.file("LICENSE")
+}
+
 publishing {
     publications {
         maven(MavenPublication) {
@@ -143,6 +155,10 @@ gem {
     summary = "Elasticsearch output plugin for Embulk"
     homepage = "https://github.com/embulk/embulk-output-elasticsearch"
     licenses = [ "Apache-2.0" ]
+
+    from rootProject.file("LICENSE")
+    from rootProject.file("NOTICE_GEM")
+    rename ("NOTICE_GEM", "NOTICE")
 }
 
 gemPush {
