@@ -8,16 +8,17 @@ import org.embulk.base.restclient.jackson.JacksonServiceRequestMapper;
 import org.embulk.base.restclient.jackson.JacksonTopLevelValueLocator;
 import org.embulk.base.restclient.jackson.scope.JacksonAllInObjectScope;
 import org.embulk.base.restclient.record.RecordBuffer;
-import org.embulk.config.Config;
-import org.embulk.config.ConfigDefault;
 import org.embulk.config.ConfigDiff;
 import org.embulk.config.ConfigException;
-import org.embulk.config.Task;
 import org.embulk.config.TaskReport;
 import org.embulk.spi.Exec;
 import org.embulk.spi.Schema;
-import org.embulk.spi.time.TimestampFormatter;
+import org.embulk.util.config.Config;
+import org.embulk.util.config.ConfigDefault;
+import org.embulk.util.config.Task;
+import org.embulk.util.timestamp.TimestampFormatter;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Locale;
@@ -31,7 +32,7 @@ public class ElasticsearchOutputPluginDelegate
 
     public ElasticsearchOutputPluginDelegate()
     {
-        this.log = Exec.getLogger(getClass());
+        this.log = LoggerFactory.getLogger(getClass());
         this.client = new ElasticsearchHttpClient();
     }
 
@@ -47,7 +48,7 @@ public class ElasticsearchOutputPluginDelegate
     }
 
     public interface PluginTask
-            extends RestClientOutputTaskBase, TimestampFormatter.Task
+            extends RestClientOutputTaskBase
     {
         @Config("mode")
         @ConfigDefault("\"insert\"")
@@ -135,6 +136,18 @@ public class ElasticsearchOutputPluginDelegate
         @Config("fill_null_for_empty_column")
         @ConfigDefault("false")
         boolean getFillNullForEmptyColumn();
+
+        // The following method has been removed. It came org.embulk.spi.time.TimestampFormatter.Task, but it has not been used.
+        //
+        // @Config("default_timezone")
+        // @ConfigDefault("\"UTC\"")
+        // String getDefaultTimeZoneId()
+
+        // The following method has been removed. It came org.embulk.spi.time.TimestampFormatter.Task, but it has not been used.
+        //
+        // @Config("default_timestamp_format")
+        // @ConfigDefault("\"%Y-%m-%d %H:%M:%S.%6N %z\"")
+        // String getDefaultTimestampFormat();
     }
 
     public enum Mode
@@ -227,7 +240,11 @@ public class ElasticsearchOutputPluginDelegate
     @Override  // Overridden from |ServiceRequestMapperBuildable|
     public JacksonServiceRequestMapper buildServiceRequestMapper(PluginTask task)
     {
-        TimestampFormatter formatter = TimestampFormatter.of("%Y-%m-%dT%H:%M:%S.%3N%z", task.getTimeZone());
+        final TimestampFormatter formatter = TimestampFormatter
+                .builder("%Y-%m-%dT%H:%M:%S.%3N%z", true)
+                .setDefaultZoneFromString(task.getTimeZone())
+                .build();
+
         return JacksonServiceRequestMapper.builder()
                 .add(new JacksonAllInObjectScope(formatter, task.getFillNullForEmptyColumn()), new JacksonTopLevelValueLocator("record"))
                 .build();
@@ -258,6 +275,6 @@ public class ElasticsearchOutputPluginDelegate
             client.reassignAlias(task.getAlias().orElse(null), task.getIndex(), task);
         }
 
-        return Exec.newConfigDiff();
+        return ElasticsearchOutputPlugin.CONFIG_MAPPER_FACTORY.newConfigDiff();
     }
 }

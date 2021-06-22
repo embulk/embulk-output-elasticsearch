@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.google.common.base.Throwables;
 import org.embulk.base.restclient.jackson.JacksonServiceRecord;
 import org.embulk.base.restclient.record.RecordBuffer;
 import org.embulk.base.restclient.record.ServiceRecord;
@@ -13,6 +12,7 @@ import org.embulk.config.TaskReport;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
 import org.embulk.spi.Exec;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -48,7 +48,7 @@ public class ElasticsearchRecordBuffer
         this.totalCount = 0;
         this.requestCount = 0;
         this.requestBytes = 0;
-        this.log = Exec.getLogger(getClass());
+        this.log = LoggerFactory.getLogger(getClass());
     }
 
     @Override
@@ -78,7 +78,7 @@ public class ElasticsearchRecordBuffer
             throw new RuntimeException(ex);
         }
         catch (IOException ex) {
-            throw Throwables.propagate(ex);
+            throw new RuntimeException(ex);
         }
     }
 
@@ -99,6 +99,6 @@ public class ElasticsearchRecordBuffer
             client.push(records, task);
             log.info("Inserted {} records", records.size());
         }
-        return Exec.newTaskReport().set("inserted", totalCount);
+        return ElasticsearchOutputPlugin.CONFIG_MAPPER_FACTORY.newTaskReport().set("inserted", totalCount);
     }
 }

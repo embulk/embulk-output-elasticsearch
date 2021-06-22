@@ -17,6 +17,8 @@ import org.embulk.spi.Page;
 import org.embulk.spi.PageTestUtils;
 import org.embulk.spi.Schema;
 import org.embulk.spi.TransactionalPageOutput;
+import org.embulk.util.config.ConfigMapper;
+import org.embulk.util.config.ConfigMapperFactory;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -34,10 +36,8 @@ import static org.junit.Assert.assertTrue;
 
 public class TestElasticsearchOutputPluginJSON
 {
-    @BeforeClass
-    public static void initializeConstant()
-    {
-    }
+    private static final ConfigMapperFactory CONFIG_MAPPER_FACTORY = ElasticsearchOutputPlugin.CONFIG_MAPPER_FACTORY;
+    private static final ConfigMapper CONFIG_MAPPER = ElasticsearchOutputPlugin.CONFIG_MAPPER;
 
     @Rule
     public EmbulkTestRuntime runtime = new EmbulkTestRuntime();
@@ -49,7 +49,7 @@ public class TestElasticsearchOutputPluginJSON
     {
         utils = new ElasticsearchTestUtils();
         utils.initializeConstant();
-        PluginTask task = utils.configJSON().loadConfig(PluginTask.class);
+        final PluginTask task = CONFIG_MAPPER.map(utils.configJSON(), PluginTask.class);
         utils.prepareBeforeTest(task);
 
         plugin = new ElasticsearchOutputPlugin();
@@ -58,7 +58,7 @@ public class TestElasticsearchOutputPluginJSON
     @Test
     public void testDefaultValues()
     {
-        PluginTask task = utils.configJSON().loadConfig(PluginTask.class);
+        final PluginTask task = CONFIG_MAPPER.map(utils.configJSON(), PluginTask.class);
         assertThat(task.getIndex(), is(ES_INDEX));
     }
 
@@ -83,7 +83,7 @@ public class TestElasticsearchOutputPluginJSON
     {
         ConfigSource config = utils.configJSON();
         Schema schema = utils.JSONSchema();
-        PluginTask task = config.loadConfig(PluginTask.class);
+        final PluginTask task = CONFIG_MAPPER.map(config, PluginTask.class);
         plugin.resume(task.dump(), schema, 0, new OutputPlugin.Control()
         {
             @Override
@@ -99,7 +99,7 @@ public class TestElasticsearchOutputPluginJSON
     {
         ConfigSource config = utils.configJSON();
         Schema schema = utils.JSONSchema();
-        PluginTask task = config.loadConfig(PluginTask.class);
+        final PluginTask task = CONFIG_MAPPER.map(config, PluginTask.class);
         plugin.cleanup(task.dump(), schema, 0, Arrays.asList(Exec.newTaskReport()));
         // no error happens
     }
@@ -109,7 +109,7 @@ public class TestElasticsearchOutputPluginJSON
     {
         ConfigSource config = utils.configJSON();
         Schema schema = utils.JSONSchema();
-        PluginTask task = config.loadConfig(PluginTask.class);
+        final PluginTask task = CONFIG_MAPPER.map(config, PluginTask.class);
         plugin.transaction(config, schema, 0, new OutputPlugin.Control() {
             @Override
             public List<TaskReport> run(TaskSource taskSource)
@@ -153,7 +153,7 @@ public class TestElasticsearchOutputPluginJSON
     {
         ConfigSource config = utils.configJSON();
         Schema schema = utils.JSONSchema();
-        PluginTask task = config.loadConfig(PluginTask.class);
+        final PluginTask task = CONFIG_MAPPER.map(config, PluginTask.class);
         plugin.transaction(config, schema, 0, new OutputPlugin.Control() {
             @Override
             public List<TaskReport> run(TaskSource taskSource)
@@ -197,7 +197,7 @@ public class TestElasticsearchOutputPluginJSON
     {
         ConfigSource config = utils.configJSON();
         Schema schema = utils.JSONSchema();
-        PluginTask task = config.loadConfig(PluginTask.class);
+        final PluginTask task = CONFIG_MAPPER.map(config, PluginTask.class);
         TransactionalPageOutput output = plugin.open(task.dump(), schema, 0);
         output.abort();
         // no error happens.

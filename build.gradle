@@ -1,39 +1,75 @@
 plugins {
-    id "com.jfrog.bintray" version "1.7"
     id "maven-publish"
-    id "com.github.jruby-gradle.base" version "0.1.5"
     id "java"
+    id "signing"
+    id "jacoco"
     id "checkstyle"
+    id "org.embulk.embulk-plugins" version "0.4.2"
 }
-import com.github.jrubygradle.JRubyExec
+
 repositories {
     mavenCentral()
+
+    // Tests need EmbulkTestRuntime. EmbulkTestRuntime needs old-style embulk-standards till 0.10.28. 0.10.28 needs jcenter.
     jcenter()
-    // TODO: Remove this after embulk-base-restclient goes to jcenter.
-    maven {
-        url "https://dl.bintray.com/embulk-base-restclient/maven"
-    }
-}
-configurations {
-    provided
 }
 
-group = "org.embulk.output.elasticsearch"
-version = "0.4.7"
+group = "org.embulk"
+version = "0.5.0-SNAPSHOT"
+description = "Elasticsearch output plugin is an Embulk plugin that loads records to Elasticsearch read by any input plugins."
 
-compileJava.options.encoding = 'UTF-8' // source encoding
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-dependencies {
-    compile  "org.embulk:embulk-core:0.9.11"
-    provided  "org.embulk:embulk-core:0.9.11"
-    compile  "org.embulk.base.restclient:embulk-base-restclient:0.5.5"
-    compile  "org.embulk.base.restclient:embulk-util-retryhelper-jetty92:0.5.3"
+tasks.withType(JavaCompile) {
+    options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
+    options.encoding = "UTF-8"
+}
 
-    testCompile "junit:junit:4.+"
-    testCompile "org.embulk:embulk-core:0.9.11:tests"
-    testCompile "org.embulk:embulk-standards:0.9.11"
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+dependencies {
+    compileOnly "org.embulk:embulk-api:0.10.28"
+    compileOnly "org.embulk:embulk-spi:0.10.28"
+
+    compile("org.embulk:embulk-util-config:0.3.0") {
+        // They conflict with embulk-core. They are once excluded here,
+        // and added explicitly with versions exactly the same with embulk-core:0.10.28.
+        exclude group: "com.fasterxml.jackson.core", module: "jackson-annotations"
+        exclude group: "com.fasterxml.jackson.core", module: "jackson-core"
+        exclude group: "com.fasterxml.jackson.core", module: "jackson-databind"
+        exclude group: "com.fasterxml.jackson.datatype", module: "jackson-datatype-jdk8"
+        exclude group: "javax.validation", module: "validation-api"
+    }
+
+    // They are once excluded from transitive dependencies of other dependencies,
+    // and added explicitly with versions exactly the same with embulk-core:0.10.28.
+    compile "com.fasterxml.jackson.core:jackson-annotations:2.6.7"
+    compile "com.fasterxml.jackson.core:jackson-core:2.6.7"
+    compile "com.fasterxml.jackson.core:jackson-databind:2.6.7"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.6.7"
+    compile "javax.validation:validation-api:1.1.0.Final"
+
+    compile "org.embulk:embulk-base-restclient:0.10.1"
+    compile "org.embulk:embulk-util-retryhelper-jetty92:0.8.2"
+
+    compile "org.embulk:embulk-util-timestamp:0.2.1"
+
+    testCompile "junit:junit:4.13.2"
+    testCompile "org.embulk:embulk-core:0.10.28"
+    testCompile "org.embulk:embulk-core:0.10.28:tests"
+    testCompile "org.embulk:embulk-standards:0.10.28"
+    testCompile "org.embulk:embulk-junit4:0.10.28"
+    testCompile "org.embulk:embulk-deps:0.10.28"
+}
+
+embulkPlugin {
+    mainClass = "org.embulk.output.elasticsearch.ElasticsearchOutputPlugin"
+    category = "output"
+    type = "elasticsearch"
 }
 
 javadoc {
@@ -43,63 +79,74 @@ javadoc {
     }
 }
 
-// bintray
-bintray {
-    // write at your bintray user name and api key to ~/.gradle/gradle.properties file:
-    user = project.hasProperty('bintray_user') ? bintray_user : ''
-    key = project.hasProperty('bintray_api_key') ? bintray_api_key : ''
-
-    publications = ['bintrayMavenRelease']
-    publish = true
-
-    pkg {
-        userOrg = 'embulk-output-elasticsearch'
-        repo = 'maven'
-        name = project.name
-        desc = 'Elasticsearch output plugin for Embulk'
-        websiteUrl = 'https://github.com/embulk/embulk-output-elasticsearch'
-        issueTrackerUrl = 'https://github.com/embulk/embulk-output-elasticsearch/issues'
-        vcsUrl = 'https://github.com/embulk/embulk-output-elasticsearch.git'
-        licenses = ['Apache 2.0']
-        labels = ['embulk', 'java']
-        publicDownloadNumbers = true
-
-        version {
-            name = project.version
-        }
-    }
-}
-
-task classpath(type: Copy, dependsOn: ["jar"]) {
-    doFirst { file("classpath").deleteDir() }
-    from (configurations.runtime - configurations.provided + files(jar.archivePath))
-    into "classpath"
-}
-clean { delete 'classpath' }
-
-// add tests/javadoc/source jar tasks as artifacts to be released
-task testsJar(type: Jar, dependsOn: classes) {
-    classifier = 'tests'
-    from sourceSets.test.output
-}
-task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
-}
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from javadoc.destinationDir
-}
-
 publishing {
     publications {
-        bintrayMavenRelease(MavenPublication) {
-            from components.java
-            artifact testsJar
-            artifact sourcesJar
-            artifact javadocJar
+        maven(MavenPublication) {
+            groupId = project.group
+            artifactId = project.name
+
+            from components.java  // Must be "components.java". The dependency modification works only for it.
+            // javadocJar and sourcesJar are added by java.withJavadocJar() and java.withSourcesJar() above.
+            // See: https://docs.gradle.org/current/javadoc/org/gradle/api/plugins/JavaPluginExtension.html
+
+            pom {  // https://central.sonatype.org/pages/requirements.html
+                packaging "jar"
+
+                name = project.name
+                description = project.description
+                url = "https://www.embulk.org/"
+
+                licenses {
+                    license {
+                        // http://central.sonatype.org/pages/requirements.html#license-information
+                        name = "The Apache License, Version 2.0"
+                        url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+                    }
+                }
+
+                developers {
+                }
+
+                scm {
+                    connection = "scm:git:git://github.com/embulk/embulk-output-elasticsearch.git"
+                    developerConnection = "scm:git:git@github.com:embulk/embulk-output-elasticsearch.git"
+                    url = "https://github.com/embulk/embulk-output-elasticsearch"
+                }
+            }
         }
     }
+
+    repositories {
+        maven {  // publishMavenPublicationToMavenCentralRepository
+            name = "mavenCentral"
+            if (project.version.endsWith("-SNAPSHOT")) {
+                url "https://oss.sonatype.org/content/repositories/snapshots"
+            } else {
+                url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+            }
+
+            credentials {
+                username = project.hasProperty("ossrhUsername") ? ossrhUsername : ""
+                password = project.hasProperty("ossrhPassword") ? ossrhPassword : ""
+            }
+        }
+    }
+}
+
+signing {
+    sign publishing.publications.maven
+}
+
+gem {
+    authors = [ "Muga Nishizawa" ]
+    email = [ "muga.nishizawa@gmail.com" ]
+    summary = "Elasticsearch output plugin for Embulk"
+    homepage = "https://github.com/embulk/embulk-output-elasticsearch"
+    licenses = [ "Apache-2.0" ]
+}
+
+gemPush {
+    host = "https://rubygems.org"
 }
 
 checkstyle {
@@ -117,48 +164,4 @@ checkstyleTest {
 task checkstyle(type: Checkstyle) {
     classpath = sourceSets.main.output + sourceSets.test.output
     source = sourceSets.main.allJava + sourceSets.test.allJava
-}
-
-//task copyDependencies(type:Copy) {
-//    new File("$buildDir/libs/dependencies").mkdirs()
-//    into "$buildDir/libs/dependencies" from configurations.runtime
-//}
-
-task gem(type: JRubyExec, dependsOn: ["build", "gemspec", "classpath"]) {
-    jrubyArgs "-rrubygems/gem_runner", "-eGem::GemRunner.new.run(ARGV)", "build"
-    script "build/gemspec"
-    doLast { ant.move(file: "${project.name}-${project.version}.gem", todir: "pkg") }
-}
-
-task "package"(dependsOn: ["gemspec", "classpath"]) {
-    doLast {
-        println "> Build succeeded."
-        println "> You can run embulk with '-L ${file(".").absolutePath}' argument."
-    }
-}
-
-task gemspec {
-    doLast { file("build/gemspec").write($/
-Gem::Specification.new do |spec|
-  spec.name          = "${project.name}"
-  spec.version       = "${project.version}"
-  spec.authors       = ["Muga Nishizawa"]
-  spec.summary       = %[Elasticsearch output plugin for Embulk]
-  spec.description   = %[Elasticsearch output plugin is an Embulk plugin that loads records to Elasticsearch read by any input plugins. Search the input plugins by "embulk-input" keyword.]
-  spec.email         = ["muga.nishizawa@gmail.com"]
-  spec.licenses      = ["Apache 2.0"]
-  spec.homepage      = "https://github.com/embulk/embulk-output-elasticsearch"
-
-  spec.files         = `git ls-files`.split("\n") + Dir["classpath/*.jar"]
-  spec.test_files    = spec.files.grep(%r"^(test|spec)/")
-  spec.require_paths = ["lib"]
-  spec.executables   = spec.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
-  spec.has_rdoc      = false
-
-  spec.add_development_dependency "bundler", [">= 1.0"]
-  spec.add_development_dependency "rake", [">= 10.0"]
-  spec.add_development_dependency "test-unit", ["~> 3.0.2"]
-end
-/$)
-    }
 }
