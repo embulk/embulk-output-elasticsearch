@@ -7,6 +7,8 @@ import org.embulk.config.ConfigSource;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
 import org.embulk.spi.Exec;
 import org.embulk.spi.time.Timestamp;
+import org.embulk.util.config.ConfigMapper;
+import org.embulk.util.config.ConfigMapperFactory;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -35,12 +37,16 @@ public class TestElasticsearchHttpClient
         utils = new ElasticsearchTestUtils();
         utils.initializeConstant();
 
-        PluginTask task = utils.config().loadConfig(PluginTask.class);
+        final PluginTask task = CONFIG_MAPPER.map(utils.config(), PluginTask.class);
         utils.prepareBeforeTest(task);
     }
 
     @Rule
     public EmbulkTestRuntime runtime = new EmbulkTestRuntime();
+
+    private static final ConfigMapperFactory CONFIG_MAPPER_FACTORY = ElasticsearchOutputPlugin.CONFIG_MAPPER_FACTORY;
+    private static final ConfigMapper CONFIG_MAPPER = ElasticsearchOutputPlugin.CONFIG_MAPPER;
+
     private ElasticsearchTestUtils utils;
 
     @Test
@@ -102,7 +108,7 @@ public class TestElasticsearchHttpClient
     public void testCreateAlias() throws Exception
     {
         ElasticsearchHttpClient client = new ElasticsearchHttpClient();
-        PluginTask task = utils.config().loadConfig(PluginTask.class);
+        final PluginTask task = CONFIG_MAPPER.map(utils.config(), PluginTask.class);
         // delete index
         Method method = ElasticsearchHttpClient.class.getDeclaredMethod("deleteIndex", String.class, PluginTask.class);
         method.setAccessible(true);
@@ -133,7 +139,7 @@ public class TestElasticsearchHttpClient
     public void testIsIndexExistingWithNonExistsIndex()
     {
         ElasticsearchHttpClient client = new ElasticsearchHttpClient();
-        PluginTask task = utils.config().loadConfig(PluginTask.class);
+        final PluginTask task = CONFIG_MAPPER.map(utils.config(), PluginTask.class);
         assertThat(client.isIndexExisting("non-existing-index", task), is(false));
     }
 
@@ -141,7 +147,7 @@ public class TestElasticsearchHttpClient
     public void testIsAliasExistingWithNonExistsAlias()
     {
         ElasticsearchHttpClient client = new ElasticsearchHttpClient();
-        PluginTask task = utils.config().loadConfig(PluginTask.class);
+        final PluginTask task = CONFIG_MAPPER.map(utils.config(), PluginTask.class);
         assertThat(client.isAliasExisting("non-existing-alias", task), is(false));
     }
 
@@ -150,7 +156,7 @@ public class TestElasticsearchHttpClient
     {
         ElasticsearchHttpClient client = new ElasticsearchHttpClient();
 
-        ConfigSource config = Exec.newConfigSource()
+        ConfigSource config = CONFIG_MAPPER_FACTORY.newConfigSource()
                 .set("auth_method", "basic")
                 .set("user", "username")
                 .set("password", "password")
@@ -158,6 +164,8 @@ public class TestElasticsearchHttpClient
                 .set("index_type", "idx_type")
                 .set("nodes", ES_NODES);
 
-        assertThat(client.getAuthorizationHeader(config.loadConfig(PluginTask.class)), is("Basic dXNlcm5hbWU6cGFzc3dvcmQ="));
+        assertThat(
+                client.getAuthorizationHeader(CONFIG_MAPPER.map(config, PluginTask.class)),
+                is("Basic dXNlcm5hbWU6cGFzc3dvcmQ="));
     }
 }

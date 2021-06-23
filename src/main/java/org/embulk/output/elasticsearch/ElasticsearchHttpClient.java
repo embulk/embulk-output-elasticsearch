@@ -3,8 +3,6 @@ package org.embulk.output.elasticsearch;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
@@ -21,6 +19,7 @@ import org.embulk.util.retryhelper.jetty92.Jetty92RetryHelper;
 import org.embulk.util.retryhelper.jetty92.Jetty92SingleRequester;
 import org.embulk.util.retryhelper.jetty92.StringJetty92ResponseEntityReader;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -54,7 +53,7 @@ public class ElasticsearchHttpClient
 
     public ElasticsearchHttpClient()
     {
-        this.log = Exec.getLogger(getClass());
+        this.log = LoggerFactory.getLogger(getClass());
     }
 
     public void push(JsonNode records, PluginTask task)
@@ -410,13 +409,15 @@ public class ElasticsearchHttpClient
                             return client;
                         }
                         catch (Exception e) {
-                            throw Throwables.propagate(e);
+                            if (e instanceof RuntimeException) {
+                                throw (RuntimeException) e;
+                            }
+                            throw new RuntimeException(e);
                         }
                     }
                 });
     }
 
-    @VisibleForTesting
     protected String getAuthorizationHeader(PluginTask task)
     {
         String header = "";
