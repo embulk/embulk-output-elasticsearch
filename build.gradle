@@ -134,6 +134,10 @@ publishing {
                         email = "satoshiakama@gmail.com"
                     }
                     developer {
+                        name = "Kevin M Fitzgerald"
+                        email = "kevin@kevinfitzgerald.net"
+                    }
+                    developer {
                         name = "Serhii Himadieiev"
                         email = "gimadeevsv@gmail.com"
                     }
