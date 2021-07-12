@@ -126,6 +126,10 @@ publishing {
                         email = "frsyuki@gmail.com"
                     }
                     developer {
+                        name = "hirakiuc"
+                        email = "hirakiuc@gmail.com"
+                    }
+                    developer {
                         name = "Toyama Hiroshi"
                         email = "toyama0919@gmail.com"
                     }
