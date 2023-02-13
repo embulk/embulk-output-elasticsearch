@@ -184,15 +184,23 @@ public class TestElasticsearchOutputPlugin
 
         output.finish();
         output.commit();
-        Thread.sleep(1500); // Need to wait until index done
+        Thread.sleep(2500); // Need to wait until index done
 
         ElasticsearchHttpClient client = new ElasticsearchHttpClient();
         Method sendRequest = ElasticsearchHttpClient.class.getDeclaredMethod("sendRequest", String.class, HttpMethod.class, PluginTask.class, String.class);
         sendRequest.setAccessible(true);
-        String path = String.format("/%s/%s/_search", ES_INDEX, ES_INDEX_TYPE);
+        int esMajorVersion = client.getEsMajorVersion(task);
+        String path = esMajorVersion >= ElasticsearchHttpClient.ES_SUPPORT_TYPELESS_API_VERSION
+            ? String.format("/%s/_search", ES_INDEX)
+            : String.format("/%s/%s/_search", ES_INDEX, ES_INDEX_TYPE);
         String sort = "{\"sort\" : \"id\"}";
         JsonNode response = (JsonNode) sendRequest.invoke(client, path, HttpMethod.POST, task, sort);
-        assertThat(response.get("hits").get("total").asInt(), is(1));
+
+        int totalHits = esMajorVersion >= ElasticsearchHttpClient.ES_SUPPORT_TYPELESS_API_VERSION
+            ? response.get("hits").get("total").get("value").asInt()
+            : response.get("hits").get("total").asInt();
+
+        assertThat(totalHits, is(1));
         if (response.size() > 0) {
             JsonNode record = response.get("hits").get("hits").get(0).get("_source");
             assertThat(record.get("id").asInt(), is(1));

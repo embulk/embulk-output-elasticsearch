@@ -72,9 +72,19 @@ public class ElasticsearchTestUtils
         Method deleteIndex = ElasticsearchHttpClient.class.getDeclaredMethod("deleteIndex", String.class, PluginTask.class);
         deleteIndex.setAccessible(true);
 
+        Method deleteAlias = ElasticsearchHttpClient.class.getDeclaredMethod("deleteAlias", String.class, String.class, PluginTask.class);
+        deleteAlias.setAccessible(true);
+
+        int esMajorVersion = client.getEsMajorVersion(task);
+
         // Delete alias
         if (client.isAliasExisting(ES_ALIAS, task)) {
-            deleteIndex.invoke(client, ES_ALIAS, task);
+            if (esMajorVersion <= ElasticsearchHttpClient.ES_SUPPORT_MIN_VERSION) {
+                deleteIndex.invoke(client, ES_ALIAS, task);
+            }
+            else {
+                deleteAlias.invoke(client, ES_INDEX, ES_ALIAS, task);
+            }
         }
 
         // Delete index
