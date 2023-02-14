@@ -1,6 +1,10 @@
+## 0.6.0 - 2023-02-14
+* [maintenance] Support typeless endpoint for ES version 7.x & 8.x [#71](https://github.com/embulk/embulk-output-elasticsearch/pull/71)
+
 ## 0.4.7 - 2018-12-14
 * [maintenance] Show warning logs instead of throwing ConfigException for AWS ES [#49](https://github.com/embulk/embulk-output-elasticsearch/pull/49)
 * [maintenance] Updated Embulk version v0.8.36 to v0.9.11 [#55](https://github.com/embulk/embulk-output-elasticsearch/pull/55)
+
 ## 0.4.6 - 2018-08-01
 * [new feature] Add "connect_timeout_millis" option [#53](https://github.com/embulk/embulk-output-elasticsearch/pull/53)
 * [new feature] Only build with Java8 [#52](https://github.com/embulk/embulk-output-elasticsearch/pull/52)
