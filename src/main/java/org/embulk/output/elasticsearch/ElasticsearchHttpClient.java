@@ -48,6 +48,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -67,8 +68,10 @@ public class ElasticsearchHttpClient
     private final long maxIndexNameBytes = 255;
     private final List<Character> invalidIndexCharacters = Arrays.asList('\\', '/', '*', '?', '"', '<', '>', '|', '#', ' ', ',');
 
-    public static final int ES_SUPPORT_TYPELESS_API_VERSION = 7;
+    public static final int ES_SUPPORT_TYPELESS_API_VERSION = 8;
     public static final int ES_SUPPORT_MIN_VERSION = 5;
+
+    private static Integer ES_CURRENT_MAJOR_VERSION;
 
     public ElasticsearchHttpClient()
     {
@@ -191,8 +194,15 @@ public class ElasticsearchHttpClient
     public int getEsMajorVersion(PluginTask task)
     {
         try {
-            String esVersion = getEsVersion(task);
-            return Integer.parseInt(esVersion.substring(0, 1));
+            if (Objects.nonNull(ES_CURRENT_MAJOR_VERSION)) {
+                return ES_CURRENT_MAJOR_VERSION.intValue();
+            }
+            else {
+                final String esVersion = getEsVersion(task);
+                final int esMajorVersion = Integer.parseInt(esVersion.substring(0, 1));
+                ES_CURRENT_MAJOR_VERSION = Integer.valueOf(esMajorVersion);
+                return esMajorVersion;
+            }
         } catch (Exception ex) {
             return ES_SUPPORT_MIN_VERSION;
         }

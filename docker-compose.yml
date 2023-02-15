@@ -13,8 +13,8 @@ services:
     - 19300:9300
 
     # use this environment for v7.x & v8.x
-    #environment:
-    #  - discovery.type=single-node
-    #  - xpack.security.enabled=false
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
     volumes:
     - ./es-data:/usr/share/elasticsearch/data/

@@ -1,5 +1,5 @@
 ## 0.6.0 - 2023-02-14
-* [maintenance] Support typeless endpoint for ES version 7.x & 8.x [#71](https://github.com/embulk/embulk-output-elasticsearch/pull/71)
+* [maintenance] Support typeless endpoint for ES version 8.x [#71](https://github.com/embulk/embulk-output-elasticsearch/pull/71)
 
 ## 0.4.7 - 2018-12-14
 * [maintenance] Show warning logs instead of throwing ConfigException for AWS ES [#49](https://github.com/embulk/embulk-output-elasticsearch/pull/49)
