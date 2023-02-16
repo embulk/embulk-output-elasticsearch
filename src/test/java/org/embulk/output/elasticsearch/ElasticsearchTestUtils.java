@@ -28,8 +28,6 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assume.assumeNotNull;
-
 public class ElasticsearchTestUtils
 {
     public static String ES_HOST;
@@ -45,6 +43,8 @@ public class ElasticsearchTestUtils
     public static String JSON_PATH_PREFIX;
     public static String ES_INDEX2;
     public static String ES_ALIAS;
+
+    public static int ES_SUPPORT_TYPELESS_API_VERSION = 7;
 
     public void initializeConstant()
     {
@@ -75,16 +75,9 @@ public class ElasticsearchTestUtils
         Method deleteAlias = ElasticsearchHttpClient.class.getDeclaredMethod("deleteAlias", String.class, String.class, PluginTask.class);
         deleteAlias.setAccessible(true);
 
-        int esMajorVersion = client.getEsMajorVersion(task);
-
         // Delete alias
         if (client.isAliasExisting(ES_ALIAS, task)) {
-            if (esMajorVersion <= ElasticsearchHttpClient.ES_SUPPORT_MIN_VERSION) {
-                deleteIndex.invoke(client, ES_ALIAS, task);
-            }
-            else {
-                deleteAlias.invoke(client, ES_INDEX, ES_ALIAS, task);
-            }
+            deleteAlias.invoke(client, ES_INDEX, ES_ALIAS, task);
         }
 
         // Delete index

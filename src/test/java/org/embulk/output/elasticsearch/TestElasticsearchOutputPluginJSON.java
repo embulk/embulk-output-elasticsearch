@@ -36,7 +36,6 @@ import org.embulk.spi.TransactionalPageOutput;
 import org.embulk.util.config.ConfigMapper;
 import org.embulk.util.config.ConfigMapperFactory;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -155,7 +154,7 @@ public class TestElasticsearchOutputPluginJSON
         String sort = "{\"sort\" : \"id\"}";
         JsonNode response = (JsonNode) sendRequest.invoke(client, path, HttpMethod.POST, task, sort);
 
-        int totalHits = esMajorVersion >= ElasticsearchHttpClient.ES_SUPPORT_TYPELESS_API_VERSION
+        int totalHits = esMajorVersion >= ElasticsearchTestUtils.ES_SUPPORT_TYPELESS_API_VERSION
             ? response.get("hits").get("total").get("value").asInt()
             : response.get("hits").get("total").asInt();
 
@@ -203,14 +202,14 @@ public class TestElasticsearchOutputPluginJSON
         sendRequest.setAccessible(true);
         int esMajorVersion = client.getEsMajorVersion(task);
 
-        String path = esMajorVersion >= ElasticsearchHttpClient.ES_SUPPORT_MIN_VERSION
+        String path = esMajorVersion >= ElasticsearchHttpClient.ES_SUPPORT_TYPELESS_API_VERSION
             ? String.format("/%s/_search", ES_INDEX)
             : String.format("/%s/%s/_search", ES_INDEX, ES_INDEX_TYPE);
         String sort = "{\"sort\" : \"id\"}";
 
         JsonNode response = (JsonNode) sendRequest.invoke(client, path, HttpMethod.POST, task, sort);
 
-        int totalHits = esMajorVersion >= ElasticsearchHttpClient.ES_SUPPORT_TYPELESS_API_VERSION
+        int totalHits = esMajorVersion >= ElasticsearchTestUtils.ES_SUPPORT_TYPELESS_API_VERSION
             ? response.get("hits").get("total").get("value").asInt()
             : response.get("hits").get("total").asInt();
 

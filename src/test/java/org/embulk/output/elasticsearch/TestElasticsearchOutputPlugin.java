@@ -36,9 +36,7 @@ import org.embulk.spi.TransactionalPageOutput;
 import org.embulk.spi.time.Timestamp;
 import org.embulk.standards.CsvParserPlugin;
 import org.embulk.util.config.ConfigMapper;
-import org.embulk.util.config.ConfigMapperFactory;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -59,7 +57,6 @@ import static org.junit.Assert.assertTrue;
 
 public class TestElasticsearchOutputPlugin
 {
-    private static final ConfigMapperFactory CONFIG_MAPPER_FACTORY = ElasticsearchOutputPlugin.CONFIG_MAPPER_FACTORY;
     private static final ConfigMapper CONFIG_MAPPER = ElasticsearchOutputPlugin.CONFIG_MAPPER;
 
     @Rule
@@ -184,7 +181,7 @@ public class TestElasticsearchOutputPlugin
 
         output.finish();
         output.commit();
-        Thread.sleep(2500); // Need to wait until index done
+        Thread.sleep(3000); // Need to wait until index done
 
         ElasticsearchHttpClient client = new ElasticsearchHttpClient();
         Method sendRequest = ElasticsearchHttpClient.class.getDeclaredMethod("sendRequest", String.class, HttpMethod.class, PluginTask.class, String.class);
@@ -196,7 +193,7 @@ public class TestElasticsearchOutputPlugin
         String sort = "{\"sort\" : \"id\"}";
         JsonNode response = (JsonNode) sendRequest.invoke(client, path, HttpMethod.POST, task, sort);
 
-        int totalHits = esMajorVersion >= ElasticsearchHttpClient.ES_SUPPORT_TYPELESS_API_VERSION
+        int totalHits = esMajorVersion >= ElasticsearchTestUtils.ES_SUPPORT_TYPELESS_API_VERSION
             ? response.get("hits").get("total").get("value").asInt()
             : response.get("hits").get("total").asInt();
 

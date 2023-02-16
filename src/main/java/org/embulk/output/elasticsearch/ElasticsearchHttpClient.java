@@ -48,7 +48,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -69,9 +68,7 @@ public class ElasticsearchHttpClient
     private final List<Character> invalidIndexCharacters = Arrays.asList('\\', '/', '*', '?', '"', '<', '>', '|', '#', ' ', ',');
 
     public static final int ES_SUPPORT_TYPELESS_API_VERSION = 8;
-    public static final int ES_SUPPORT_MIN_VERSION = 5;
-
-    private static Integer ES_CURRENT_MAJOR_VERSION;
+    private static int ES_CURRENT_MAJOR_VERSION = 0;
 
     public ElasticsearchHttpClient()
     {
@@ -180,6 +177,7 @@ public class ElasticsearchHttpClient
             assignAlias(newIndexName, aliasName, task);
             for (String index : oldIndices) {
                 deleteIndex(index, task);
+                deleteAlias(index, aliasName, task);
             }
         }
     }
@@ -194,17 +192,16 @@ public class ElasticsearchHttpClient
     public int getEsMajorVersion(PluginTask task)
     {
         try {
-            if (Objects.nonNull(ES_CURRENT_MAJOR_VERSION)) {
-                return ES_CURRENT_MAJOR_VERSION.intValue();
+            if (ES_CURRENT_MAJOR_VERSION > 0) {
+                return ES_CURRENT_MAJOR_VERSION;
             }
-            else {
-                final String esVersion = getEsVersion(task);
-                final int esMajorVersion = Integer.parseInt(esVersion.substring(0, 1));
-                ES_CURRENT_MAJOR_VERSION = Integer.valueOf(esMajorVersion);
-                return esMajorVersion;
-            }
-        } catch (Exception ex) {
-            return ES_SUPPORT_MIN_VERSION;
+
+            final String esVersion = getEsVersion(task);
+            ES_CURRENT_MAJOR_VERSION = Integer.parseInt(esVersion.substring(0, 1));
+            return ES_CURRENT_MAJOR_VERSION;
+        }
+        catch (Exception ex) {
+            throw new RuntimeException("Failed to fetch ES version");
         }
     }
 
