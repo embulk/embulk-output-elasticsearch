@@ -65,7 +65,10 @@ public class ElasticsearchHttpClient
     // public static final int MAX_INDEX_NAME_BYTES = 255;
     // @see https://github.com/elastic/elasticsearch/blob/master/core/src/main/java/org/elasticsearch/cluster/metadata/MetaDataCreateIndexService.java#L108
     private final long maxIndexNameBytes = 255;
-    private final List<Character> inalidIndexCharaters = Arrays.asList('\\', '/', '*', '?', '"', '<', '>', '|', '#', ' ', ',');
+    private final List<Character> invalidIndexCharacters = Arrays.asList('\\', '/', '*', '?', '"', '<', '>', '|', '#', ' ', ',');
+
+    public static final int ES_SUPPORT_TYPELESS_API_VERSION = 8;
+    private static int ES_CURRENT_MAJOR_VERSION = 0;
 
     public ElasticsearchHttpClient()
     {
@@ -83,7 +86,10 @@ public class ElasticsearchHttpClient
         // {"k" : "v2"}\n
         // '
         try {
-            String path = String.format("/%s/%s/_bulk", task.getIndex(), task.getType());
+            int esMajorVersion = this.getEsMajorVersion(task);
+            String path = esMajorVersion >= ES_SUPPORT_TYPELESS_API_VERSION
+                ? String.format("/%s/_bulk", task.getIndex())
+                : String.format("/%s/%s/_bulk", task.getIndex(), task.getType());
             int recordSize = records.size();
             String idColumn = task.getId().orElse(null);
             if (recordSize > 0) {
@@ -182,11 +188,27 @@ public class ElasticsearchHttpClient
         return response.get("version").get("number").asText();
     }
 
+    public int getEsMajorVersion(PluginTask task)
+    {
+        try {
+            if (ES_CURRENT_MAJOR_VERSION > 0) {
+                return ES_CURRENT_MAJOR_VERSION;
+            }
+
+            final String esVersion = getEsVersion(task);
+            ES_CURRENT_MAJOR_VERSION = Integer.parseInt(esVersion.substring(0, 1));
+            return ES_CURRENT_MAJOR_VERSION;
+        }
+        catch (Exception ex) {
+            throw new RuntimeException("Failed to fetch ES version");
+        }
+    }
+
     public void validateIndexOrAliasName(String index, String type)
     {
         for (int i = 0; i < index.length(); i++) {
-            if (inalidIndexCharaters.contains(index.charAt(i))) {
-                throw new ConfigException(String.format("%s '%s' must not contain the invalid characters " + inalidIndexCharaters.toString(), type, index));
+            if (invalidIndexCharacters.contains(index.charAt(i))) {
+                throw new ConfigException(String.format("%s '%s' must not contain the invalid characters " + invalidIndexCharacters.toString(), type, index));
             }
         }
 

@@ -36,9 +36,7 @@ import org.embulk.spi.TransactionalPageOutput;
 import org.embulk.spi.time.Timestamp;
 import org.embulk.standards.CsvParserPlugin;
 import org.embulk.util.config.ConfigMapper;
-import org.embulk.util.config.ConfigMapperFactory;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -59,7 +57,6 @@ import static org.junit.Assert.assertTrue;
 
 public class TestElasticsearchOutputPlugin
 {
-    private static final ConfigMapperFactory CONFIG_MAPPER_FACTORY = ElasticsearchOutputPlugin.CONFIG_MAPPER_FACTORY;
     private static final ConfigMapper CONFIG_MAPPER = ElasticsearchOutputPlugin.CONFIG_MAPPER;
 
     @Rule
@@ -184,15 +181,23 @@ public class TestElasticsearchOutputPlugin
 
         output.finish();
         output.commit();
-        Thread.sleep(1500); // Need to wait until index done
+        Thread.sleep(3000); // Need to wait until index done
 
         ElasticsearchHttpClient client = new ElasticsearchHttpClient();
         Method sendRequest = ElasticsearchHttpClient.class.getDeclaredMethod("sendRequest", String.class, HttpMethod.class, PluginTask.class, String.class);
         sendRequest.setAccessible(true);
-        String path = String.format("/%s/%s/_search", ES_INDEX, ES_INDEX_TYPE);
+        int esMajorVersion = client.getEsMajorVersion(task);
+        String path = esMajorVersion >= ElasticsearchHttpClient.ES_SUPPORT_TYPELESS_API_VERSION
+            ? String.format("/%s/_search", ES_INDEX)
+            : String.format("/%s/%s/_search", ES_INDEX, ES_INDEX_TYPE);
         String sort = "{\"sort\" : \"id\"}";
         JsonNode response = (JsonNode) sendRequest.invoke(client, path, HttpMethod.POST, task, sort);
-        assertThat(response.get("hits").get("total").asInt(), is(1));
+
+        int totalHits = esMajorVersion >= ElasticsearchTestUtils.ES_MIN_API_VERSION
+            ? response.get("hits").get("total").get("value").asInt()
+            : response.get("hits").get("total").asInt();
+
+        assertThat(totalHits, is(1));
         if (response.size() > 0) {
             JsonNode record = response.get("hits").get("hits").get(0).get("_source");
             assertThat(record.get("id").asInt(), is(1));

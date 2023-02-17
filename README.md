@@ -96,7 +96,7 @@ $ ./gradlew bintrayUpload # release embulk-output-elasticsearch to Bintray maven
 ## Test
 
 Firstly install Docker and Docker compose then `docker-compose up -d`,
-so that an MongoDB server will be locally launched then you can run tests with `./gradlew test`.
+so that an ES server will be locally launched then you can run tests with `./gradlew test`.
 
 ```sh
 $ docker-compose up -d
