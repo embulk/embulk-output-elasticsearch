@@ -176,7 +176,6 @@ public class ElasticsearchHttpClient
             List<String> oldIndices = getIndexByAlias(aliasName, task);
             assignAlias(newIndexName, aliasName, task);
             for (String index : oldIndices) {
-                deleteAlias(index, aliasName, task);
                 deleteIndex(index, task);
             }
         }
@@ -309,34 +308,6 @@ public class ElasticsearchHttpClient
             waitSnapshot(task);
             sendRequest(indexName, HttpMethod.DELETE, task);
             log.info("Deleted Index [{}]", indexName);
-        }
-    }
-
-    private void deleteAlias(String indexName, String aliasName, PluginTask task)
-    {
-        try {
-            if (isIndexExisting(indexName, task)) {
-                if (isAliasExisting(aliasName, task)) {
-                    Map<String, String> alias = new HashMap<>();
-                    alias.put("index", indexName);
-                    alias.put("alias", aliasName);
-
-                    Map<String, Map> remove = new HashMap<>();
-                    remove.put("remove", alias);
-
-                    List<Map<String, Map>> actions = new ArrayList<>();
-                    actions.add(remove);
-                    Map<String, List> rootTree = new HashMap<>();
-                    rootTree.put("actions", actions);
-
-                    String content = jsonMapper.writeValueAsString(rootTree);
-                    sendRequest("/_aliases", HttpMethod.POST, task, content);
-                    log.info("Remove alias [{}] to index[{}]", aliasName, indexName);
-                }
-            }
-        }
-        catch (JsonProcessingException ex) {
-            throw new ConfigException(String.format("Failed to remove alias[%s] to index[%s]", aliasName, indexName));
         }
     }
 
