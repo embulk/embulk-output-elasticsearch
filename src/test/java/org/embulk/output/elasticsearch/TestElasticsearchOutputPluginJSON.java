@@ -154,7 +154,7 @@ public class TestElasticsearchOutputPluginJSON
         String sort = "{\"sort\" : \"id\"}";
         JsonNode response = (JsonNode) sendRequest.invoke(client, path, HttpMethod.POST, task, sort);
 
-        int totalHits = esMajorVersion >= ElasticsearchTestUtils.ES_SUPPORT_TYPELESS_API_VERSION
+        int totalHits = esMajorVersion >= ElasticsearchTestUtils.ES_MIN_API_VERSION
             ? response.get("hits").get("total").get("value").asInt()
             : response.get("hits").get("total").asInt();
 
@@ -209,7 +209,7 @@ public class TestElasticsearchOutputPluginJSON
 
         JsonNode response = (JsonNode) sendRequest.invoke(client, path, HttpMethod.POST, task, sort);
 
-        int totalHits = esMajorVersion >= ElasticsearchTestUtils.ES_SUPPORT_TYPELESS_API_VERSION
+        int totalHits = esMajorVersion >= ElasticsearchTestUtils.ES_MIN_API_VERSION
             ? response.get("hits").get("total").get("value").asInt()
             : response.get("hits").get("total").asInt();
 

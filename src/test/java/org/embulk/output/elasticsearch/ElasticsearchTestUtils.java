@@ -44,7 +44,7 @@ public class ElasticsearchTestUtils
     public static String ES_INDEX2;
     public static String ES_ALIAS;
 
-    public static int ES_SUPPORT_TYPELESS_API_VERSION = 7;
+    public static int ES_MIN_API_VERSION = 7;
 
     public void initializeConstant()
     {
