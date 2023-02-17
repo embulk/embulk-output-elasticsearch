@@ -4,7 +4,7 @@ plugins {
     id "signing"
     id "jacoco"
     id "checkstyle"
-    id "org.embulk.embulk-plugins" version "0.4.2"
+    id "org.embulk.embulk-plugins" version "0.5.5"
 }
 
 repositories {
@@ -18,8 +18,8 @@ group = "org.embulk"
 version = "0.6.0-SNAPSHOT"
 description = "Elasticsearch output plugin is an Embulk plugin that loads records to Elasticsearch read by any input plugins."
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
 
 tasks.withType(JavaCompile) {
     options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
@@ -35,7 +35,7 @@ dependencies {
     compileOnly "org.embulk:embulk-api:0.10.28"
     compileOnly "org.embulk:embulk-spi:0.10.28"
 
-    compile("org.embulk:embulk-util-config:0.3.0") {
+    implementation("org.embulk:embulk-util-config:0.3.2") {
         // They conflict with embulk-core. They are once excluded here,
         // and added explicitly with versions exactly the same with embulk-core:0.10.28.
         exclude group: "com.fasterxml.jackson.core", module: "jackson-annotations"
@@ -47,23 +47,23 @@ dependencies {
 
     // They are once excluded from transitive dependencies of other dependencies,
     // and added explicitly with versions exactly the same with embulk-core:0.10.28.
-    compile "com.fasterxml.jackson.core:jackson-annotations:2.6.7"
-    compile "com.fasterxml.jackson.core:jackson-core:2.6.7"
-    compile "com.fasterxml.jackson.core:jackson-databind:2.6.7"
-    compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.6.7"
-    compile "javax.validation:validation-api:1.1.0.Final"
+    implementation "com.fasterxml.jackson.core:jackson-annotations:2.6.7"
+    implementation "com.fasterxml.jackson.core:jackson-core:2.6.7"
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.6.7"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.6.7"
+    implementation "javax.validation:validation-api:1.1.0.Final"
 
-    compile "org.embulk:embulk-base-restclient:0.10.1"
-    compile "org.embulk:embulk-util-retryhelper-jetty92:0.8.2"
+    implementation "org.embulk:embulk-base-restclient:0.10.1"
+    implementation "org.embulk:embulk-util-retryhelper-jetty92:0.8.2"
 
-    compile "org.embulk:embulk-util-timestamp:0.2.1"
+    implementation "org.embulk:embulk-util-timestamp:0.2.1"
 
-    testCompile "junit:junit:4.13.2"
-    testCompile "org.embulk:embulk-core:0.10.28"
-    testCompile "org.embulk:embulk-core:0.10.28:tests"
-    testCompile "org.embulk:embulk-standards:0.10.28"
-    testCompile "org.embulk:embulk-junit4:0.10.28"
-    testCompile "org.embulk:embulk-deps:0.10.28"
+    testImplementation "junit:junit:4.13.2"
+    testImplementation "org.embulk:embulk-core:0.10.28"
+    testImplementation "org.embulk:embulk-core:0.10.28:tests"
+    testImplementation "org.embulk:embulk-standards:0.10.28"
+    testImplementation "org.embulk:embulk-junit4:0.10.28"
+    testImplementation "org.embulk:embulk-deps:0.10.28"
 }
 
 embulkPlugin {
@@ -74,21 +74,30 @@ embulkPlugin {
 
 javadoc {
     options {
-        locale = 'en_US'
-        encoding = 'UTF-8'
+        locale = "en_US"
+        encoding = "UTF-8"
     }
 }
 
 jar {
-    from rootProject.file("LICENSE")
+    metaInf {
+        from rootProject.file("LICENSE")
+        from rootProject.file("NOTICE")
+    }
 }
 
 sourcesJar {
-    from rootProject.file("LICENSE")
+    metaInf {
+        from rootProject.file("LICENSE")
+        from rootProject.file("NOTICE")
+    }
 }
 
 javadocJar {
-    from rootProject.file("LICENSE")
+    metaInf {
+        from rootProject.file("LICENSE")
+        from rootProject.file("NOTICE")
+    }
 }
 
 publishing {
@@ -174,6 +183,10 @@ publishing {
 }
 
 signing {
+    if (project.hasProperty("signingKey") && project.hasProperty("signingPassword")) {
+        logger.lifecycle("Signing with an in-memory key.")
+        useInMemoryPgpKeys(signingKey, signingPassword)
+    }
     sign publishing.publications.maven
 }
 
