@@ -176,8 +176,8 @@ public class ElasticsearchHttpClient
             List<String> oldIndices = getIndexByAlias(aliasName, task);
             assignAlias(newIndexName, aliasName, task);
             for (String index : oldIndices) {
-                deleteIndex(index, task);
                 deleteAlias(index, aliasName, task);
+                deleteIndex(index, task);
             }
         }
     }
