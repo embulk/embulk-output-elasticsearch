@@ -45,7 +45,7 @@ This mode writes data to existing index.
 
 #### replace:
 
-1. Create new temporary index 
+1. Create new temporary index
 2. Insert data into the new index
 3. replace the alias with the new index. If alias doesn't exists, plugin will create new alias.
 4. Delete existing (old) index if exists
@@ -58,7 +58,7 @@ out:
   mode: replace
   nodes:
   - {host: localhost, port: 9200}
-  index: <alias name> # plugin generates index name like <index>_%Y%m%d-%H%M%S 
+  index: <alias name> # plugin generates index name like <index>_%Y%m%d-%H%M%S
   index_type: <index type>
 ```
 
@@ -86,13 +86,6 @@ out:
   index_type: <index type>
 ```
 
-## Build
-
-```
-$ ./gradlew gem  # -t to watch change of files and rebuild continuously
-$ ./gradlew bintrayUpload # release embulk-output-elasticsearch to Bintray maven repo
-```
-
 ## Test
 
 Firstly install Docker and Docker compose then `docker-compose up -d`,
@@ -109,4 +102,38 @@ $ docker-compose ps
 embulk-output-elasticsearch_server   /docker-entrypoint.sh elas ...   Up      0.0.0.0:19200->9200/tcp, 0.0.0.0:19300->9300/tcp
 
 $ ./gradlew test  # -t to watch change of files and rebuild continuously
+```
+
+For Maintainers
+----------------
+
+### Release
+
+Modify `version` in `build.gradle` at a detached commit, and then tag the commit with an annotation.
+
+```
+git checkout --detach master
+(Edit: Remove "-SNAPSHOT" in "version" in build.gradle.)
+git add build.gradle
+git commit -m "Release vX.Y.Z"
+git tag -a vX.Y.Z
+(Edit: Write a tag annotation in the changelog format.)
+```
+
+See [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) for the changelog format. We adopt a part of it for Git's tag annotation like below.
+
+```
+## [X.Y.Z] - YYYY-MM-DD
+### Added
+- Added a feature.
+### Changed
+- Changed something.
+### Fixed
+- Fixed a bug.
+```
+
+Push the annotated tag, then. It triggers a release operation on GitHub Actions after approval.
+
+```
+git push -u origin vX.Y.Z
 ```
