@@ -19,13 +19,11 @@ services:
         hard: 65536
     volumes:
       - opensearch-data1:/usr/share/opensearch/data
-    ports:
-      - 19200:9200
-    networks:
-      - opensearch-net
+  java:
+    image: eclipse-temurin:8
+    volumes:
+      - .:/embulk
+    working_dir: /embulk
 
 volumes:
   opensearch-data1:
-
-networks:
-  opensearch-net:

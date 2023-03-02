@@ -48,8 +48,8 @@ public class ElasticsearchTestUtils
 
     public void initializeConstant()
     {
-        ES_HOST = "localhost";
-        ES_PORT = 19200;
+        ES_HOST = "elasticsearch";
+        ES_PORT = 9200;
 
         ES_INDEX = "embulk";
         ES_INDEX2 = ES_INDEX + "_02";
