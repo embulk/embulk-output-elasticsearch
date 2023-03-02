@@ -88,8 +88,8 @@ out:
 
 ## Test
 
-Firstly install Docker and Docker compose then `docker-compose up -d`,
-so that an ES server will be locally launched then you can run tests with `./gradlew test`.
+Firstly install Docker and Docker compose then `docker-compose up opensearch`,
+so that an ES server will be locally launched then you can run tests with `docker compose run --rm java ./gradlew test`.
 
 ```sh
 $ docker-compose up -d

@@ -43,12 +43,14 @@ public class ElasticsearchTestUtils
     public static String JSON_PATH_PREFIX;
     public static String ES_INDEX2;
     public static String ES_ALIAS;
+    public static String ES_USER;
+    public static String ES_PASSWORD;
 
     public static int ES_MIN_API_VERSION = 7;
 
     public void initializeConstant()
     {
-        ES_HOST = "elasticsearch";
+        ES_HOST = "opensearch";
         ES_PORT = 9200;
 
         ES_INDEX = "embulk";
@@ -59,6 +61,8 @@ public class ElasticsearchTestUtils
         ES_BULK_ACTIONS = 1000;
         ES_BULK_SIZE = 5242880;
         ES_CONCURRENT_REQUESTS = 5;
+        ES_USER = "admin";
+        ES_PASSWORD = "admin";
 
         ES_NODES = Arrays.asList(ImmutableMap.of("host", ES_HOST, "port", ES_PORT));
 
@@ -97,8 +101,8 @@ public class ElasticsearchTestUtils
                 .set("bulk_size", ES_BULK_SIZE)
                 .set("concurrent_requests", ES_CONCURRENT_REQUESTS)
                 .set("maximum_retries", 2)
-                .set("user", "admin")
-                .set("password", "admin");
+                .set("user", ES_USER)
+                .set("password", ES_PASSWORD);
     }
 
     public ConfigSource oldParserConfig(final EmbulkTestRuntime runtime)
@@ -124,8 +128,8 @@ public class ElasticsearchTestUtils
                 .set("concurrent_requests", ES_CONCURRENT_REQUESTS)
                 .set("maximum_retries", 2)
                 .set("fill_null_for_empty_column", true)
-                .set("user", "admin")
-                .set("password", "admin");
+                .set("user", ES_USER)
+                .set("password", ES_PASSWORD);
     }
 
     public ImmutableMap<String, Object> inputConfig()
