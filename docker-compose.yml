@@ -1,20 +1,31 @@
 version: '3.1'
 services:
   elasticsearch:
-    container_name: embulk-output-elasticsearch_server
-    image: elasticsearch:5
-    #image: elasticsearch:6.8.21
-    #image: elasticsearch:7.17.8
-    # For Mac M1
-    #image: docker.elastic.co/elasticsearch/elasticsearch:7.17.6-arm64
-    #image: elasticsearch:8.6.1
-    ports:
-    - 19200:9200
-    - 19300:9300
-
-    # use this environment for v7.x & v8.x
-    #environment:
-    #  - discovery.type=single-node
-    #  - xpack.security.enabled=false
+    image: opensearchproject/opensearch:2
+    container_name: opensearch-node1
+    environment:
+      - cluster.name=opensearch-cluster
+      - node.name=opensearch-node1
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - plugins.security.disabled=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
     volumes:
-    - ./es-data:/usr/share/elasticsearch/data/
+      - opensearch-data1:/usr/share/opensearch/data
+    ports:
+      - 19200:9200
+    networks:
+      - opensearch-net
+
+volumes:
+  opensearch-data1:
+
+networks:
+  opensearch-net:

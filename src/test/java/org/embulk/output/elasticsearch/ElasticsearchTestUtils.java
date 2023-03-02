@@ -96,7 +96,9 @@ public class ElasticsearchTestUtils
                 .set("bulk_actions", ES_BULK_ACTIONS)
                 .set("bulk_size", ES_BULK_SIZE)
                 .set("concurrent_requests", ES_CONCURRENT_REQUESTS)
-                .set("maximum_retries", 2);
+                .set("maximum_retries", 2)
+                .set("user", "admin")
+                .set("password", "admin");
     }
 
     public ConfigSource oldParserConfig(final EmbulkTestRuntime runtime)
@@ -121,7 +123,9 @@ public class ElasticsearchTestUtils
                 .set("bulk_size", ES_BULK_SIZE)
                 .set("concurrent_requests", ES_CONCURRENT_REQUESTS)
                 .set("maximum_retries", 2)
-                .set("fill_null_for_empty_column", true);
+                .set("fill_null_for_empty_column", true)
+                .set("user", "admin")
+                .set("password", "admin");
     }
 
     public ImmutableMap<String, Object> inputConfig()

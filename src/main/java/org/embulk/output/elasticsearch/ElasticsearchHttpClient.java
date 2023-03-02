@@ -67,7 +67,6 @@ public class ElasticsearchHttpClient
     private final long maxIndexNameBytes = 255;
     private final List<Character> invalidIndexCharacters = Arrays.asList('\\', '/', '*', '?', '"', '<', '>', '|', '#', ' ', ',');
 
-    public static final int ES_SUPPORT_TYPELESS_API_VERSION = 8;
     private static int ES_CURRENT_MAJOR_VERSION = 0;
 
     public ElasticsearchHttpClient()
@@ -87,9 +86,7 @@ public class ElasticsearchHttpClient
         // '
         try {
             int esMajorVersion = this.getEsMajorVersion(task);
-            String path = esMajorVersion >= ES_SUPPORT_TYPELESS_API_VERSION
-                ? String.format("/%s/_bulk", task.getIndex())
-                : String.format("/%s/%s/_bulk", task.getIndex(), task.getType());
+            String path = String.format("/%s/_bulk", task.getIndex());
             int recordSize = records.size();
             String idColumn = task.getId().orElse(null);
             if (recordSize > 0) {

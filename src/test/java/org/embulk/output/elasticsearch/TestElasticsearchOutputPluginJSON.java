@@ -148,15 +148,11 @@ public class TestElasticsearchOutputPluginJSON
         Method sendRequest = ElasticsearchHttpClient.class.getDeclaredMethod("sendRequest", String.class, HttpMethod.class, PluginTask.class, String.class);
         sendRequest.setAccessible(true);
         int esMajorVersion = client.getEsMajorVersion(task);
-        String path = esMajorVersion >= ElasticsearchHttpClient.ES_SUPPORT_TYPELESS_API_VERSION
-            ? String.format("/%s/_search", ES_INDEX)
-            : String.format("/%s/%s/_search", ES_INDEX, ES_INDEX_TYPE);
+        String path = String.format("/%s/_search", ES_INDEX);
         String sort = "{\"sort\" : \"id\"}";
         JsonNode response = (JsonNode) sendRequest.invoke(client, path, HttpMethod.POST, task, sort);
 
-        int totalHits = esMajorVersion >= ElasticsearchTestUtils.ES_MIN_API_VERSION
-            ? response.get("hits").get("total").get("value").asInt()
-            : response.get("hits").get("total").asInt();
+        int totalHits = response.get("hits").get("total").get("value").asInt();
 
         assertThat(totalHits, is(1));
 
@@ -202,16 +198,12 @@ public class TestElasticsearchOutputPluginJSON
         sendRequest.setAccessible(true);
         int esMajorVersion = client.getEsMajorVersion(task);
 
-        String path = esMajorVersion >= ElasticsearchHttpClient.ES_SUPPORT_TYPELESS_API_VERSION
-            ? String.format("/%s/_search", ES_INDEX)
-            : String.format("/%s/%s/_search", ES_INDEX, ES_INDEX_TYPE);
+        String path = String.format("/%s/_search", ES_INDEX);
         String sort = "{\"sort\" : \"id\"}";
 
         JsonNode response = (JsonNode) sendRequest.invoke(client, path, HttpMethod.POST, task, sort);
 
-        int totalHits = esMajorVersion >= ElasticsearchTestUtils.ES_MIN_API_VERSION
-            ? response.get("hits").get("total").get("value").asInt()
-            : response.get("hits").get("total").asInt();
+        int totalHits = response.get("hits").get("total").get("value").asInt();
 
         assertThat(totalHits, is(1));
         if (response.size() > 0) {
