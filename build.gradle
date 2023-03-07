@@ -18,8 +18,8 @@ group = "org.embulk"
 version = "0.6.0-SNAPSHOT"
 description = "Elasticsearch output plugin is an Embulk plugin that loads records to Elasticsearch read by any input plugins."
 
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
 
 tasks.withType(JavaCompile) {
     options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
@@ -57,6 +57,12 @@ dependencies {
     implementation "org.embulk:embulk-util-retryhelper-jetty92:0.8.2"
 
     implementation "org.embulk:embulk-util-timestamp:0.2.1"
+
+    implementation 'jakarta.xml.bind:jakarta.xml.bind-api:2.3.3'
+
+    implementation 'org.opensearch.client:opensearch-rest-client:2.6.0'
+    implementation 'org.opensearch.client:opensearch-java:2.2.0'
+    // implementation 'com.github.harshavamsi:opensearch-java:feature~java8migrate-SNAPSHOT'
 
     testImplementation "junit:junit:4.13.2"
     testImplementation "org.embulk:embulk-core:0.10.28"

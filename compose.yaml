@@ -20,7 +20,7 @@ services:
     volumes:
       - opensearch-data1:/usr/share/opensearch/data
   java:
-    image: eclipse-temurin:8
+    image: eclipse-temurin:11
     volumes:
       - .:/embulk
     working_dir: /embulk
