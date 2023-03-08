@@ -16,6 +16,7 @@
 
 package org.embulk.output.elasticsearch;
 
+import java.io.IOException;
 import java.util.Locale;
 import org.eclipse.jetty.client.HttpResponseException;
 import org.eclipse.jetty.client.api.Response;
@@ -111,6 +112,17 @@ public class OpenSearchRetryHelper
     @Override
     public void close()
     {
+        if (this.clientStarted == null) {
+            return;
+        }
+
+        // TODO
+        try {
+            this.clientStarted._transport().close();
+        }
+        catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     private final int maximumRetries;

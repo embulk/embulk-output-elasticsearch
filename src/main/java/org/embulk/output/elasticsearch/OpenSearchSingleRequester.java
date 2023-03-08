@@ -29,7 +29,17 @@ public abstract class OpenSearchSingleRequester
         }
     }
 
-    protected abstract boolean isResponseStatusToRetry(org.opensearch.client.opensearch._types.ErrorResponse response);
+    protected boolean isResponseStatusToRetry(org.opensearch.client.opensearch._types.ErrorResponse response)
+    {
+        int status = response.status();
+        if (status == 404) {
+            throw new ResourceNotFoundException("Requested resource was not found");
+        }
+        else if (status == 429) {
+            return true; // Retry if 429.
+        }
+        return status / 100 != 4; // Retry unless 4xx except for 429.
+    }
 
     protected boolean isExceptionToRetry(Exception exception) {
         return false;

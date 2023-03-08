@@ -29,7 +29,6 @@ import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.embulk.config.ConfigException;
-import org.embulk.config.UserDataException;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.AuthMethod;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.NodeAddressTask;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
@@ -41,6 +40,7 @@ import org.embulk.util.retryhelper.jetty92.Jetty92RetryHelper;
 import org.embulk.util.retryhelper.jetty92.Jetty92SingleRequester;
 import org.embulk.util.retryhelper.jetty92.StringJetty92ResponseEntityReader;
 import org.opensearch.client.json.jackson.JacksonJsonpMapper;
+import org.opensearch.client.opensearch.core.InfoResponse;
 import org.opensearch.client.opensearch.OpenSearchClient;
 import org.opensearch.client.RestClient;
 import org.opensearch.client.RestClientBuilder;
@@ -359,6 +359,26 @@ public class ElasticsearchHttpClient
         return sendRequest(path, method, task, "");
     }
 
+    private InfoResponse sendRequest2(final PluginTask task)
+    {
+        try (OpenSearchRetryHelper retryHelper = createRetryHelper2(task)) {
+            return retryHelper.requestWithRetry(
+                    new OpenSearchSingleRequester() {
+                        @Override
+                        public <T> T requestOnce(org.opensearch.client.opensearch.OpenSearchClient client, final Class<T> clazz)
+                        {
+                            try {
+                                // TODO: no cast
+                                return clazz.cast(client.info());
+                            } catch (IOException e) {
+                                // TODO
+                                throw new RuntimeException(e);
+                            }
+                        }
+                    }, InfoResponse.class);
+        }
+    }
+
     private JsonNode sendRequest(String path, final HttpMethod method, final PluginTask task, final String content)
     {
         final String uri = createRequestUri(task, path);
@@ -387,7 +407,7 @@ public class ElasticsearchHttpClient
                         }
 
                         @Override
-                        public boolean isExceptionToRetry(Exception exception)
+                        protected boolean isExceptionToRetry(Exception exception)
                         {
                             return task.getId().isPresent();
                         }
@@ -437,6 +457,40 @@ public class ElasticsearchHttpClient
         catch (IOException ex) {
             throw new DataException(ex);
         }
+    }
+
+    private OpenSearchRetryHelper createRetryHelper2(final PluginTask task)
+    {
+        return new OpenSearchRetryHelper(
+                task.getMaximumRetries(),
+                task.getInitialRetryIntervalMillis(),
+                task.getMaximumRetryIntervalMillis(),
+                new OpenSearchClientCreator() {
+                    @Override
+                    public org.opensearch.client.opensearch.OpenSearchClient createAndStart()
+                    {
+                        RestClient restClient = null;
+                        try {
+                            // TODO: secret, authorization, timeout
+                            final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+                            credentialsProvider.setCredentials(AuthScope.ANY,
+                                new UsernamePasswordCredentials("admin", "admin"));
+
+                            restClient = RestClient.builder(new HttpHost("opensearch", 9200, "https")).
+                              setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback() {
+                                @Override
+                                public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
+                                    return httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+                                }
+                              }).build();
+                            OpenSearchTransport transport = new RestClientTransport(restClient, new JacksonJsonpMapper());
+                            return new OpenSearchClient(transport);
+                        }
+                        catch (Exception ex) {
+                            throw new RuntimeException(ex);
+                        }
+                    }
+                });
     }
 
     private Jetty92RetryHelper createRetryHelper(final PluginTask task)
@@ -495,22 +549,5 @@ public class ElasticsearchHttpClient
             header = "Basic " + DatatypeConverter.printBase64Binary(authString.getBytes());
         }
         return header;
-    }
-
-    public class ResourceNotFoundException extends RuntimeException implements UserDataException
-    {
-        protected ResourceNotFoundException()
-        {
-        }
-
-        public ResourceNotFoundException(String message)
-        {
-            super(message);
-        }
-
-        public ResourceNotFoundException(Throwable cause)
-        {
-            super(cause);
-        }
     }
 }
