@@ -80,8 +80,6 @@ public class ElasticsearchHttpClient
     private final long maxIndexNameBytes = 255;
     private final List<Character> invalidIndexCharacters = Arrays.asList('\\', '/', '*', '?', '"', '<', '>', '|', '#', ' ', ',');
 
-    private static int ES_CURRENT_MAJOR_VERSION = 0;
-
     public ElasticsearchHttpClient()
     {
         this.log = LoggerFactory.getLogger(getClass());
@@ -192,25 +190,8 @@ public class ElasticsearchHttpClient
 
     public String getEsVersion(PluginTask task)
     {
-        // curl -XGET 'http://localhost:9200’
-        JsonNode response = sendRequest("", HttpMethod.GET, task);
-        return response.get("version").get("number").asText();
-    }
-
-    public int getEsMajorVersion(PluginTask task)
-    {
-        try {
-            if (ES_CURRENT_MAJOR_VERSION > 0) {
-                return ES_CURRENT_MAJOR_VERSION;
-            }
-
-            final String esVersion = getEsVersion(task);
-            ES_CURRENT_MAJOR_VERSION = Integer.parseInt(esVersion.substring(0, 1));
-            return ES_CURRENT_MAJOR_VERSION;
-        }
-        catch (Exception ex) {
-            throw new RuntimeException("Failed to fetch ES version");
-        }
+        // curl -XGET 'http://localhost:9200'
+        return sendInfoRequest(task).version().number();
     }
 
     public void validateIndexOrAliasName(String index, String type)
@@ -354,12 +335,7 @@ public class ElasticsearchHttpClient
         return !snapshots.equals("");
     }
 
-    private JsonNode sendRequest(String path, final HttpMethod method, PluginTask task)
-    {
-        return sendRequest(path, method, task, "");
-    }
-
-    private InfoResponse sendRequest2(final PluginTask task)
+    private InfoResponse sendInfoRequest(final PluginTask task)
     {
         try (OpenSearchRetryHelper retryHelper = createRetryHelper2(task)) {
             return retryHelper.requestWithRetry(
@@ -370,13 +346,19 @@ public class ElasticsearchHttpClient
                             try {
                                 // TODO: no cast
                                 return clazz.cast(client.info());
-                            } catch (IOException e) {
+                            }
+                            catch (IOException e) {
                                 // TODO
                                 throw new RuntimeException(e);
                             }
                         }
                     }, InfoResponse.class);
         }
+    }
+
+    private JsonNode sendRequest(String path, final HttpMethod method, PluginTask task)
+    {
+        return sendRequest(path, method, task, "");
     }
 
     private JsonNode sendRequest(String path, final HttpMethod method, final PluginTask task, final String content)
@@ -476,10 +458,11 @@ public class ElasticsearchHttpClient
                             credentialsProvider.setCredentials(AuthScope.ANY,
                                 new UsernamePasswordCredentials("admin", "admin"));
 
-                            restClient = RestClient.builder(new HttpHost("opensearch", 9200, "https")).
+                            restClient = RestClient.builder(new HttpHost("opensearch", 9200, "http")).
                               setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback() {
                                 @Override
-                                public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
+                                public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder)
+                                {
                                     return httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
                                 }
                               }).build();
@@ -511,7 +494,8 @@ public class ElasticsearchHttpClient
                             RestClient restClient = RestClient.builder(new HttpHost("localhost", 9200, "https")).
                               setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback() {
                                 @Override
-                                public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
+                                public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder)
+                                {
                                     return httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
                                 }
                               }).build();

@@ -147,7 +147,6 @@ public class TestElasticsearchOutputPluginJSON
         ElasticsearchHttpClient client = new ElasticsearchHttpClient();
         Method sendRequest = ElasticsearchHttpClient.class.getDeclaredMethod("sendRequest", String.class, HttpMethod.class, PluginTask.class, String.class);
         sendRequest.setAccessible(true);
-        int esMajorVersion = client.getEsMajorVersion(task);
         String path = String.format("/%s/_search", ES_INDEX);
         String sort = "{\"sort\" : \"id\"}";
         JsonNode response = (JsonNode) sendRequest.invoke(client, path, HttpMethod.POST, task, sort);
@@ -196,7 +195,6 @@ public class TestElasticsearchOutputPluginJSON
         ElasticsearchHttpClient client = new ElasticsearchHttpClient();
         Method sendRequest = ElasticsearchHttpClient.class.getDeclaredMethod("sendRequest", String.class, HttpMethod.class, PluginTask.class, String.class);
         sendRequest.setAccessible(true);
-        int esMajorVersion = client.getEsMajorVersion(task);
 
         String path = String.format("/%s/_search", ES_INDEX);
         String sort = "{\"sort\" : \"id\"}";

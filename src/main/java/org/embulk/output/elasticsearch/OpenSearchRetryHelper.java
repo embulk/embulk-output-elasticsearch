@@ -63,7 +63,8 @@ public class OpenSearchRetryHelper
                         {
                             try {
                                 return singleRequester.requestOnce(clientStarted, responseType);
-                            } catch (OpenSearchException e) {
+                            }
+                            catch (OpenSearchException e) {
                                 throw e;
                             }
                         }

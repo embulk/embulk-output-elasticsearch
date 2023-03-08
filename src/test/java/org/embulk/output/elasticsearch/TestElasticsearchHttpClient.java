@@ -184,4 +184,12 @@ public class TestElasticsearchHttpClient
                 client.getAuthorizationHeader(CONFIG_MAPPER.map(config, PluginTask.class)),
                 is("Basic dXNlcm5hbWU6cGFzc3dvcmQ="));
     }
+
+    @Test
+    public void testGetEsVersion()
+    {
+        ElasticsearchHttpClient client = new ElasticsearchHttpClient();
+        final PluginTask task = CONFIG_MAPPER.map(utils.config(), PluginTask.class);
+        assertThat(client.getEsVersion(task), is("2.6.0"));
+    }
 }
