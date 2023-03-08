@@ -19,6 +19,12 @@ package org.embulk.output.elasticsearch;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.HttpHost;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
@@ -34,6 +40,13 @@ import org.embulk.util.retryhelper.jetty92.Jetty92ClientCreator;
 import org.embulk.util.retryhelper.jetty92.Jetty92RetryHelper;
 import org.embulk.util.retryhelper.jetty92.Jetty92SingleRequester;
 import org.embulk.util.retryhelper.jetty92.StringJetty92ResponseEntityReader;
+import org.opensearch.client.json.jackson.JacksonJsonpMapper;
+import org.opensearch.client.opensearch.OpenSearchClient;
+import org.opensearch.client.RestClient;
+import org.opensearch.client.RestClientBuilder;
+import org.opensearch.client.transport.OpenSearchTransport;
+import org.opensearch.client.transport.rest_client.RestClientTransport;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,7 +98,6 @@ public class ElasticsearchHttpClient
         // {"k" : "v2"}\n
         // '
         try {
-            int esMajorVersion = this.getEsMajorVersion(task);
             String path = String.format("/%s/_bulk", task.getIndex());
             int recordSize = records.size();
             String idColumn = task.getId().orElse(null);
@@ -437,6 +449,28 @@ public class ElasticsearchHttpClient
                     @Override
                     public org.eclipse.jetty.client.HttpClient createAndStart()
                     {
+                        try {
+                            final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+                            credentialsProvider.setCredentials(AuthScope.ANY,
+                                new UsernamePasswordCredentials("admin", "admin"));
+
+                            RestClient restClient = RestClient.builder(new HttpHost("localhost", 9200, "https")).
+                              setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback() {
+                                @Override
+                                public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
+                                    return httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+                                }
+                              }).build();
+                            OpenSearchTransport transport = new RestClientTransport(restClient, new JacksonJsonpMapper());
+                            OpenSearchClient client = new OpenSearchClient(transport);
+                        }
+                        catch (Exception e) {
+                            if (e instanceof RuntimeException) {
+                                throw (RuntimeException) e;
+                            }
+                            throw new RuntimeException(e);
+                        }
+
                         org.eclipse.jetty.client.HttpClient client = new org.eclipse.jetty.client.HttpClient(new SslContextFactory());
                         client.setConnectTimeout(task.getConnectTimeoutMills());
                         try {
