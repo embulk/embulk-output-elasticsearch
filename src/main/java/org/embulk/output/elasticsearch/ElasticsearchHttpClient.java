@@ -45,6 +45,8 @@ import org.opensearch.client.json.JsonpMapper;
 import org.opensearch.client.opensearch.core.BulkRequest;
 import org.opensearch.client.opensearch.core.BulkResponse;
 import org.opensearch.client.opensearch.core.InfoResponse;
+import org.opensearch.client.opensearch.indices.DeleteIndexRequest;
+import org.opensearch.client.opensearch.indices.DeleteIndexResponse;
 import org.opensearch.client.opensearch.indices.ExistsAliasRequest;
 import org.opensearch.client.opensearch.indices.get_alias.IndexAliases;
 import org.opensearch.client.opensearch.indices.GetAliasResponse;
@@ -263,10 +265,11 @@ public class ElasticsearchHttpClient
             return;
         }
 
+        waitSnapshot(task);
+
         // curl -XDELETE localhost:9200/{index}
         // Success: {"acknowledged":true}
-        waitSnapshot(task);
-        sendRequest(indexName, HttpMethod.DELETE, task);
+        sendDeleteIndexRequest(indexName, task);
 
         log.info("Deleted Index [{}]", indexName);
     }
@@ -439,7 +442,7 @@ public class ElasticsearchHttpClient
         }
     }
 
-    private PutAliasResponse sendPutAliasRequest(String indexName, String aliasName, PluginTask task)
+    private PutAliasResponse sendPutAliasRequest(final String indexName, final String aliasName, final PluginTask task)
     {
         try (OpenSearchRetryHelper retryHelper = createRetryHelper2(task)) {
             PutAliasRequest request = new PutAliasRequest.Builder().index(indexName).name(aliasName).build();
@@ -462,7 +465,7 @@ public class ElasticsearchHttpClient
         }
     }
 
-    private UpdateAliasesResponse sendUpdateAliasesRequest(List<String> oldIndices, String indexName, String aliasName, PluginTask task)
+    private UpdateAliasesResponse sendUpdateAliasesRequest(final List<String> oldIndices, final String indexName, final String aliasName, final PluginTask task)
     {
         try (OpenSearchRetryHelper retryHelper = createRetryHelper2(task)) {
             UpdateAliasesRequest.Builder br = new UpdateAliasesRequest.Builder();
@@ -487,7 +490,7 @@ public class ElasticsearchHttpClient
         }
     }
 
-    private SnapshotStatusResponse sendSnapshotStatusRequest(PluginTask task)
+    private SnapshotStatusResponse sendSnapshotStatusRequest(final PluginTask task)
     {
         try (OpenSearchRetryHelper retryHelper = createRetryHelper2(task)) {
             SnapshotStatusRequest request = new SnapshotStatusRequest.Builder().build();
@@ -507,6 +510,29 @@ public class ElasticsearchHttpClient
                             }
                         }
                     }, SnapshotStatusResponse.class);
+        }
+    }
+
+    private DeleteIndexResponse sendDeleteIndexRequest(final String indexName, final PluginTask task)
+    {
+        try (OpenSearchRetryHelper retryHelper = createRetryHelper2(task)) {
+            DeleteIndexRequest request = new DeleteIndexRequest.Builder().index(indexName).build();
+
+            return retryHelper.requestWithRetry(
+                    new OpenSearchSingleRequester() {
+                        @Override
+                        public <T> T requestOnce(org.opensearch.client.opensearch.OpenSearchClient client, final Class<T> clazz)
+                        {
+                            try {
+                                // TODO: no cast
+                                return clazz.cast(client.indices().delete(request));
+                            }
+                            catch (IOException e) {
+                                // TODO
+                                throw new RuntimeException(e);
+                            }
+                        }
+                    }, DeleteIndexResponse.class);
         }
     }
 
