@@ -58,6 +58,9 @@ import org.opensearch.client.opensearch.indices.update_aliases.RemoveAction;
 import org.opensearch.client.opensearch.indices.UpdateAliasesRequest;
 import org.opensearch.client.opensearch.indices.UpdateAliasesResponse;
 import org.opensearch.client.opensearch.OpenSearchClient;
+import org.opensearch.client.opensearch.snapshot.SnapshotStatusRequest;
+import org.opensearch.client.opensearch.snapshot.SnapshotStatusResponse;
+import org.opensearch.client.opensearch.snapshot.Status;
 import org.opensearch.client.RestClient;
 import org.opensearch.client.RestClientBuilder;
 import org.opensearch.client.transport.endpoints.BooleanResponse;
@@ -297,9 +300,10 @@ public class ElasticsearchHttpClient
     {
         // https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-snapshots.html#_snapshot_status
         // curl -XGET localhost:9200/_snapshot/_status
-        JsonNode response = sendRequest("/_snapshot/_status", HttpMethod.GET, task);
-        String snapshots = response.get("snapshots").asText();
-        return !snapshots.equals("");
+        SnapshotStatusResponse snapshotStatusResponse = sendSnapshotStatusRequest(task);
+        List<Status> snapshots = snapshotStatusResponse.snapshots();
+
+        return snapshots != null && !snapshots.isEmpty();
     }
 
     private BulkResponse sendBulkRequest(JsonNode records, PluginTask task)
@@ -480,6 +484,29 @@ public class ElasticsearchHttpClient
                             }
                         }
                     }, UpdateAliasesResponse.class);
+        }
+    }
+
+    private SnapshotStatusResponse sendSnapshotStatusRequest(PluginTask task)
+    {
+        try (OpenSearchRetryHelper retryHelper = createRetryHelper2(task)) {
+            SnapshotStatusRequest request = new SnapshotStatusRequest.Builder().build();
+
+            return retryHelper.requestWithRetry(
+                    new OpenSearchSingleRequester() {
+                        @Override
+                        public <T> T requestOnce(org.opensearch.client.opensearch.OpenSearchClient client, final Class<T> clazz)
+                        {
+                            try {
+                                // TODO: no cast
+                                return clazz.cast(client.snapshot().status(request));
+                            }
+                            catch (IOException e) {
+                                // TODO
+                                throw new RuntimeException(e);
+                            }
+                        }
+                    }, SnapshotStatusResponse.class);
         }
     }
 
