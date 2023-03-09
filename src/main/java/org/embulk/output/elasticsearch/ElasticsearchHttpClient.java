@@ -48,6 +48,8 @@ import org.opensearch.client.opensearch.core.BulkResponse;
 import org.opensearch.client.opensearch.core.InfoResponse;
 import org.opensearch.client.opensearch.indices.get_alias.IndexAliases;
 import org.opensearch.client.opensearch.indices.GetAliasResponse;
+import org.opensearch.client.opensearch.indices.GetIndexRequest;
+import org.opensearch.client.opensearch.indices.GetIndexResponse;
 import org.opensearch.client.opensearch.OpenSearchClient;
 import org.opensearch.client.RestClient;
 import org.opensearch.client.RestClientBuilder;
@@ -107,47 +109,7 @@ public class ElasticsearchHttpClient
         // {"index" : {}}\n
         // {"k" : "v2"}\n
         // '
-        try (OpenSearchRetryHelper retryHelper = createRetryHelper2(task)) {
-            JsonpMapper jsonpMapper = retryHelper.jsonpMapper();
-            JsonProvider jsonProvider = retryHelper.jsonProvider();
-            Optional<String> idColumn = task.getId();
-            BulkRequest.Builder br = new BulkRequest.Builder();
-
-            for (JsonNode record : records) {
-                // TODO: performance
-                JsonData jsonData = parseRecord(record, jsonpMapper, jsonProvider);
-                Optional<String> id = getRecordId(record, idColumn);
-
-                br.operations(op -> op
-                    .index(idx -> idx
-                        .index(task.getIndex())
-                        .id(id.orElse(null))
-                        .document(jsonData)
-                    )
-                );
-            }
-            retryHelper.requestWithRetry(
-                    new OpenSearchSingleRequester() {
-                        @Override
-                        public <T> T requestOnce(org.opensearch.client.opensearch.OpenSearchClient client, final Class<T> clazz)
-                        {
-                            try {
-                                // TODO: no cast
-                                return clazz.cast(client.bulk(br.build()));
-                            }
-                            catch (IOException e) {
-                                // TODO
-                                throw new RuntimeException(e);
-                            }
-                        }
-
-                        @Override
-                        protected boolean isExceptionToRetry(Exception exception)
-                        {
-                            return task.getId().isPresent();
-                        }
-                    }, BulkResponse.class);
-        }
+        sendBulkRequest(records, task);
     }
 
     public List<String> getIndexByAlias(String aliasName, PluginTask task)
@@ -170,7 +132,7 @@ public class ElasticsearchHttpClient
         // No index: 404
         // Index found: 200
         try {
-            sendRequest(indexName, HttpMethod.GET, task);
+            sendGetIndexRequest(indexName, task);
             return true;
         }
         catch (ResourceNotFoundException ex) {
@@ -355,9 +317,27 @@ public class ElasticsearchHttpClient
         return !snapshots.equals("");
     }
 
-    private InfoResponse sendInfoRequest(final PluginTask task)
+    private BulkResponse sendBulkRequest(JsonNode records, PluginTask task)
     {
         try (OpenSearchRetryHelper retryHelper = createRetryHelper2(task)) {
+            JsonpMapper jsonpMapper = retryHelper.jsonpMapper();
+            JsonProvider jsonProvider = retryHelper.jsonProvider();
+            Optional<String> idColumn = task.getId();
+            BulkRequest.Builder br = new BulkRequest.Builder();
+
+            for (JsonNode record : records) {
+                // TODO: performance
+                JsonData jsonData = parseRecord(record, jsonpMapper, jsonProvider);
+                Optional<String> id = getRecordId(record, idColumn);
+
+                br.operations(op -> op
+                    .index(idx -> idx
+                        .index(task.getIndex())
+                        .id(id.orElse(null))
+                        .document(jsonData)
+                    )
+                );
+            }
             return retryHelper.requestWithRetry(
                     new OpenSearchSingleRequester() {
                         @Override
@@ -365,14 +345,20 @@ public class ElasticsearchHttpClient
                         {
                             try {
                                 // TODO: no cast
-                                return clazz.cast(client.info());
+                                return clazz.cast(client.bulk(br.build()));
                             }
                             catch (IOException e) {
                                 // TODO
                                 throw new RuntimeException(e);
                             }
                         }
-                    }, InfoResponse.class);
+
+                        @Override
+                        protected boolean isExceptionToRetry(Exception exception)
+                        {
+                            return task.getId().isPresent();
+                        }
+                    }, BulkResponse.class);
         }
     }
 
@@ -394,6 +380,50 @@ public class ElasticsearchHttpClient
                             }
                         }
                     }, GetAliasResponse.class);
+        }
+    }
+
+    private GetIndexResponse sendGetIndexRequest(String indexName, PluginTask task)
+    {
+        try (OpenSearchRetryHelper retryHelper = createRetryHelper2(task)) {
+            GetIndexRequest request = new GetIndexRequest.Builder().index(indexName).build();
+
+            return retryHelper.requestWithRetry(
+                    new OpenSearchSingleRequester() {
+                        @Override
+                        public <T> T requestOnce(org.opensearch.client.opensearch.OpenSearchClient client, final Class<T> clazz)
+                        {
+                            try {
+                                // TODO: no cast
+                                return clazz.cast(client.indices().get(request));
+                            }
+                            catch (IOException e) {
+                                // TODO
+                                throw new RuntimeException(e);
+                            }
+                        }
+                    }, GetIndexResponse.class);
+        }
+    }
+
+    private InfoResponse sendInfoRequest(final PluginTask task)
+    {
+        try (OpenSearchRetryHelper retryHelper = createRetryHelper2(task)) {
+            return retryHelper.requestWithRetry(
+                    new OpenSearchSingleRequester() {
+                        @Override
+                        public <T> T requestOnce(org.opensearch.client.opensearch.OpenSearchClient client, final Class<T> clazz)
+                        {
+                            try {
+                                // TODO: no cast
+                                return clazz.cast(client.info());
+                            }
+                            catch (IOException e) {
+                                // TODO
+                                throw new RuntimeException(e);
+                            }
+                        }
+                    }, InfoResponse.class);
         }
     }
 
