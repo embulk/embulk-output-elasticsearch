@@ -50,6 +50,13 @@ import org.opensearch.client.opensearch.indices.get_alias.IndexAliases;
 import org.opensearch.client.opensearch.indices.GetAliasResponse;
 import org.opensearch.client.opensearch.indices.GetIndexRequest;
 import org.opensearch.client.opensearch.indices.GetIndexResponse;
+import org.opensearch.client.opensearch.indices.PutAliasRequest;
+import org.opensearch.client.opensearch.indices.PutAliasResponse;
+import org.opensearch.client.opensearch.indices.update_aliases.Action;
+import org.opensearch.client.opensearch.indices.update_aliases.AddAction;
+import org.opensearch.client.opensearch.indices.update_aliases.RemoveAction;
+import org.opensearch.client.opensearch.indices.UpdateAliasesRequest;
+import org.opensearch.client.opensearch.indices.UpdateAliasesResponse;
 import org.opensearch.client.opensearch.OpenSearchClient;
 import org.opensearch.client.RestClient;
 import org.opensearch.client.RestClientBuilder;
@@ -222,65 +229,43 @@ public class ElasticsearchHttpClient
 
     private void assignAlias(String indexName, String aliasName, PluginTask task)
     {
-        try {
-            if (isIndexExisting(indexName, task)) {
-                if (isAliasExisting(aliasName, task)) {
-                    // curl -XPUT http://localhost:9200/_alias -d\
-                    // "actions" : [
-                    //   {"remove" : {"alias" : "{alias}", "index" : "{index_old}"}},
-                    //   {"add" : {"alias": "{alias}", "index": "{index_new}"}}
-                    // ]
-                    // Success: {"acknowledged":true}
-                    List<String> oldIndices = getIndexByAlias(aliasName, task);
-
-                    Map<String, String> newAlias = new HashMap<>();
-                    newAlias.put("alias", aliasName);
-                    newAlias.put("index", indexName);
-                    Map<String, Map> add = new HashMap<>();
-                    add.put("add", newAlias);
-
-                    Map<String, String> oldAlias = new HashMap<>();
-                    // TODO multiple alias?
-                    for (String oldIndex : oldIndices) {
-                        oldAlias.put("alias", aliasName);
-                        oldAlias.put("index", oldIndex);
-                    }
-                    Map<String, Map> remove = new HashMap<>();
-                    remove.put("remove", oldAlias);
-
-                    List<Map<String, Map>> actions = new ArrayList<>();
-                    actions.add(remove);
-                    actions.add(add);
-                    Map<String, List> rootTree = new HashMap<>();
-                    rootTree.put("actions", actions);
-
-                    String content = jsonMapper.writeValueAsString(rootTree);
-                    sendRequest("/_aliases", HttpMethod.POST, task, content);
-                    log.info("Reassigned alias [{}] to index[{}]", aliasName, indexName);
-                }
-                else {
-                    // curl -XPUT http://localhost:9200/{index}/_alias/{alias}
-                    // Success: {"acknowledged":true}
-                    String path = String.format("/%s/_alias/%s", indexName, aliasName);
-                    sendRequest(path, HttpMethod.PUT, task);
-                    log.info("Assigned alias [{}] to Index [{}]", aliasName, indexName);
-                }
-            }
+        if (!isIndexExisting(indexName, task)) {
+            return;
         }
-        catch (JsonProcessingException ex) {
-            throw new ConfigException(String.format("Failed to assign alias[%s] to index[%s]", aliasName, indexName));
+
+        if (!isAliasExisting(aliasName, task)) {
+            // curl -XPUT http://localhost:9200/{index}/_alias/{alias}
+            // Success: {"acknowledged":true}
+            sendPutAliasRequest(indexName, aliasName, task);
+            log.info("Assigned alias [{}] to Index [{}]", aliasName, indexName);
+
+            return;
         }
+
+        // curl -XPUT http://localhost:9200/_alias -d\
+        // "actions" : [
+        //   {"remove" : {"alias" : "{alias}", "index" : "{index_old}"}},
+        //   {"add" : {"alias": "{alias}", "index": "{index_new}"}}
+        // ]
+        // Success: {"acknowledged":true}
+        List<String> oldIndices = getIndexByAlias(aliasName, task);
+        sendUpdateAliasesRequest(oldIndices, indexName, aliasName, task);
+
+        log.info("Reassigned alias [{}] to index[{}]", aliasName, indexName);
     }
 
     private void deleteIndex(String indexName, PluginTask task)
     {
+        if (!isIndexExisting(indexName, task)) {
+            return;
+        }
+
         // curl -XDELETE localhost:9200/{index}
         // Success: {"acknowledged":true}
-        if (isIndexExisting(indexName, task)) {
-            waitSnapshot(task);
-            sendRequest(indexName, HttpMethod.DELETE, task);
-            log.info("Deleted Index [{}]", indexName);
-        }
+        waitSnapshot(task);
+        sendRequest(indexName, HttpMethod.DELETE, task);
+
+        log.info("Deleted Index [{}]", indexName);
     }
 
     private void waitSnapshot(PluginTask task)
@@ -447,6 +432,54 @@ public class ElasticsearchHttpClient
                             }
                         }
                     }, InfoResponse.class);
+        }
+    }
+
+    private PutAliasResponse sendPutAliasRequest(String indexName, String aliasName, PluginTask task)
+    {
+        try (OpenSearchRetryHelper retryHelper = createRetryHelper2(task)) {
+            PutAliasRequest request = new PutAliasRequest.Builder().index(indexName).name(aliasName).build();
+
+            return retryHelper.requestWithRetry(
+                    new OpenSearchSingleRequester() {
+                        @Override
+                        public <T> T requestOnce(org.opensearch.client.opensearch.OpenSearchClient client, final Class<T> clazz)
+                        {
+                            try {
+                                // TODO: no cast
+                                return clazz.cast(client.indices().putAlias(request));
+                            }
+                            catch (IOException e) {
+                                // TODO
+                                throw new RuntimeException(e);
+                            }
+                        }
+                    }, PutAliasResponse.class);
+        }
+    }
+
+    private UpdateAliasesResponse sendUpdateAliasesRequest(List<String> oldIndices, String indexName, String aliasName, PluginTask task)
+    {
+        try (OpenSearchRetryHelper retryHelper = createRetryHelper2(task)) {
+            UpdateAliasesRequest.Builder br = new UpdateAliasesRequest.Builder();
+            br.actions(ac -> ac.remove(ra -> ra.alias(aliasName).indices(oldIndices)));
+            br.actions(ac -> ac.add(aa -> aa.alias(aliasName).index(indexName)));
+
+            return retryHelper.requestWithRetry(
+                    new OpenSearchSingleRequester() {
+                        @Override
+                        public <T> T requestOnce(org.opensearch.client.opensearch.OpenSearchClient client, final Class<T> clazz)
+                        {
+                            try {
+                                // TODO: no cast
+                                return clazz.cast(client.indices().updateAliases(br.build()));
+                            }
+                            catch (IOException e) {
+                                // TODO
+                                throw new RuntimeException(e);
+                            }
+                        }
+                    }, UpdateAliasesResponse.class);
         }
     }
 
