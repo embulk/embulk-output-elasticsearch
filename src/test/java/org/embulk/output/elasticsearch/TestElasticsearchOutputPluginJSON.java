@@ -35,10 +35,14 @@ import org.embulk.spi.Schema;
 import org.embulk.spi.TransactionalPageOutput;
 import org.embulk.util.config.ConfigMapper;
 import org.embulk.util.config.ConfigMapperFactory;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.opensearch.client.opensearch.core.SearchResponse;
+import org.opensearch.client.opensearch.OpenSearchClient;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
@@ -58,6 +62,7 @@ public class TestElasticsearchOutputPluginJSON
     public EmbulkTestRuntime runtime = new EmbulkTestRuntime();
     private ElasticsearchOutputPlugin plugin;
     private ElasticsearchTestUtils utils;
+    private OpenSearchClient openSearchClient;
 
     @Before
     public void createResources() throws Exception
@@ -68,6 +73,19 @@ public class TestElasticsearchOutputPluginJSON
         utils.prepareBeforeTest(task);
 
         plugin = new ElasticsearchOutputPlugin();
+
+        openSearchClient = utils.client();
+    }
+
+    @After
+    public void close()
+    {
+        try {
+            openSearchClient._transport().close();
+        }
+        catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     @Test
@@ -144,27 +162,20 @@ public class TestElasticsearchOutputPluginJSON
         output.commit();
         Thread.sleep(1500); // Need to wait until index done
 
-        ElasticsearchHttpClient client = new ElasticsearchHttpClient();
-        Method sendRequest = ElasticsearchHttpClient.class.getDeclaredMethod("sendRequest", String.class, HttpMethod.class, PluginTask.class, String.class);
-        sendRequest.setAccessible(true);
-        String path = String.format("/%s/_search", ES_INDEX);
-        String sort = "{\"sort\" : \"id\"}";
-        JsonNode response = (JsonNode) sendRequest.invoke(client, path, HttpMethod.POST, task, sort);
+        SearchResponse<IndexData> response = openSearchClient.search(s -> s.index(ES_INDEX), IndexData.class);
 
-        int totalHits = response.get("hits").get("total").get("value").asInt();
+        int totalHits = response.hits().hits().size();
 
         assertThat(totalHits, is(1));
 
-        if (response.size() > 0) {
-            JsonNode record = response.get("hits").get("hits").get(0).get("_source");
-            assertThat(record.get("id").asInt(), is(1));
-            assertThat(record.get("account").asInt(), is(32864));
-            assertThat(record.get("time").asText(), is("2015-01-27 19:23:49"));
-            assertThat(record.get("purchase").asText(), is("2015-01-27"));
-            assertThat(record.get("flg").asBoolean(), is(true));
-            assertThat(record.get("score").asDouble(), is(123.45));
-            assertThat(record.get("comment").asText(), is("embulk"));
-        }
+        IndexData record = response.hits().hits().get(0).source();
+        assertThat(record.getId(), is(1L));
+        assertThat(record.getAccount(), is(32864L));
+        assertThat(record.getTime(), is("2015-01-27 19:23:49"));
+        assertThat(record.getPurchase(), is("2015-01-27"));
+        assertThat(record.getFlg(), is(true));
+        assertThat(record.getScore(), is(123.45));
+        assertThat(record.getComment(), is("embulk"));
     }
 
     @Test
@@ -192,28 +203,20 @@ public class TestElasticsearchOutputPluginJSON
         output.commit();
         Thread.sleep(1500); // Need to wait until index done
 
-        ElasticsearchHttpClient client = new ElasticsearchHttpClient();
-        Method sendRequest = ElasticsearchHttpClient.class.getDeclaredMethod("sendRequest", String.class, HttpMethod.class, PluginTask.class, String.class);
-        sendRequest.setAccessible(true);
+        SearchResponse<IndexData> response = openSearchClient.search(s -> s.index(ES_INDEX), IndexData.class);
 
-        String path = String.format("/%s/_search", ES_INDEX);
-        String sort = "{\"sort\" : \"id\"}";
-
-        JsonNode response = (JsonNode) sendRequest.invoke(client, path, HttpMethod.POST, task, sort);
-
-        int totalHits = response.get("hits").get("total").get("value").asInt();
+        int totalHits = response.hits().hits().size();
 
         assertThat(totalHits, is(1));
-        if (response.size() > 0) {
-            JsonNode record = response.get("hits").get("hits").get(0).get("_source");
-            assertThat(record.get("id").asInt(), is(2));
-            assertTrue(record.get("account").isNull());
-            assertTrue(record.get("time").isNull());
-            assertThat(record.get("purchase").asText(), is("2015-01-27"));
-            assertThat(record.get("flg").asBoolean(), is(true));
-            assertThat(record.get("score").asDouble(), is(123.45));
-            assertThat(record.get("comment").asText(), is("embulk"));
-        }
+
+        IndexData record = response.hits().hits().get(0).source();
+        assertThat(record.getId(), is(2L));
+        assertTrue(record.getAccount() == null);
+        assertTrue(record.getTime() == null);
+        assertThat(record.getPurchase(), is("2015-01-27"));
+        assertThat(record.getFlg(), is(true));
+        assertThat(record.getScore(), is(123.45));
+        assertThat(record.getComment(), is("embulk"));
     }
 
     @Test

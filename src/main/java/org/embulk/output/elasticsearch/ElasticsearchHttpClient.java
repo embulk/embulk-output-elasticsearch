@@ -16,7 +16,6 @@
 
 package org.embulk.output.elasticsearch;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.json.spi.JsonProvider;
@@ -26,19 +25,9 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.HttpHost;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
-import org.eclipse.jetty.client.util.StringContentProvider;
-import org.eclipse.jetty.http.HttpMethod;
-import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.embulk.config.ConfigException;
-import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.AuthMethod;
-import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.NodeAddressTask;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
-import org.embulk.spi.DataException;
 import org.embulk.spi.Exec;
-import org.embulk.util.retryhelper.jetty92.Jetty92ClientCreator;
-import org.embulk.util.retryhelper.jetty92.Jetty92RetryHelper;
-import org.embulk.util.retryhelper.jetty92.Jetty92SingleRequester;
-import org.embulk.util.retryhelper.jetty92.StringJetty92ResponseEntityReader;
 import org.opensearch.client.json.jackson.JacksonJsonpMapper;
 import org.opensearch.client.json.JsonData;
 import org.opensearch.client.json.JsonpMapper;
@@ -72,21 +61,15 @@ import org.opensearch.client.transport.rest_client.RestClientTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.bind.DatatypeConverter;
-
 import java.io.IOException;
 import java.io.StringReader;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -188,6 +171,7 @@ public class ElasticsearchHttpClient
         return sendInfoRequest(task).version().number();
     }
 
+    // TODO: delete
     public void validateIndexOrAliasName(String index, String type)
     {
         for (int i = 0; i < index.length(); i++) {
@@ -211,16 +195,6 @@ public class ElasticsearchHttpClient
         if (index.equals(".") || index.equals("..")) {
             throw new ConfigException("index must not be '.' or '..'");
         }
-    }
-
-    protected String getAuthorizationHeader(PluginTask task)
-    {
-        String header = "";
-        if (task.getAuthMethod() == AuthMethod.BASIC) {
-            String authString = task.getUser().get() + ":" + task.getPassword().get();
-            header = "Basic " + DatatypeConverter.printBase64Binary(authString.getBytes());
-        }
-        return header;
     }
 
     private Optional<String> getRecordId(JsonNode record, Optional<String> idColumn)
@@ -311,7 +285,7 @@ public class ElasticsearchHttpClient
 
     private BulkResponse sendBulkRequest(JsonNode records, PluginTask task)
     {
-        try (OpenSearchRetryHelper retryHelper = createRetryHelper2(task)) {
+        try (OpenSearchRetryHelper retryHelper = createRetryHelper(task)) {
             JsonpMapper jsonpMapper = retryHelper.jsonpMapper();
             JsonProvider jsonProvider = retryHelper.jsonProvider();
             Optional<String> idColumn = task.getId();
@@ -356,7 +330,7 @@ public class ElasticsearchHttpClient
 
     private GetAliasResponse sendGetAliasRequest(String aliasName, PluginTask task)
     {
-        try (OpenSearchRetryHelper retryHelper = createRetryHelper2(task)) {
+        try (OpenSearchRetryHelper retryHelper = createRetryHelper(task)) {
             return retryHelper.requestWithRetry(
                     new OpenSearchSingleRequester() {
                         @Override
@@ -377,7 +351,7 @@ public class ElasticsearchHttpClient
 
     private GetIndexResponse sendGetIndexRequest(String indexName, PluginTask task)
     {
-        try (OpenSearchRetryHelper retryHelper = createRetryHelper2(task)) {
+        try (OpenSearchRetryHelper retryHelper = createRetryHelper(task)) {
             GetIndexRequest request = new GetIndexRequest.Builder().index(indexName).build();
 
             return retryHelper.requestWithRetry(
@@ -400,7 +374,7 @@ public class ElasticsearchHttpClient
 
     private BooleanResponse sendExistsAliasRequest(String aliasName, PluginTask task)
     {
-        try (OpenSearchRetryHelper retryHelper = createRetryHelper2(task)) {
+        try (OpenSearchRetryHelper retryHelper = createRetryHelper(task)) {
             ExistsAliasRequest request = new ExistsAliasRequest.Builder().name(aliasName).build();
 
             return retryHelper.requestWithRetry(
@@ -423,7 +397,7 @@ public class ElasticsearchHttpClient
 
     private InfoResponse sendInfoRequest(final PluginTask task)
     {
-        try (OpenSearchRetryHelper retryHelper = createRetryHelper2(task)) {
+        try (OpenSearchRetryHelper retryHelper = createRetryHelper(task)) {
             return retryHelper.requestWithRetry(
                     new OpenSearchSingleRequester() {
                         @Override
@@ -444,7 +418,7 @@ public class ElasticsearchHttpClient
 
     private PutAliasResponse sendPutAliasRequest(final String indexName, final String aliasName, final PluginTask task)
     {
-        try (OpenSearchRetryHelper retryHelper = createRetryHelper2(task)) {
+        try (OpenSearchRetryHelper retryHelper = createRetryHelper(task)) {
             PutAliasRequest request = new PutAliasRequest.Builder().index(indexName).name(aliasName).build();
 
             return retryHelper.requestWithRetry(
@@ -467,7 +441,7 @@ public class ElasticsearchHttpClient
 
     private UpdateAliasesResponse sendUpdateAliasesRequest(final List<String> oldIndices, final String indexName, final String aliasName, final PluginTask task)
     {
-        try (OpenSearchRetryHelper retryHelper = createRetryHelper2(task)) {
+        try (OpenSearchRetryHelper retryHelper = createRetryHelper(task)) {
             UpdateAliasesRequest.Builder br = new UpdateAliasesRequest.Builder();
             br.actions(ac -> ac.remove(ra -> ra.alias(aliasName).indices(oldIndices)));
             br.actions(ac -> ac.add(aa -> aa.alias(aliasName).index(indexName)));
@@ -492,7 +466,7 @@ public class ElasticsearchHttpClient
 
     private SnapshotStatusResponse sendSnapshotStatusRequest(final PluginTask task)
     {
-        try (OpenSearchRetryHelper retryHelper = createRetryHelper2(task)) {
+        try (OpenSearchRetryHelper retryHelper = createRetryHelper(task)) {
             SnapshotStatusRequest request = new SnapshotStatusRequest.Builder().build();
 
             return retryHelper.requestWithRetry(
@@ -515,7 +489,7 @@ public class ElasticsearchHttpClient
 
     private DeleteIndexResponse sendDeleteIndexRequest(final String indexName, final PluginTask task)
     {
-        try (OpenSearchRetryHelper retryHelper = createRetryHelper2(task)) {
+        try (OpenSearchRetryHelper retryHelper = createRetryHelper(task)) {
             DeleteIndexRequest request = new DeleteIndexRequest.Builder().index(indexName).build();
 
             return retryHelper.requestWithRetry(
@@ -536,92 +510,7 @@ public class ElasticsearchHttpClient
         }
     }
 
-    private JsonNode sendRequest(String path, final HttpMethod method, PluginTask task)
-    {
-        return sendRequest(path, method, task, "");
-    }
-
-    private JsonNode sendRequest(String path, final HttpMethod method, final PluginTask task, final String content)
-    {
-        final String uri = createRequestUri(task, path);
-        final String authorizationHeader = getAuthorizationHeader(task);
-
-        try (Jetty92RetryHelper retryHelper = createRetryHelper(task)) {
-            String responseBody = retryHelper.requestWithRetry(
-                    new StringJetty92ResponseEntityReader(task.getTimeoutMills()),
-                    new Jetty92SingleRequester() {
-                        @Override
-                        public void requestOnce(org.eclipse.jetty.client.HttpClient client, org.eclipse.jetty.client.api.Response.Listener responseListener)
-                        {
-                            org.eclipse.jetty.client.api.Request request = client
-                                    .newRequest(uri)
-                                    .accept("application/json")
-                                    .timeout(task.getTimeoutMills(), TimeUnit.MILLISECONDS)
-                                    .method(method);
-                            if (method == HttpMethod.POST) {
-                                request.content(new StringContentProvider(content), "application/json");
-                            }
-
-                            if (!authorizationHeader.isEmpty()) {
-                                request.header("Authorization", authorizationHeader);
-                            }
-                            request.send(responseListener);
-                        }
-
-                        @Override
-                        protected boolean isExceptionToRetry(Exception exception)
-                        {
-                            return task.getId().isPresent();
-                        }
-
-                        @Override
-                        public boolean isResponseStatusToRetry(org.eclipse.jetty.client.api.Response response)
-                        {
-                            int status = response.getStatus();
-                            if (status == 404) {
-                                throw new ResourceNotFoundException("Requested resource was not found");
-                            }
-                            else if (status == 429) {
-                                return true;  // Retry if 429.
-                            }
-                            return status / 100 != 4;  // Retry unless 4xx except for 429.
-                        }
-                    });
-            return parseJson(responseBody);
-        }
-    }
-
-    private String createRequestUri(PluginTask task, String path)
-    {
-        if (!path.startsWith("/")) {
-            path = "/" + path;
-        }
-        String protocol = task.getUseSsl() ? "https" : "http";
-        String nodeAddress = getRandomNodeAddress(task);
-        return String.format("%s://%s%s", protocol, nodeAddress, path);
-    }
-
-    // Return node address (RoundRobin)
-    private String getRandomNodeAddress(PluginTask task)
-    {
-        List<NodeAddressTask> nodes = task.getNodes();
-        Random random = new Random();
-        int index = random.nextInt(nodes.size());
-        NodeAddressTask node =  nodes.get(index);
-        return node.getHost() + ":" + node.getPort();
-    }
-
-    private JsonNode parseJson(final String json) throws DataException
-    {
-        try {
-            return this.jsonMapper.readTree(json);
-        }
-        catch (IOException ex) {
-            throw new DataException(ex);
-        }
-    }
-
-    private OpenSearchRetryHelper createRetryHelper2(final PluginTask task)
+    private OpenSearchRetryHelper createRetryHelper(final PluginTask task)
     {
         return new OpenSearchRetryHelper(
                 task.getMaximumRetries(),
@@ -651,55 +540,6 @@ public class ElasticsearchHttpClient
                         }
                         catch (Exception ex) {
                             throw new RuntimeException(ex);
-                        }
-                    }
-                });
-    }
-
-    private Jetty92RetryHelper createRetryHelper(final PluginTask task)
-    {
-        return new Jetty92RetryHelper(
-                task.getMaximumRetries(),
-                task.getInitialRetryIntervalMillis(),
-                task.getMaximumRetryIntervalMillis(),
-                new Jetty92ClientCreator() {
-                    @Override
-                    public org.eclipse.jetty.client.HttpClient createAndStart()
-                    {
-                        try {
-                            final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-                            credentialsProvider.setCredentials(AuthScope.ANY,
-                                new UsernamePasswordCredentials("admin", "admin"));
-
-                            RestClient restClient = RestClient.builder(new HttpHost("localhost", 9200, "https")).
-                              setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback() {
-                                @Override
-                                public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder)
-                                {
-                                    return httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
-                                }
-                              }).build();
-                            OpenSearchTransport transport = new RestClientTransport(restClient, new JacksonJsonpMapper());
-                            OpenSearchClient client = new OpenSearchClient(transport);
-                        }
-                        catch (Exception e) {
-                            if (e instanceof RuntimeException) {
-                                throw (RuntimeException) e;
-                            }
-                            throw new RuntimeException(e);
-                        }
-
-                        org.eclipse.jetty.client.HttpClient client = new org.eclipse.jetty.client.HttpClient(new SslContextFactory());
-                        client.setConnectTimeout(task.getConnectTimeoutMills());
-                        try {
-                            client.start();
-                            return client;
-                        }
-                        catch (Exception e) {
-                            if (e instanceof RuntimeException) {
-                                throw (RuntimeException) e;
-                            }
-                            throw new RuntimeException(e);
                         }
                     }
                 });

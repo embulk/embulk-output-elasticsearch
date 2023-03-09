@@ -18,11 +18,23 @@ package org.embulk.output.elasticsearch;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.HttpHost;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.embulk.EmbulkTestRuntime;
 import org.embulk.config.ConfigSource;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
 import org.embulk.spi.Schema;
 import org.embulk.spi.type.Types;
+import org.opensearch.client.json.jackson.JacksonJsonpMapper;
+import org.opensearch.client.opensearch.OpenSearchClient;
+import org.opensearch.client.RestClient;
+import org.opensearch.client.RestClientBuilder;
+import org.opensearch.client.transport.OpenSearchTransport;
+import org.opensearch.client.transport.rest_client.RestClientTransport;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -196,5 +208,30 @@ public class ElasticsearchTestUtils
                 .add("score", Types.DOUBLE)
                 .add("comment", Types.STRING)
                 .build();
+    }
+
+    public OpenSearchClient client()
+    {
+        RestClient restClient = null;
+        try {
+            // TODO: secret, authorization, timeout
+            final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+            credentialsProvider.setCredentials(AuthScope.ANY,
+                new UsernamePasswordCredentials("admin", "admin"));
+
+            restClient = RestClient.builder(new HttpHost("opensearch", 9200, "http")).
+              setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback() {
+                @Override
+                public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder)
+                {
+                    return httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+                }
+              }).build();
+            OpenSearchTransport transport = new RestClientTransport(restClient, new JacksonJsonpMapper());
+            return new OpenSearchClient(transport);
+        }
+        catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }
