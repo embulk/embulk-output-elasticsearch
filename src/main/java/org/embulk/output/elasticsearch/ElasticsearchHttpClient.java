@@ -46,6 +46,8 @@ import org.opensearch.client.json.JsonpMapper;
 import org.opensearch.client.opensearch.core.BulkRequest;
 import org.opensearch.client.opensearch.core.BulkResponse;
 import org.opensearch.client.opensearch.core.InfoResponse;
+import org.opensearch.client.opensearch.indices.get_alias.IndexAliases;
+import org.opensearch.client.opensearch.indices.GetAliasResponse;
 import org.opensearch.client.opensearch.OpenSearchClient;
 import org.opensearch.client.RestClient;
 import org.opensearch.client.RestClientBuilder;
@@ -70,6 +72,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class ElasticsearchHttpClient
 {
@@ -105,9 +108,9 @@ public class ElasticsearchHttpClient
         // {"k" : "v2"}\n
         // '
         try (OpenSearchRetryHelper retryHelper = createRetryHelper2(task)) {
-            Optional<String> idColumn = task.getId();
             JsonpMapper jsonpMapper = retryHelper.jsonpMapper();
             JsonProvider jsonProvider = retryHelper.jsonProvider();
+            Optional<String> idColumn = task.getId();
             BulkRequest.Builder br = new BulkRequest.Builder();
 
             for (JsonNode record : records) {
@@ -152,16 +155,13 @@ public class ElasticsearchHttpClient
         // curl -XGET localhost:9200/_alias/{alias}
         // No alias: 404
         // Alias found: {"embulk_20161018-183738":{"aliases":{"embulk":{}}}}
-        List<String> indices = new ArrayList<>();
-        String path = String.format("/_alias/%s", aliasName);
-        JsonNode response = sendRequest(path, HttpMethod.GET, task);
-
-        Iterator it = response.fieldNames();
-        while (it.hasNext()) {
-            indices.add(it.next().toString());
+        GetAliasResponse getAliasResponse = sendGetAliasRequest(aliasName, task);
+        Map<String, IndexAliases> result = getAliasResponse.result();
+        if (result == null || result.isEmpty()) {
+            return new ArrayList<>();
         }
 
-        return indices;
+        return result.keySet().stream().collect(Collectors.toList());
     }
 
     public boolean isIndexExisting(String indexName, PluginTask task)
@@ -373,6 +373,27 @@ public class ElasticsearchHttpClient
                             }
                         }
                     }, InfoResponse.class);
+        }
+    }
+
+    private GetAliasResponse sendGetAliasRequest(String aliasName, PluginTask task)
+    {
+        try (OpenSearchRetryHelper retryHelper = createRetryHelper2(task)) {
+            return retryHelper.requestWithRetry(
+                    new OpenSearchSingleRequester() {
+                        @Override
+                        public <T> T requestOnce(org.opensearch.client.opensearch.OpenSearchClient client, final Class<T> clazz)
+                        {
+                            try {
+                                // TODO: no cast
+                                return clazz.cast(client.indices().getAlias(a -> a.name(aliasName)));
+                            }
+                            catch (IOException e) {
+                                // TODO
+                                throw new RuntimeException(e);
+                            }
+                        }
+                    }, GetAliasResponse.class);
         }
     }
 
