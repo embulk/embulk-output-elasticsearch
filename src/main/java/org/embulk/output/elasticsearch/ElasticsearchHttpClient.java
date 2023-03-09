@@ -19,6 +19,7 @@ package org.embulk.output.elasticsearch;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.json.spi.JsonProvider;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
@@ -40,6 +41,10 @@ import org.embulk.util.retryhelper.jetty92.Jetty92RetryHelper;
 import org.embulk.util.retryhelper.jetty92.Jetty92SingleRequester;
 import org.embulk.util.retryhelper.jetty92.StringJetty92ResponseEntityReader;
 import org.opensearch.client.json.jackson.JacksonJsonpMapper;
+import org.opensearch.client.json.JsonData;
+import org.opensearch.client.json.JsonpMapper;
+import org.opensearch.client.opensearch.core.BulkRequest;
+import org.opensearch.client.opensearch.core.BulkResponse;
 import org.opensearch.client.opensearch.core.InfoResponse;
 import org.opensearch.client.opensearch.OpenSearchClient;
 import org.opensearch.client.RestClient;
@@ -53,6 +58,7 @@ import org.slf4j.LoggerFactory;
 import javax.xml.bind.DatatypeConverter;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,6 +69,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.Optional;
 
 public class ElasticsearchHttpClient
 {
@@ -87,33 +94,56 @@ public class ElasticsearchHttpClient
 
     public void push(JsonNode records, PluginTask task)
     {
-        int bulkActions = task.getBulkActions();
-        long bulkSize = task.getBulkSize();
+        if (records.size() == 0) {
+            return;
+        }
+
         // curl -xPOST localhost:9200/{index}/{type}/_bulk -d '
         // {"index" : {}}\n
         // {"k" : "v"}\n
         // {"index" : {}}\n
         // {"k" : "v2"}\n
         // '
-        try {
-            String path = String.format("/%s/_bulk", task.getIndex());
-            int recordSize = records.size();
-            String idColumn = task.getId().orElse(null);
-            if (recordSize > 0) {
-                StringBuilder sb = new StringBuilder();
-                for (JsonNode record : records) {
-                    sb.append(createIndexRequest(idColumn, record));
+        try (OpenSearchRetryHelper retryHelper = createRetryHelper2(task)) {
+            Optional<String> idColumn = task.getId();
+            JsonpMapper jsonpMapper = retryHelper.jsonpMapper();
+            JsonProvider jsonProvider = retryHelper.jsonProvider();
+            BulkRequest.Builder br = new BulkRequest.Builder();
 
-                    String requestString = jsonMapper.writeValueAsString(record);
-                    sb.append("\n")
-                            .append(requestString)
-                            .append("\n");
-                }
-                sendRequest(path, HttpMethod.POST, task, sb.toString());
+            for (JsonNode record : records) {
+                // TODO: performance
+                JsonData jsonData = parseRecord(record, jsonpMapper, jsonProvider);
+                Optional<String> id = getRecordId(record, idColumn);
+
+                br.operations(op -> op
+                    .index(idx -> idx
+                        .index(task.getIndex())
+                        .id(id.orElse(null))
+                        .document(jsonData)
+                    )
+                );
             }
-        }
-        catch (JsonProcessingException ex) {
-            throw new DataException(ex);
+            retryHelper.requestWithRetry(
+                    new OpenSearchSingleRequester() {
+                        @Override
+                        public <T> T requestOnce(org.opensearch.client.opensearch.OpenSearchClient client, final Class<T> clazz)
+                        {
+                            try {
+                                // TODO: no cast
+                                return clazz.cast(client.bulk(br.build()));
+                            }
+                            catch (IOException e) {
+                                // TODO
+                                throw new RuntimeException(e);
+                            }
+                        }
+
+                        @Override
+                        protected boolean isExceptionToRetry(Exception exception)
+                        {
+                            return task.getId().isPresent();
+                        }
+                    }, BulkResponse.class);
         }
     }
 
@@ -219,23 +249,13 @@ public class ElasticsearchHttpClient
         }
     }
 
-    private String createIndexRequest(String idColumn, JsonNode record) throws JsonProcessingException
+    private Optional<String> getRecordId(JsonNode record, Optional<String> idColumn)
     {
-        // index name and type are set at path("/{index}/{type}"). So no need to set
-        if (idColumn != null && record.hasNonNull(idColumn)) {
-            // {"index" : {"_id" : "v"}}
-            Map<String, Map> indexRequest = new HashMap<>();
-
-            Map<String, JsonNode> idRequest = new HashMap<>();
-            idRequest.put("_id", record.get(idColumn));
-
-            indexRequest.put("index", idRequest);
-            return jsonMapper.writeValueAsString(indexRequest);
+        if (idColumn.isPresent() && record.hasNonNull(idColumn.get())) {
+            return Optional.of(record.get(idColumn.get()).asText());
         }
-        else {
-            // {"index" : {}}
-            return "{\"index\" : {}}";
-        }
+
+        return Optional.empty();
     }
 
     private void assignAlias(String indexName, String aliasName, PluginTask task)
@@ -523,6 +543,11 @@ public class ElasticsearchHttpClient
                         }
                     }
                 });
+    }
+
+    private JsonData parseRecord(JsonNode record, JsonpMapper jsonpMapper, JsonProvider jsonProvider)
+    {
+        return JsonData.from(jsonProvider.createParser(new StringReader(record.toString())), jsonpMapper);
     }
 
     protected String getAuthorizationHeader(PluginTask task)

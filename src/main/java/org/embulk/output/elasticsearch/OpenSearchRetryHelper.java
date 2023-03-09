@@ -16,6 +16,7 @@
 
 package org.embulk.output.elasticsearch;
 
+import jakarta.json.spi.JsonProvider;
 import java.io.IOException;
 import java.util.Locale;
 import org.eclipse.jetty.client.HttpResponseException;
@@ -24,6 +25,7 @@ import org.embulk.util.retryhelper.jetty92.Jetty92ResponseReader;
 import org.embulk.util.retryhelper.Retryable;
 import org.embulk.util.retryhelper.RetryExecutor;
 import org.embulk.util.retryhelper.RetryGiveupException;
+import org.opensearch.client.json.JsonpMapper;
 import org.opensearch.client.opensearch._types.OpenSearchException;
 import org.opensearch.client.opensearch.OpenSearchClient;
 import org.slf4j.LoggerFactory;
@@ -124,6 +126,16 @@ public class OpenSearchRetryHelper
         catch (IOException ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    public JsonpMapper jsonpMapper()
+    {
+        return this.clientStarted._transport().jsonpMapper();
+    }
+
+    public JsonProvider jsonProvider()
+    {
+        return jsonpMapper().jsonProvider();
     }
 
     private final int maximumRetries;
