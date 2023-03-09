@@ -35,7 +35,6 @@ import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.NodeAdd
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
 import org.embulk.spi.DataException;
 import org.embulk.spi.Exec;
-import org.embulk.spi.time.Timestamp;
 import org.embulk.util.retryhelper.jetty92.Jetty92ClientCreator;
 import org.embulk.util.retryhelper.jetty92.Jetty92RetryHelper;
 import org.embulk.util.retryhelper.jetty92.Jetty92SingleRequester;
@@ -46,6 +45,7 @@ import org.opensearch.client.json.JsonpMapper;
 import org.opensearch.client.opensearch.core.BulkRequest;
 import org.opensearch.client.opensearch.core.BulkResponse;
 import org.opensearch.client.opensearch.core.InfoResponse;
+import org.opensearch.client.opensearch.indices.ExistsAliasRequest;
 import org.opensearch.client.opensearch.indices.get_alias.IndexAliases;
 import org.opensearch.client.opensearch.indices.GetAliasResponse;
 import org.opensearch.client.opensearch.indices.GetIndexRequest;
@@ -53,6 +53,7 @@ import org.opensearch.client.opensearch.indices.GetIndexResponse;
 import org.opensearch.client.opensearch.OpenSearchClient;
 import org.opensearch.client.RestClient;
 import org.opensearch.client.RestClientBuilder;
+import org.opensearch.client.transport.endpoints.BooleanResponse;
 import org.opensearch.client.transport.OpenSearchTransport;
 import org.opensearch.client.transport.rest_client.RestClientTransport;
 
@@ -64,6 +65,7 @@ import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.io.StringReader;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -142,25 +144,13 @@ public class ElasticsearchHttpClient
 
     public String generateNewIndexName(String indexName)
     {
-        Timestamp time = Exec.getTransactionTime();
-        return indexName + new SimpleDateFormat("_yyyyMMdd-HHmmss").format(time.toEpochMilli());
+        return indexName + new SimpleDateFormat("_yyyyMMdd-HHmmss").format(getTransactionTime().toEpochMilli());
     }
 
     public boolean isAliasExisting(String aliasName, PluginTask task)
     {
-        // curl -XGET localhost:9200/_aliases  // List all aliases
-        // No aliases: {}
-        // Aliases found: {"embulk_20161018-183738":{"aliases":{"embulk":{}}}}
-        JsonNode response = sendRequest("/_aliases", HttpMethod.GET, task);
-        if (response.size() == 0) {
-            return false;
-        }
-        for (JsonNode index : response) {
-            if (index.has("aliases") && index.get("aliases").has(aliasName)) {
-                return true;
-            }
-        }
-        return false;
+        BooleanResponse booleanResponse = sendExistsAliasRequest(aliasName, task);
+        return booleanResponse.value();
     }
 
     // Should be called just once while Embulk transaction.
@@ -209,6 +199,16 @@ public class ElasticsearchHttpClient
         if (index.equals(".") || index.equals("..")) {
             throw new ConfigException("index must not be '.' or '..'");
         }
+    }
+
+    protected String getAuthorizationHeader(PluginTask task)
+    {
+        String header = "";
+        if (task.getAuthMethod() == AuthMethod.BASIC) {
+            String authString = task.getUser().get() + ":" + task.getPassword().get();
+            header = "Basic " + DatatypeConverter.printBase64Binary(authString.getBytes());
+        }
+        return header;
     }
 
     private Optional<String> getRecordId(JsonNode record, Optional<String> idColumn)
@@ -403,6 +403,29 @@ public class ElasticsearchHttpClient
                             }
                         }
                     }, GetIndexResponse.class);
+        }
+    }
+
+    private BooleanResponse sendExistsAliasRequest(String aliasName, PluginTask task)
+    {
+        try (OpenSearchRetryHelper retryHelper = createRetryHelper2(task)) {
+            ExistsAliasRequest request = new ExistsAliasRequest.Builder().name(aliasName).build();
+
+            return retryHelper.requestWithRetry(
+                    new OpenSearchSingleRequester() {
+                        @Override
+                        public <T> T requestOnce(org.opensearch.client.opensearch.OpenSearchClient client, final Class<T> clazz)
+                        {
+                            try {
+                                // TODO: no cast
+                                return clazz.cast(client.indices().existsAlias(request));
+                            }
+                            catch (IOException e) {
+                                // TODO
+                                throw new RuntimeException(e);
+                            }
+                        }
+                    }, BooleanResponse.class);
         }
     }
 
@@ -601,13 +624,25 @@ public class ElasticsearchHttpClient
         return JsonData.from(jsonProvider.createParser(new StringReader(record.toString())), jsonpMapper);
     }
 
-    protected String getAuthorizationHeader(PluginTask task)
+    @SuppressWarnings("deprecation")
+    private static Instant getTransactionTime()
     {
-        String header = "";
-        if (task.getAuthMethod() == AuthMethod.BASIC) {
-            String authString = task.getUser().get() + ":" + task.getPassword().get();
-            header = "Basic " + DatatypeConverter.printBase64Binary(authString.getBytes());
+        if (HAS_EXEC_GET_TRANSACTION_TIME_INSTANT) {
+            return Exec.getTransactionTimeInstant();
         }
-        return header;
+        return Exec.getTransactionTime().getInstant();
     }
+
+    private static boolean hasExecGetTransactionTimeInstant()
+    {
+        try {
+            Exec.class.getMethod("getTransactionTimeInstant");
+        }
+        catch (final NoSuchMethodException ex) {
+            return false;
+        }
+        return true;
+    }
+
+    private static final boolean HAS_EXEC_GET_TRANSACTION_TIME_INSTANT = hasExecGetTransactionTimeInstant();
 }

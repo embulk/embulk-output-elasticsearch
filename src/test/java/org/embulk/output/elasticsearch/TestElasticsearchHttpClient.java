@@ -32,6 +32,7 @@ import org.junit.Test;
 
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 
 import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_ALIAS;
 import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_INDEX;
@@ -116,7 +117,7 @@ public class TestElasticsearchHttpClient
     {
         ElasticsearchHttpClient client = new ElasticsearchHttpClient();
         String newIndexName = client.generateNewIndexName(ES_INDEX);
-        Timestamp time = Exec.getTransactionTime();
+        Instant time = Exec.getTransactionTime().getInstant();
         assertThat(newIndexName, is(ES_INDEX + new SimpleDateFormat("_yyyyMMdd-HHmmss").format(time.toEpochMilli())));
     }
 
