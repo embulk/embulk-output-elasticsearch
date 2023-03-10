@@ -56,7 +56,7 @@ import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_INDEX;
 import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_INDEX_TYPE;
 import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_NODES;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class TestElasticsearchOutputPlugin

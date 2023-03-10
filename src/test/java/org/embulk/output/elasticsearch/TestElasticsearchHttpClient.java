@@ -42,8 +42,8 @@ import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_ALIAS;
 import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_INDEX;
 import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_INDEX2;
 import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_NODES;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class TestElasticsearchHttpClient
 {

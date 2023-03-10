@@ -64,6 +64,7 @@ dependencies {
     implementation 'org.opensearch.client:opensearch-java:2.2.0'
 
     testImplementation "junit:junit:4.13.2"
+    testImplementation "org.hamcrest:hamcrest:2.2"
     testImplementation "org.embulk:embulk-core:0.10.28"
     testImplementation "org.embulk:embulk-core:0.10.28:tests"
     testImplementation "org.embulk:embulk-standards:0.10.28"
