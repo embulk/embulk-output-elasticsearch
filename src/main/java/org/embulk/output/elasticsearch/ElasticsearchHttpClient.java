@@ -21,11 +21,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.json.spi.JsonProvider;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.HttpHost;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.embulk.config.ConfigException;
+import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.AuthMethod;
+import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.NodeAddressTask;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
 import org.embulk.spi.Exec;
 import org.opensearch.client.json.jackson.JacksonJsonpMapper;
@@ -520,22 +523,32 @@ public class ElasticsearchHttpClient
                     @Override
                     public org.opensearch.client.opensearch.OpenSearchClient createAndStart()
                     {
-                        RestClient restClient = null;
                         try {
-                            // TODO: secret, authorization, timeout
-                            final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-                            credentialsProvider.setCredentials(AuthScope.ANY,
-                                new UsernamePasswordCredentials("admin", "admin"));
-
-                            restClient = RestClient.builder(new HttpHost("opensearch", 9200, "http")).
-                              setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback() {
+                            RestClientBuilder restClientBuilder = RestClient.builder(getHttpHosts(task).toArray(new HttpHost[0]));
+                            restClientBuilder.setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback() {
                                 @Override
                                 public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder)
                                 {
-                                    return httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+                                    if (task.getAuthMethod() == AuthMethod.BASIC) {
+                                        final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+                                        credentialsProvider.setCredentials(AuthScope.ANY,
+                                            new UsernamePasswordCredentials(task.getUser().get(), task.getPassword().get()));
+                                        httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+                                    }
+
+                                    return httpClientBuilder;
                                 }
-                              }).build();
-                            OpenSearchTransport transport = new RestClientTransport(restClient, new JacksonJsonpMapper());
+                            });
+                            restClientBuilder.setRequestConfigCallback(new RestClientBuilder.RequestConfigCallback() {
+                                @Override
+                                public RequestConfig.Builder customizeRequestConfig(RequestConfig.Builder requestConfigBuilder)
+                                {
+                                    requestConfigBuilder.setConnectTimeout(task.getConnectTimeoutMills());
+                                    requestConfigBuilder.setConnectionRequestTimeout(task.getTimeoutMills());
+                                    return requestConfigBuilder;
+                                }
+                            });
+                            OpenSearchTransport transport = new RestClientTransport(restClientBuilder.build(), new JacksonJsonpMapper());
                             return new OpenSearchClient(transport);
                         }
                         catch (Exception ex) {
@@ -543,6 +556,16 @@ public class ElasticsearchHttpClient
                         }
                     }
                 });
+    }
+
+    private List<HttpHost> getHttpHosts(PluginTask task)
+    {
+        List<HttpHost> hosts = new ArrayList<>();
+        String protocol = task.getUseSsl() ? "https" : "http";
+        for (NodeAddressTask node : task.getNodes()) {
+            hosts.add(new HttpHost(node.getHost(), node.getPort(), protocol));
+        }
+        return hosts;
     }
 
     private JsonData parseRecord(JsonNode record, JsonpMapper jsonpMapper, JsonProvider jsonProvider)

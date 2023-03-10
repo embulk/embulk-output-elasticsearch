@@ -55,6 +55,7 @@ public class ElasticsearchTestUtils
     public static String JSON_PATH_PREFIX;
     public static String ES_INDEX2;
     public static String ES_ALIAS;
+    public static String ES_AUTH_METHOD;
     public static String ES_USER;
     public static String ES_PASSWORD;
 
@@ -73,6 +74,7 @@ public class ElasticsearchTestUtils
         ES_BULK_ACTIONS = 1000;
         ES_BULK_SIZE = 5242880;
         ES_CONCURRENT_REQUESTS = 5;
+        ES_AUTH_METHOD = "basic";
         ES_USER = "admin";
         ES_PASSWORD = "admin";
 
@@ -113,6 +115,7 @@ public class ElasticsearchTestUtils
                 .set("bulk_size", ES_BULK_SIZE)
                 .set("concurrent_requests", ES_CONCURRENT_REQUESTS)
                 .set("maximum_retries", 2)
+                .set("auth_method", ES_AUTH_METHOD)
                 .set("user", ES_USER)
                 .set("password", ES_PASSWORD);
     }
@@ -140,6 +143,7 @@ public class ElasticsearchTestUtils
                 .set("concurrent_requests", ES_CONCURRENT_REQUESTS)
                 .set("maximum_retries", 2)
                 .set("fill_null_for_empty_column", true)
+                .set("auth_method", ES_AUTH_METHOD)
                 .set("user", ES_USER)
                 .set("password", ES_PASSWORD);
     }
@@ -214,12 +218,11 @@ public class ElasticsearchTestUtils
     {
         RestClient restClient = null;
         try {
-            // TODO: secret, authorization, timeout
             final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
             credentialsProvider.setCredentials(AuthScope.ANY,
-                new UsernamePasswordCredentials("admin", "admin"));
+                new UsernamePasswordCredentials(ES_USER, ES_PASSWORD));
 
-            restClient = RestClient.builder(new HttpHost("opensearch", 9200, "http")).
+            restClient = RestClient.builder(new HttpHost(ES_HOST, ES_PORT, "http")).
               setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback() {
                 @Override
                 public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder)
