@@ -50,7 +50,7 @@ public class OpenSearchRetryHelper
         this.logger = LoggerFactory.getLogger(OpenSearchRetryHelper.class);
     }
 
-    public <T> T requestWithRetry(final OpenSearchSingleRequester singleRequester, final Class<T> responseType)
+    public <T> T requestWithRetry(final OpenSearchSingleRequester<T> singleRequester)
     {
         try {
             return RetryExecutor.builder()
@@ -64,7 +64,7 @@ public class OpenSearchRetryHelper
                                 throws Exception
                         {
                             try {
-                                return singleRequester.requestOnce(clientStarted, responseType);
+                                return singleRequester.requestOnce(clientStarted);
                             }
                             catch (OpenSearchException e) {
                                 throw e;

@@ -16,9 +16,9 @@
 
 package org.embulk.output.elasticsearch;
 
-public abstract class OpenSearchSingleRequester
+public abstract class OpenSearchSingleRequester<T>
 {
-    public abstract <T> T requestOnce(org.opensearch.client.opensearch.OpenSearchClient client, final Class<T> responseType);
+    public abstract T requestOnce(org.opensearch.client.opensearch.OpenSearchClient client);
 
     public final boolean toRetry(Exception exception)
     {

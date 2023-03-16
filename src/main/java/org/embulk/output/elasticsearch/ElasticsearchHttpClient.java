@@ -309,16 +309,15 @@ public class ElasticsearchHttpClient
                 );
             }
             return retryHelper.requestWithRetry(
-                    new OpenSearchSingleRequester() {
+                    new OpenSearchSingleRequester<BulkResponse>() {
                         @Override
-                        public <T> T requestOnce(org.opensearch.client.opensearch.OpenSearchClient client, final Class<T> clazz)
+                        public BulkResponse requestOnce(org.opensearch.client.opensearch.OpenSearchClient client)
                         {
                             try {
                                 TransportOptions filterOptions = client._transport().options().with(b -> b
-                                    .setParameter("filter_path", "-items")
+                                    .setParameter("filter_path", "-took,-items.index._*")
                                 );
-                                // TODO: no cast
-                                return clazz.cast(client.withTransportOptions(filterOptions).bulk(br.build()));
+                                return client.withTransportOptions(filterOptions).bulk(br.build());
                             }
                             catch (IOException e) {
                                 throw new RuntimeException(e);
@@ -330,7 +329,7 @@ public class ElasticsearchHttpClient
                         {
                             return task.getId().isPresent();
                         }
-                    }, BulkResponse.class);
+                    });
         }
     }
 
@@ -338,19 +337,18 @@ public class ElasticsearchHttpClient
     {
         try (OpenSearchRetryHelper retryHelper = createRetryHelper(task)) {
             return retryHelper.requestWithRetry(
-                    new OpenSearchSingleRequester() {
+                    new OpenSearchSingleRequester<GetAliasResponse>() {
                         @Override
-                        public <T> T requestOnce(org.opensearch.client.opensearch.OpenSearchClient client, final Class<T> clazz)
+                        public GetAliasResponse requestOnce(org.opensearch.client.opensearch.OpenSearchClient client)
                         {
                             try {
-                                // TODO: no cast
-                                return clazz.cast(client.indices().getAlias(a -> a.name(aliasName)));
+                                return client.indices().getAlias(a -> a.name(aliasName));
                             }
                             catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
                         }
-                    }, GetAliasResponse.class);
+                    });
         }
     }
 
@@ -360,19 +358,18 @@ public class ElasticsearchHttpClient
             GetIndexRequest request = new GetIndexRequest.Builder().index(indexName).build();
 
             return retryHelper.requestWithRetry(
-                    new OpenSearchSingleRequester() {
+                    new OpenSearchSingleRequester<GetIndexResponse>() {
                         @Override
-                        public <T> T requestOnce(org.opensearch.client.opensearch.OpenSearchClient client, final Class<T> clazz)
+                        public GetIndexResponse requestOnce(org.opensearch.client.opensearch.OpenSearchClient client)
                         {
                             try {
-                                // TODO: no cast
-                                return clazz.cast(client.indices().get(request));
+                                return client.indices().get(request);
                             }
                             catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
                         }
-                    }, GetIndexResponse.class);
+                    });
         }
     }
 
@@ -382,19 +379,18 @@ public class ElasticsearchHttpClient
             ExistsAliasRequest request = new ExistsAliasRequest.Builder().name(aliasName).build();
 
             return retryHelper.requestWithRetry(
-                    new OpenSearchSingleRequester() {
+                    new OpenSearchSingleRequester<BooleanResponse>() {
                         @Override
-                        public <T> T requestOnce(org.opensearch.client.opensearch.OpenSearchClient client, final Class<T> clazz)
+                        public BooleanResponse requestOnce(org.opensearch.client.opensearch.OpenSearchClient client)
                         {
                             try {
-                                // TODO: no cast
-                                return clazz.cast(client.indices().existsAlias(request));
+                                return client.indices().existsAlias(request);
                             }
                             catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
                         }
-                    }, BooleanResponse.class);
+                    });
         }
     }
 
@@ -402,19 +398,18 @@ public class ElasticsearchHttpClient
     {
         try (OpenSearchRetryHelper retryHelper = createRetryHelper(task)) {
             return retryHelper.requestWithRetry(
-                    new OpenSearchSingleRequester() {
+                    new OpenSearchSingleRequester<InfoResponse>() {
                         @Override
-                        public <T> T requestOnce(org.opensearch.client.opensearch.OpenSearchClient client, final Class<T> clazz)
+                        public InfoResponse requestOnce(org.opensearch.client.opensearch.OpenSearchClient client)
                         {
                             try {
-                                // TODO: no cast
-                                return clazz.cast(client.info());
+                                return client.info();
                             }
                             catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
                         }
-                    }, InfoResponse.class);
+                    });
         }
     }
 
@@ -424,19 +419,18 @@ public class ElasticsearchHttpClient
             PutAliasRequest request = new PutAliasRequest.Builder().index(indexName).name(aliasName).build();
 
             return retryHelper.requestWithRetry(
-                    new OpenSearchSingleRequester() {
+                    new OpenSearchSingleRequester<PutAliasResponse>() {
                         @Override
-                        public <T> T requestOnce(org.opensearch.client.opensearch.OpenSearchClient client, final Class<T> clazz)
+                        public PutAliasResponse requestOnce(org.opensearch.client.opensearch.OpenSearchClient client)
                         {
                             try {
-                                // TODO: no cast
-                                return clazz.cast(client.indices().putAlias(request));
+                                return client.indices().putAlias(request);
                             }
                             catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
                         }
-                    }, PutAliasResponse.class);
+                    });
         }
     }
 
@@ -448,19 +442,18 @@ public class ElasticsearchHttpClient
             br.actions(ac -> ac.add(aa -> aa.alias(aliasName).index(indexName)));
 
             return retryHelper.requestWithRetry(
-                    new OpenSearchSingleRequester() {
+                    new OpenSearchSingleRequester<UpdateAliasesResponse>() {
                         @Override
-                        public <T> T requestOnce(org.opensearch.client.opensearch.OpenSearchClient client, final Class<T> clazz)
+                        public UpdateAliasesResponse requestOnce(org.opensearch.client.opensearch.OpenSearchClient client)
                         {
                             try {
-                                // TODO: no cast
-                                return clazz.cast(client.indices().updateAliases(br.build()));
+                                return client.indices().updateAliases(br.build());
                             }
                             catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
                         }
-                    }, UpdateAliasesResponse.class);
+                    });
         }
     }
 
@@ -470,19 +463,18 @@ public class ElasticsearchHttpClient
             SnapshotStatusRequest request = new SnapshotStatusRequest.Builder().build();
 
             return retryHelper.requestWithRetry(
-                    new OpenSearchSingleRequester() {
+                    new OpenSearchSingleRequester<SnapshotStatusResponse>() {
                         @Override
-                        public <T> T requestOnce(org.opensearch.client.opensearch.OpenSearchClient client, final Class<T> clazz)
+                        public SnapshotStatusResponse requestOnce(org.opensearch.client.opensearch.OpenSearchClient client)
                         {
                             try {
-                                // TODO: no cast
-                                return clazz.cast(client.snapshot().status(request));
+                                return client.snapshot().status(request);
                             }
                             catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
                         }
-                    }, SnapshotStatusResponse.class);
+                    });
         }
     }
 
@@ -492,19 +484,18 @@ public class ElasticsearchHttpClient
             DeleteIndexRequest request = new DeleteIndexRequest.Builder().index(indexName).build();
 
             return retryHelper.requestWithRetry(
-                    new OpenSearchSingleRequester() {
+                    new OpenSearchSingleRequester<DeleteIndexResponse>() {
                         @Override
-                        public <T> T requestOnce(org.opensearch.client.opensearch.OpenSearchClient client, final Class<T> clazz)
+                        public DeleteIndexResponse requestOnce(org.opensearch.client.opensearch.OpenSearchClient client)
                         {
                             try {
-                                // TODO: no cast
-                                return clazz.cast(client.indices().delete(request));
+                                return client.indices().delete(request);
                             }
                             catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
                         }
-                    }, DeleteIndexResponse.class);
+                    });
         }
     }
 
