@@ -97,7 +97,7 @@ public class ElasticsearchHttpClient
         this.log = LoggerFactory.getLogger(getClass());
     }
 
-    public void push(JsonNode records, PluginTask task)
+    public void push(List<JsonData> records, PluginTask task)
     {
         if (records.size() == 0) {
             return;
@@ -200,13 +200,15 @@ public class ElasticsearchHttpClient
         }
     }
 
-    private Optional<String> getRecordId(JsonNode record, Optional<String> idColumn)
+    private Optional<String> getRecordId(JsonData record, Optional<String> idColumn, JsonpMapper jsonpMapper)
     {
-        if (idColumn.isPresent() && record.hasNonNull(idColumn.get())) {
-            return Optional.of(record.get(idColumn.get()).asText());
+        if (!idColumn.isPresent()) {
+            return Optional.empty();
         }
 
-        return Optional.empty();
+        String id = record.toJson(jsonpMapper).asJsonObject().getString(idColumn.get(), null);
+
+        return (id == null) ? Optional.empty() : Optional.of(id);
     }
 
     private void assignAlias(String indexName, String aliasName, PluginTask task)
@@ -286,7 +288,7 @@ public class ElasticsearchHttpClient
         return snapshots != null && !snapshots.isEmpty();
     }
 
-    private BulkResponse sendBulkRequest(JsonNode records, PluginTask task)
+    private BulkResponse sendBulkRequest(List<JsonData> records, PluginTask task)
     {
         try (OpenSearchRetryHelper retryHelper = createRetryHelper(task)) {
             JsonpMapper jsonpMapper = retryHelper.jsonpMapper();
@@ -294,16 +296,15 @@ public class ElasticsearchHttpClient
             Optional<String> idColumn = task.getId();
             BulkRequest.Builder br = new BulkRequest.Builder();
 
-            for (JsonNode record : records) {
+            for (JsonData record : records) {
                 // TODO: performance
-                JsonData jsonData = parseRecord(record, jsonpMapper, jsonProvider);
-                Optional<String> id = getRecordId(record, idColumn);
+                Optional<String> id = getRecordId(record, idColumn, jsonpMapper);
 
                 br.operations(op -> op
                     .index(idx -> idx
                         .index(task.getIndex())
                         .id(id.orElse(null))
-                        .document(jsonData)
+                        .document(record)
                     )
                 );
             }
@@ -566,11 +567,6 @@ public class ElasticsearchHttpClient
             hosts.add(new HttpHost(node.getHost(), node.getPort(), protocol));
         }
         return hosts;
-    }
-
-    private JsonData parseRecord(JsonNode record, JsonpMapper jsonpMapper, JsonProvider jsonProvider)
-    {
-        return JsonData.from(jsonProvider.createParser(new StringReader(record.toString())), jsonpMapper);
     }
 
     @SuppressWarnings("deprecation")

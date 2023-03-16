@@ -21,15 +21,23 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import jakarta.json.JsonObject;
+import jakarta.json.stream.JsonParser;
 import org.embulk.base.restclient.jackson.JacksonServiceRecord;
 import org.embulk.base.restclient.record.RecordBuffer;
 import org.embulk.base.restclient.record.ServiceRecord;
 import org.embulk.config.TaskReport;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
+import org.opensearch.client.json.jackson.JacksonJsonpMapper;
+import org.opensearch.client.json.JsonData;
+import org.opensearch.client.json.JsonpMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * ElasticsearchRecordBuffer is an implementation of {@code RecordBuffer} which includes JSON output directly to Elasticsearch server.
@@ -43,11 +51,12 @@ public class ElasticsearchRecordBuffer
     private final long bulkSize;
     private final ElasticsearchHttpClient client;
     private final ObjectMapper mapper;
+    private final JsonpMapper jsonpMapper;
     private final Logger log;
     private long totalCount;
     private int requestCount;
     private long requestBytes;
-    private ArrayNode records;
+    private List<JsonData> records;
 
     public ElasticsearchRecordBuffer(String attributeName, PluginTask task)
     {
@@ -59,7 +68,8 @@ public class ElasticsearchRecordBuffer
         this.mapper = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .configure(com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS, false);
-        this.records = JsonNodeFactory.instance.arrayNode();
+        this.jsonpMapper = new JacksonJsonpMapper(this.mapper);
+        this.records = new ArrayList<>();
         this.totalCount = 0;
         this.requestCount = 0;
         this.requestBytes = 0;
@@ -72,11 +82,17 @@ public class ElasticsearchRecordBuffer
         JacksonServiceRecord jacksonServiceRecord;
         try {
             jacksonServiceRecord = (JacksonServiceRecord) serviceRecord;
-            JsonNode record = mapper.readTree(jacksonServiceRecord.toString()).get("record");
+
+            // TODO: performance
+            JsonData jsonData = parseServiceRecord(serviceRecord.toString());
+            JsonObject jsonObject = jsonData.toJson(jsonpMapper).asJsonObject().getJsonObject("record");
+            String jsonString = jsonObject.toString();
+            JsonParser parser = jsonpMapper.jsonProvider().createParser(new StringReader(jsonString));
+            JsonData record = JsonData.from(parser, jsonpMapper);
 
             requestCount++;
             totalCount++;
-            requestBytes += record.toString().getBytes().length;
+            requestBytes += jsonString.getBytes().length;
 
             records.add(record);
             if (requestCount >= bulkActions || requestBytes >= bulkSize) {
@@ -84,15 +100,12 @@ public class ElasticsearchRecordBuffer
                 if (totalCount % 10000 == 0) {
                     log.info("Inserted {} records", totalCount);
                 }
-                records = JsonNodeFactory.instance.arrayNode();
+                records = new ArrayList<>();
                 requestBytes = 0;
                 requestCount = 0;
             }
         }
         catch (ClassCastException ex) {
-            throw new RuntimeException(ex);
-        }
-        catch (IOException ex) {
             throw new RuntimeException(ex);
         }
     }
@@ -115,5 +128,11 @@ public class ElasticsearchRecordBuffer
             log.info("Inserted {} records", records.size());
         }
         return ElasticsearchOutputPlugin.CONFIG_MAPPER_FACTORY.newTaskReport().set("inserted", totalCount);
+    }
+
+    private JsonData parseServiceRecord(String serviceRecordString)
+    {
+        JsonParser parser = jsonpMapper.jsonProvider().createParser(new StringReader(serviceRecordString));
+        return JsonData.from(parser, jsonpMapper);
     }
 }
