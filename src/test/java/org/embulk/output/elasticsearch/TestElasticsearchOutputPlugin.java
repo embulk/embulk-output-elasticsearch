@@ -53,7 +53,6 @@ import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_BULK_SIZ
 import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_CONCURRENT_REQUESTS;
 import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_ID;
 import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_INDEX;
-import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_INDEX_TYPE;
 import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_NODES;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -110,7 +109,6 @@ public class TestElasticsearchOutputPlugin
             .set("mode", "") // NULL
             .set("nodes", ES_NODES)
             .set("index", ES_INDEX)
-            .set("index_type", ES_INDEX_TYPE)
             .set("id", ES_ID)
             .set("bulk_actions", ES_BULK_ACTIONS)
             .set("bulk_size", ES_BULK_SIZE)

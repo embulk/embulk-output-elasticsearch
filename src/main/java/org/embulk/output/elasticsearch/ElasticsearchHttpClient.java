@@ -60,6 +60,7 @@ import org.opensearch.client.RestClientBuilder;
 import org.opensearch.client.transport.endpoints.BooleanResponse;
 import org.opensearch.client.transport.OpenSearchTransport;
 import org.opensearch.client.transport.rest_client.RestClientTransport;
+import org.opensearch.client.transport.TransportOptions;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -313,11 +314,13 @@ public class ElasticsearchHttpClient
                         public <T> T requestOnce(org.opensearch.client.opensearch.OpenSearchClient client, final Class<T> clazz)
                         {
                             try {
+                                TransportOptions filterOptions = client._transport().options().with(b -> b
+                                    .setParameter("filter_path", "-items")
+                                );
                                 // TODO: no cast
-                                return clazz.cast(client.bulk(br.build()));
+                                return clazz.cast(client.withTransportOptions(filterOptions).bulk(br.build()));
                             }
                             catch (IOException e) {
-                                // TODO
                                 throw new RuntimeException(e);
                             }
                         }
@@ -344,7 +347,6 @@ public class ElasticsearchHttpClient
                                 return clazz.cast(client.indices().getAlias(a -> a.name(aliasName)));
                             }
                             catch (IOException e) {
-                                // TODO
                                 throw new RuntimeException(e);
                             }
                         }
@@ -367,7 +369,6 @@ public class ElasticsearchHttpClient
                                 return clazz.cast(client.indices().get(request));
                             }
                             catch (IOException e) {
-                                // TODO
                                 throw new RuntimeException(e);
                             }
                         }
@@ -390,7 +391,6 @@ public class ElasticsearchHttpClient
                                 return clazz.cast(client.indices().existsAlias(request));
                             }
                             catch (IOException e) {
-                                // TODO
                                 throw new RuntimeException(e);
                             }
                         }
@@ -411,7 +411,6 @@ public class ElasticsearchHttpClient
                                 return clazz.cast(client.info());
                             }
                             catch (IOException e) {
-                                // TODO
                                 throw new RuntimeException(e);
                             }
                         }
@@ -434,7 +433,6 @@ public class ElasticsearchHttpClient
                                 return clazz.cast(client.indices().putAlias(request));
                             }
                             catch (IOException e) {
-                                // TODO
                                 throw new RuntimeException(e);
                             }
                         }
@@ -459,7 +457,6 @@ public class ElasticsearchHttpClient
                                 return clazz.cast(client.indices().updateAliases(br.build()));
                             }
                             catch (IOException e) {
-                                // TODO
                                 throw new RuntimeException(e);
                             }
                         }
@@ -482,7 +479,6 @@ public class ElasticsearchHttpClient
                                 return clazz.cast(client.snapshot().status(request));
                             }
                             catch (IOException e) {
-                                // TODO
                                 throw new RuntimeException(e);
                             }
                         }
@@ -505,7 +501,6 @@ public class ElasticsearchHttpClient
                                 return clazz.cast(client.indices().delete(request));
                             }
                             catch (IOException e) {
-                                // TODO
                                 throw new RuntimeException(e);
                             }
                         }

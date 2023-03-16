@@ -84,9 +84,6 @@ public class ElasticsearchOutputPluginDelegate
         Optional<String> getAlias();
         void setAlias(Optional<String> aliasName);
 
-        @Config("index_type")
-        String getType();
-
         @Config("id")
         @ConfigDefault("null")
         Optional<String> getId();

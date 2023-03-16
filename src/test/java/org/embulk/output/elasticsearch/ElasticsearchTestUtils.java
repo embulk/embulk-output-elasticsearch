@@ -46,7 +46,6 @@ public class ElasticsearchTestUtils
     public static int ES_PORT;
     public static List ES_NODES;
     public static String ES_INDEX;
-    public static String ES_INDEX_TYPE;
     public static String ES_ID;
     public static int ES_BULK_ACTIONS;
     public static int ES_BULK_SIZE;
@@ -69,7 +68,6 @@ public class ElasticsearchTestUtils
         ES_INDEX = "embulk";
         ES_INDEX2 = ES_INDEX + "_02";
         ES_ALIAS = ES_INDEX + "_alias";
-        ES_INDEX_TYPE = "embulk";
         ES_ID = "id";
         ES_BULK_ACTIONS = 1000;
         ES_BULK_SIZE = 5242880;
@@ -109,7 +107,6 @@ public class ElasticsearchTestUtils
                 .set("mode", "insert")
                 .set("nodes", ES_NODES)
                 .set("index", ES_INDEX)
-                .set("index_type", ES_INDEX_TYPE)
                 .set("id", ES_ID)
                 .set("bulk_actions", ES_BULK_ACTIONS)
                 .set("bulk_size", ES_BULK_SIZE)
@@ -136,7 +133,6 @@ public class ElasticsearchTestUtils
                 .set("mode", "insert")
                 .set("nodes", ES_NODES)
                 .set("index", ES_INDEX)
-                .set("index_type", ES_INDEX_TYPE)
                 .set("id", ES_ID)
                 .set("bulk_actions", ES_BULK_ACTIONS)
                 .set("bulk_size", ES_BULK_SIZE)
