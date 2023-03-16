@@ -21,14 +21,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import jakarta.json.JsonObject;
 import jakarta.json.stream.JsonParser;
 import org.embulk.base.restclient.jackson.JacksonServiceRecord;
+import org.embulk.base.restclient.jackson.JacksonServiceValue;
+import org.embulk.base.restclient.jackson.JacksonTopLevelValueLocator;
 import org.embulk.base.restclient.record.RecordBuffer;
 import org.embulk.base.restclient.record.ServiceRecord;
 import org.embulk.config.TaskReport;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
 import org.opensearch.client.json.jackson.JacksonJsonpMapper;
+import org.opensearch.client.json.jackson.JacksonJsonpParser;
 import org.opensearch.client.json.JsonData;
 import org.opensearch.client.json.JsonpMapper;
 import org.slf4j.Logger;
@@ -84,15 +86,15 @@ public class ElasticsearchRecordBuffer
             jacksonServiceRecord = (JacksonServiceRecord) serviceRecord;
 
             // TODO: performance
-            JsonData jsonData = parseServiceRecord(serviceRecord.toString());
-            JsonObject jsonObject = jsonData.toJson(jsonpMapper).asJsonObject().getJsonObject("record");
-            String jsonString = jsonObject.toString();
-            JsonParser parser = jsonpMapper.jsonProvider().createParser(new StringReader(jsonString));
+            JacksonTopLevelValueLocator locator = new JacksonTopLevelValueLocator("record");
+            JacksonServiceValue serviceValue = jacksonServiceRecord.getValue(locator);
+            JsonNode jsonNode = serviceValue.getInternalJsonNode();
+            JsonParser parser = new JacksonJsonpParser(jsonNode.traverse());
             JsonData record = JsonData.from(parser, jsonpMapper);
 
             requestCount++;
             totalCount++;
-            requestBytes += jsonString.getBytes().length;
+            requestBytes += jsonNode.toString().getBytes().length;
 
             records.add(record);
             if (requestCount >= bulkActions || requestBytes >= bulkSize) {
