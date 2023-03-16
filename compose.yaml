@@ -19,6 +19,10 @@ services:
         hard: 65536
     volumes:
       - opensearch-data1:/usr/share/opensearch/data
+    expose:
+      - 9200
+    ports:
+      - "9200:9200"
   java:
     image: eclipse-temurin:11
     volumes:

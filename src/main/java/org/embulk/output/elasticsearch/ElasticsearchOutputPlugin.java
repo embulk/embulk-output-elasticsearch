@@ -16,12 +16,11 @@
 
 package org.embulk.output.elasticsearch;
 
-import org.embulk.base.restclient.RestClientOutputPluginBase;
 import org.embulk.util.config.ConfigMapper;
 import org.embulk.util.config.ConfigMapperFactory;
 
 public class ElasticsearchOutputPlugin
-        extends RestClientOutputPluginBase<ElasticsearchOutputPluginDelegate.PluginTask>
+        extends OpenSearchOutputPluginBase<ElasticsearchOutputPluginDelegate.PluginTask>
 {
     public ElasticsearchOutputPlugin()
     {

@@ -297,7 +297,6 @@ public class ElasticsearchHttpClient
             BulkRequest.Builder br = new BulkRequest.Builder();
 
             for (JsonData record : records) {
-                // TODO: performance
                 Optional<String> id = getRecordId(record, idColumn, jsonpMapper);
 
                 br.operations(op -> op
