@@ -27,6 +27,7 @@ import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.embulk.EmbulkTestRuntime;
 import org.embulk.config.ConfigSource;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
+import org.embulk.spi.Exec;
 import org.embulk.spi.Schema;
 import org.embulk.spi.type.Types;
 import org.opensearch.client.json.jackson.JacksonJsonpMapper;
@@ -37,6 +38,7 @@ import org.opensearch.client.transport.OpenSearchTransport;
 import org.opensearch.client.transport.rest_client.RestClientTransport;
 
 import java.lang.reflect.Method;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 
@@ -233,4 +235,26 @@ public class ElasticsearchTestUtils
             throw new RuntimeException(ex);
         }
     }
+
+    @SuppressWarnings("deprecation")
+    public static Instant getTransactionTime()
+    {
+        if (HAS_EXEC_GET_TRANSACTION_TIME_INSTANT) {
+            return Exec.getTransactionTimeInstant();
+        }
+        return Exec.getTransactionTime().getInstant();
+    }
+
+    private static boolean hasExecGetTransactionTimeInstant()
+    {
+        try {
+            Exec.class.getMethod("getTransactionTimeInstant");
+        }
+        catch (final NoSuchMethodException ex) {
+            return false;
+        }
+        return true;
+    }
+
+    private static final boolean HAS_EXEC_GET_TRANSACTION_TIME_INSTANT = hasExecGetTransactionTimeInstant();
 }

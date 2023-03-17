@@ -16,13 +16,9 @@
 
 package org.embulk.output.elasticsearch;
 
-import org.eclipse.jetty.http.HttpMethod;
 import org.embulk.EmbulkTestRuntime;
 import org.embulk.config.ConfigException;
-import org.embulk.config.ConfigSource;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
-import org.embulk.spi.Exec;
-import org.embulk.spi.time.Timestamp;
 import org.embulk.util.config.ConfigMapper;
 import org.embulk.util.config.ConfigMapperFactory;
 import org.junit.After;
@@ -41,7 +37,6 @@ import java.time.Instant;
 import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_ALIAS;
 import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_INDEX;
 import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_INDEX2;
-import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_NODES;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -135,7 +130,7 @@ public class TestElasticsearchHttpClient
     {
         ElasticsearchHttpClient client = new ElasticsearchHttpClient();
         String newIndexName = client.generateNewIndexName(ES_INDEX);
-        Instant time = Exec.getTransactionTime().getInstant();
+        Instant time = ElasticsearchTestUtils.getTransactionTime();
         assertThat(newIndexName, is(ES_INDEX + new SimpleDateFormat("_yyyyMMdd-HHmmss").format(time.toEpochMilli())));
     }
 

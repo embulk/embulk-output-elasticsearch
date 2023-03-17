@@ -16,9 +16,7 @@
 
 package org.embulk.output.elasticsearch;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Lists;
-import org.eclipse.jetty.http.HttpMethod;
 import org.embulk.EmbulkTestRuntime;
 import org.embulk.config.ConfigException;
 import org.embulk.config.ConfigSource;
@@ -27,15 +25,14 @@ import org.embulk.config.TaskSource;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.AuthMethod;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.Mode;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
-import org.embulk.spi.Exec;
 import org.embulk.spi.OutputPlugin;
 import org.embulk.spi.Page;
 import org.embulk.spi.PageTestUtils;
 import org.embulk.spi.Schema;
 import org.embulk.spi.TransactionalPageOutput;
-import org.embulk.spi.time.Timestamp;
 import org.embulk.standards.CsvParserPlugin;
 import org.embulk.util.config.ConfigMapper;
+import org.embulk.util.config.ConfigMapperFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -44,7 +41,7 @@ import org.opensearch.client.opensearch.core.SearchResponse;
 import org.opensearch.client.opensearch.OpenSearchClient;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 
@@ -60,6 +57,7 @@ import static org.junit.Assert.assertTrue;
 
 public class TestElasticsearchOutputPlugin
 {
+    private static final ConfigMapperFactory CONFIG_MAPPER_FACTORY = ElasticsearchOutputPlugin.CONFIG_MAPPER_FACTORY;
     private static final ConfigMapper CONFIG_MAPPER = ElasticsearchOutputPlugin.CONFIG_MAPPER;
 
     @Rule
@@ -121,7 +119,7 @@ public class TestElasticsearchOutputPlugin
                 @Override
                 public List<TaskReport> run(TaskSource taskSource)
                 {
-                    return Lists.newArrayList(Exec.newTaskReport());
+                    return Lists.newArrayList(CONFIG_MAPPER_FACTORY.newTaskReport());
                 }
             });
         }
@@ -142,7 +140,7 @@ public class TestElasticsearchOutputPlugin
             @Override
             public List<TaskReport> run(TaskSource taskSource)
             {
-                return Lists.newArrayList(Exec.newTaskReport());
+                return Lists.newArrayList(CONFIG_MAPPER_FACTORY.newTaskReport());
             }
         });
         // no error happens
@@ -154,12 +152,12 @@ public class TestElasticsearchOutputPlugin
         ConfigSource config = utils.config();
         Schema schema = utils.oldParserConfig(runtime).loadConfig(CsvParserPlugin.PluginTask.class).getSchemaConfig().toSchema();
         final PluginTask task = CONFIG_MAPPER.map(config, PluginTask.class);
-        plugin.resume(task.dump(), schema, 0, new OutputPlugin.Control()
+        plugin.resume(task.toTaskSource(), schema, 0, new OutputPlugin.Control()
         {
             @Override
             public List<TaskReport> run(TaskSource taskSource)
             {
-                return Lists.newArrayList(Exec.newTaskReport());
+                return Lists.newArrayList(CONFIG_MAPPER_FACTORY.newTaskReport());
             }
         });
     }
@@ -170,7 +168,7 @@ public class TestElasticsearchOutputPlugin
         ConfigSource config = utils.config();
         Schema schema = utils.oldParserConfig(runtime).loadConfig(CsvParserPlugin.PluginTask.class).getSchemaConfig().toSchema();
         final PluginTask task = CONFIG_MAPPER.map(config, PluginTask.class);
-        plugin.cleanup(task.dump(), schema, 0, Arrays.asList(Exec.newTaskReport()));
+        plugin.cleanup(task.toTaskSource(), schema, 0, Arrays.asList(CONFIG_MAPPER_FACTORY.newTaskReport()));
         // no error happens
     }
 
@@ -184,12 +182,12 @@ public class TestElasticsearchOutputPlugin
             @Override
             public List<TaskReport> run(TaskSource taskSource)
             {
-                return Lists.newArrayList(Exec.newTaskReport());
+                return Lists.newArrayList(CONFIG_MAPPER_FACTORY.newTaskReport());
             }
         });
-        TransactionalPageOutput output = plugin.open(task.dump(), schema, 0);
+        TransactionalPageOutput output = plugin.open(task.toTaskSource(), schema, 0);
 
-        List<Page> pages = PageTestUtils.buildPage(runtime.getBufferAllocator(), schema, 1L, 32864L, Timestamp.ofEpochSecond(1422386629), Timestamp.ofEpochSecond(1422316800),  true, 123.45, "embulk");
+        List<Page> pages = PageTestUtils.buildPage(runtime.getBufferAllocator(), schema, 1L, 32864L, Instant.ofEpochSecond(1422386629), Instant.ofEpochSecond(1422316800),  true, 123.45, "embulk");
         assertThat(pages.size(), is(1));
         for (Page page : pages) {
             output.add(page);
@@ -221,7 +219,7 @@ public class TestElasticsearchOutputPlugin
         ConfigSource config = utils.config();
         Schema schema = utils.oldParserConfig(runtime).loadConfig(CsvParserPlugin.PluginTask.class).getSchemaConfig().toSchema();
         final PluginTask task = CONFIG_MAPPER.map(config, PluginTask.class);
-        TransactionalPageOutput output = plugin.open(task.dump(), schema, 0);
+        TransactionalPageOutput output = plugin.open(task.toTaskSource(), schema, 0);
         output.abort();
         // no error happens.
     }

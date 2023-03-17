@@ -16,9 +16,7 @@
 
 package org.embulk.output.elasticsearch;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Lists;
-import org.eclipse.jetty.http.HttpMethod;
 import org.embulk.EmbulkTestRuntime;
 import org.embulk.config.ConfigException;
 import org.embulk.config.ConfigSource;
@@ -27,7 +25,6 @@ import org.embulk.config.TaskSource;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.AuthMethod;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.Mode;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
-import org.embulk.spi.Exec;
 import org.embulk.spi.OutputPlugin;
 import org.embulk.spi.Page;
 import org.embulk.spi.PageTestUtils;
@@ -43,7 +40,6 @@ import org.opensearch.client.opensearch.core.SearchResponse;
 import org.opensearch.client.opensearch.OpenSearchClient;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 
@@ -104,7 +100,7 @@ public class TestElasticsearchOutputPluginJSON
             @Override
             public List<TaskReport> run(TaskSource taskSource)
             {
-                return Lists.newArrayList(Exec.newTaskReport());
+                return Lists.newArrayList(CONFIG_MAPPER_FACTORY.newTaskReport());
             }
         });
         // no error happens
@@ -116,12 +112,12 @@ public class TestElasticsearchOutputPluginJSON
         ConfigSource config = utils.configJSON();
         Schema schema = utils.JSONSchema();
         final PluginTask task = CONFIG_MAPPER.map(config, PluginTask.class);
-        plugin.resume(task.dump(), schema, 0, new OutputPlugin.Control()
+        plugin.resume(task.toTaskSource(), schema, 0, new OutputPlugin.Control()
         {
             @Override
             public List<TaskReport> run(TaskSource taskSource)
             {
-                return Lists.newArrayList(Exec.newTaskReport());
+                return Lists.newArrayList(CONFIG_MAPPER_FACTORY.newTaskReport());
             }
         });
     }
@@ -132,7 +128,7 @@ public class TestElasticsearchOutputPluginJSON
         ConfigSource config = utils.configJSON();
         Schema schema = utils.JSONSchema();
         final PluginTask task = CONFIG_MAPPER.map(config, PluginTask.class);
-        plugin.cleanup(task.dump(), schema, 0, Arrays.asList(Exec.newTaskReport()));
+        plugin.cleanup(task.toTaskSource(), schema, 0, Arrays.asList(CONFIG_MAPPER_FACTORY.newTaskReport()));
         // no error happens
     }
 
@@ -146,10 +142,10 @@ public class TestElasticsearchOutputPluginJSON
             @Override
             public List<TaskReport> run(TaskSource taskSource)
             {
-                return Lists.newArrayList(Exec.newTaskReport());
+                return Lists.newArrayList(CONFIG_MAPPER_FACTORY.newTaskReport());
             }
         });
-        TransactionalPageOutput output = plugin.open(task.dump(), schema, 0);
+        TransactionalPageOutput output = plugin.open(task.toTaskSource(), schema, 0);
 
         List<Page> pages = PageTestUtils.buildPage(runtime.getBufferAllocator(), schema, 1L, 32864L, "2015-01-27 19:23:49", "2015-01-27",  true, 123.45, "embulk");
         assertThat(pages.size(), is(1));
@@ -187,10 +183,10 @@ public class TestElasticsearchOutputPluginJSON
             @Override
             public List<TaskReport> run(TaskSource taskSource)
             {
-                return Lists.newArrayList(Exec.newTaskReport());
+                return Lists.newArrayList(CONFIG_MAPPER_FACTORY.newTaskReport());
             }
         });
-        TransactionalPageOutput output = plugin.open(task.dump(), schema, 0);
+        TransactionalPageOutput output = plugin.open(task.toTaskSource(), schema, 0);
 
         List<Page> pages = PageTestUtils.buildPage(runtime.getBufferAllocator(), schema, 2L, null, null, "2015-01-27",  true, 123.45, "embulk");
         assertThat(pages.size(), is(1));
@@ -224,7 +220,7 @@ public class TestElasticsearchOutputPluginJSON
         ConfigSource config = utils.configJSON();
         Schema schema = utils.JSONSchema();
         final PluginTask task = CONFIG_MAPPER.map(config, PluginTask.class);
-        TransactionalPageOutput output = plugin.open(task.dump(), schema, 0);
+        TransactionalPageOutput output = plugin.open(task.toTaskSource(), schema, 0);
         output.abort();
         // no error happens.
     }
