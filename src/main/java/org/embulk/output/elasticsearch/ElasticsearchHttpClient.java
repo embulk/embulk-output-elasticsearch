@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonValue;
-import jakarta.json.spi.JsonProvider;
 import jakarta.json.stream.JsonParser;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -70,7 +69,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -297,7 +295,6 @@ public class ElasticsearchHttpClient
     {
         try (OpenSearchRetryHelper retryHelper = createRetryHelper(task)) {
             JsonpMapper jsonpMapper = retryHelper.jsonpMapper();
-            JsonProvider jsonProvider = retryHelper.jsonProvider();
             Optional<String> idColumn = task.getId();
             BulkRequest.Builder br = new BulkRequest.Builder();
 

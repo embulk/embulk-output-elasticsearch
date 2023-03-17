@@ -23,7 +23,6 @@ import org.embulk.base.restclient.record.ValueLocator;
 import org.embulk.base.restclient.RecordBufferBuildable;
 import org.embulk.base.restclient.RestClientOutputPluginDelegate;
 import org.embulk.base.restclient.RestClientOutputTaskBase;
-import org.embulk.base.restclient.RestClientPageOutput;
 import org.embulk.base.restclient.RestClientPluginBase;
 import org.embulk.base.restclient.ServiceRequestMapper;
 import org.embulk.base.restclient.ServiceRequestMapperBuildable;

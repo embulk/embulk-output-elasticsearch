@@ -147,18 +147,6 @@ public class ElasticsearchOutputPluginDelegate
         @Config("fill_null_for_empty_column")
         @ConfigDefault("false")
         boolean getFillNullForEmptyColumn();
-
-        // The following method has been removed. It came org.embulk.spi.time.TimestampFormatter.Task, but it has not been used.
-        //
-        // @Config("default_timezone")
-        // @ConfigDefault("\"UTC\"")
-        // String getDefaultTimeZoneId()
-
-        // The following method has been removed. It came org.embulk.spi.time.TimestampFormatter.Task, but it has not been used.
-        //
-        // @Config("default_timestamp_format")
-        // @ConfigDefault("\"%Y-%m-%d %H:%M:%S.%6N %z\"")
-        // String getDefaultTimestampFormat();
     }
 
     public enum Mode
