@@ -63,6 +63,8 @@ dependencies {
     implementation 'org.opensearch.client:opensearch-rest-client:2.6.0'
     implementation 'org.opensearch.client:opensearch-java:2.2.0'
 
+    implementation 'org.msgpack:msgpack-core:0.9.3'
+
     testImplementation "junit:junit:4.13.2"
     testImplementation "org.hamcrest:hamcrest:2.2"
     testImplementation "org.embulk:embulk-core:0.10.28"

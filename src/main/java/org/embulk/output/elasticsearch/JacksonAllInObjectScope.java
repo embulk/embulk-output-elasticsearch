@@ -19,11 +19,13 @@ package org.embulk.output.elasticsearch;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.embulk.base.restclient.jackson.StringJsonParser;
 import org.embulk.base.restclient.record.SinglePageRecordReader;
 import org.embulk.spi.Column;
 import org.embulk.spi.ColumnVisitor;
 import org.embulk.spi.DataException;
 import org.embulk.util.timestamp.TimestampFormatter;
+import org.msgpack.value.Value;
 
 public class JacksonAllInObjectScope extends JacksonObjectScopeBase
 {
@@ -123,17 +125,16 @@ public class JacksonAllInObjectScope extends JacksonObjectScopeBase
                     // TODO(dmikurube): Use jackson-datatype-msgpack.
                     // See: https://github.com/embulk/embulk-base-restclient/issues/32
                     if (!singlePageRecordReader.isNull(column)) {
-                        String jsonText = singlePageRecordReader.getJson(column).toJson();
-                        JsonNode node = jsonParser.parseJsonNode(jsonText);
+                        Value value = singlePageRecordReader.getJson(column);
 
-                        if (node.isObject()) {
-                            resultObject.set(column.getName(), jsonParser.parseJsonObject(jsonText));
+                        if (value.isMapValue()) {
+                            resultObject.set(column.getName(), jsonParser.parseJsonObject(value.toJson()));
                         }
-                        else if (node.isArray()) {
-                            resultObject.set(column.getName(), jsonParser.parseJsonArray(jsonText));
+                        else if (value.isArrayValue()) {
+                            resultObject.set(column.getName(), jsonParser.parseJsonArray(value.toJson()));
                         }
                         else {
-                            throw new DataException("Unexpected node: " + jsonText);
+                            throw new DataException("Unexpected node: " + value.toJson());
                         }
                     }
                     else {
