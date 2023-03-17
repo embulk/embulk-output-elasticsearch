@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.embulk.base.restclient.RestClientOutputPluginDelegate;
 import org.embulk.base.restclient.RestClientOutputTaskBase;
-import org.embulk.base.restclient.jackson.JacksonServiceRequestMapper;
 import org.embulk.base.restclient.jackson.JacksonTopLevelValueLocator;
 import org.embulk.base.restclient.record.RecordBuffer;
 import org.embulk.config.ConfigDiff;

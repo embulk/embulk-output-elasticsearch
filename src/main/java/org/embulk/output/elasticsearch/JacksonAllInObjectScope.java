@@ -19,7 +19,6 @@ package org.embulk.output.elasticsearch;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.embulk.base.restclient.jackson.scope.JacksonObjectScopeBase;
 import org.embulk.base.restclient.record.SinglePageRecordReader;
 import org.embulk.spi.Column;
 import org.embulk.spi.ColumnVisitor;

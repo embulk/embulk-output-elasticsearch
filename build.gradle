@@ -9,9 +9,6 @@ plugins {
 
 repositories {
     mavenCentral()
-    maven {
-        url "https://jitpack.io"
-    }
 
     // Tests need EmbulkTestRuntime. EmbulkTestRuntime needs old-style embulk-standards till 0.10.28. 0.10.28 needs jcenter.
     jcenter()
@@ -56,7 +53,7 @@ dependencies {
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.6.7"
     implementation "javax.validation:validation-api:1.1.0.Final"
 
-    implementation "com.github.calorie:embulk-base-restclient:0.10.3"
+    implementation "org.embulk:embulk-base-restclient:0.10.1"
     implementation "org.embulk:embulk-util-retryhelper-jetty92:0.8.2"
 
     implementation "org.embulk:embulk-util-timestamp:0.2.1"
