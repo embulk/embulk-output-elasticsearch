@@ -36,16 +36,16 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.opensearch.client.opensearch.core.SearchResponse;
 import org.opensearch.client.opensearch.OpenSearchClient;
+import org.opensearch.client.opensearch.core.SearchResponse;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_INDEX;
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
 
 public class TestElasticsearchOutputPluginJSON

@@ -17,15 +17,16 @@
 package org.embulk.output.elasticsearch;
 
 import jakarta.json.spi.JsonProvider;
-import java.io.IOException;
-import java.util.Locale;
-import org.embulk.util.retryhelper.Retryable;
 import org.embulk.util.retryhelper.RetryExecutor;
 import org.embulk.util.retryhelper.RetryGiveupException;
+import org.embulk.util.retryhelper.Retryable;
 import org.opensearch.client.json.JsonpMapper;
-import org.opensearch.client.opensearch._types.OpenSearchException;
 import org.opensearch.client.opensearch.OpenSearchClient;
+import org.opensearch.client.opensearch._types.OpenSearchException;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.Locale;
 
 public class OpenSearchRetryHelper
         implements AutoCloseable

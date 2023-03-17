@@ -16,16 +16,15 @@
 
 package org.embulk.output.elasticsearch;
 
-import java.util.List;
 import org.embulk.base.restclient.EmbulkDataEgestable;
 import org.embulk.base.restclient.OutputTaskValidatable;
-import org.embulk.base.restclient.record.ValueLocator;
 import org.embulk.base.restclient.RecordBufferBuildable;
 import org.embulk.base.restclient.RestClientOutputPluginDelegate;
 import org.embulk.base.restclient.RestClientOutputTaskBase;
 import org.embulk.base.restclient.RestClientPluginBase;
 import org.embulk.base.restclient.ServiceRequestMapper;
 import org.embulk.base.restclient.ServiceRequestMapperBuildable;
+import org.embulk.base.restclient.record.ValueLocator;
 import org.embulk.config.ConfigDiff;
 import org.embulk.config.ConfigSource;
 import org.embulk.config.TaskReport;
@@ -34,6 +33,8 @@ import org.embulk.spi.OutputPlugin;
 import org.embulk.spi.Schema;
 import org.embulk.spi.TransactionalPageOutput;
 import org.embulk.util.config.ConfigMapperFactory;
+
+import java.util.List;
 
 public class OpenSearchOutputPluginBase<T extends RestClientOutputTaskBase>
         extends RestClientPluginBase<T>

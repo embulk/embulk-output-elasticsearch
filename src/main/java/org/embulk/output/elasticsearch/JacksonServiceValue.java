@@ -18,11 +18,12 @@ package org.embulk.output.elasticsearch;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
-import java.time.Instant;
 import org.embulk.base.restclient.record.ServiceValue;
 import org.embulk.util.json.JsonParser;
 import org.embulk.util.timestamp.TimestampFormatter;
 import org.msgpack.value.Value;
+
+import java.time.Instant;
 
 /**
  * JacksonServiceValue represents a value in a JSON response to be converted to an Embulk column value.

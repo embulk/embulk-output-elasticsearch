@@ -26,8 +26,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
-import org.opensearch.client.opensearch.indices.CreateIndexRequest;
 import org.opensearch.client.opensearch.OpenSearchClient;
+import org.opensearch.client.opensearch.indices.CreateIndexRequest;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -37,8 +37,8 @@ import java.time.Instant;
 import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_ALIAS;
 import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_INDEX;
 import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_INDEX2;
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 
 public class TestElasticsearchHttpClient
 {

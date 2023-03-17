@@ -16,10 +16,10 @@
 
 package org.embulk.output.elasticsearch;
 
-import org.embulk.base.restclient.record.RecordBuffer;
-import org.embulk.base.restclient.record.RecordExporter;
 import org.embulk.base.restclient.RestClientOutputTaskBase;
 import org.embulk.base.restclient.RestClientPageOutput;
+import org.embulk.base.restclient.record.RecordBuffer;
+import org.embulk.base.restclient.record.RecordExporter;
 import org.embulk.spi.Page;
 import org.embulk.spi.Schema;
 import org.embulk.util.config.ConfigMapperFactory;

@@ -16,16 +16,17 @@
 
 package org.embulk.output.elasticsearch;
 
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import org.embulk.base.restclient.ServiceRequestMapper;
 import org.embulk.base.restclient.jackson.JacksonValueLocator;
 import org.embulk.base.restclient.record.EmbulkValueScope;
 import org.embulk.base.restclient.record.RecordExporter;
 import org.embulk.base.restclient.record.ValueExporter;
+
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * |JacksonServiceRequestMapper| represents which Embulk values are mapped into JSON, and
@@ -66,7 +67,6 @@ public final class JacksonServiceRequestMapper extends ServiceRequestMapper<Jack
                     new JacksonNewObjectScope(),
                     new ColumnOptions<JacksonValueLocator>(valueLocator)));
             return this;
-
         }
 
         public synchronized JacksonServiceRequestMapper.Builder add(
