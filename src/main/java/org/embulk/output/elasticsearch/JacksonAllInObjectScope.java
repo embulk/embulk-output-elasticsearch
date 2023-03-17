@@ -26,83 +26,101 @@ import org.embulk.spi.ColumnVisitor;
 import org.embulk.spi.DataException;
 import org.embulk.util.timestamp.TimestampFormatter;
 
-public class JacksonAllInObjectScope extends JacksonObjectScopeBase {
-    public JacksonAllInObjectScope() {
+public class JacksonAllInObjectScope extends JacksonObjectScopeBase
+{
+    public JacksonAllInObjectScope()
+    {
         this(null, false);
     }
 
-    public JacksonAllInObjectScope(final boolean fillsJsonNullForEmbulkNull) {
+    public JacksonAllInObjectScope(final boolean fillsJsonNullForEmbulkNull)
+    {
         this(null, fillsJsonNullForEmbulkNull);
     }
 
-    public JacksonAllInObjectScope(final TimestampFormatter timestampFormatter) {
+    public JacksonAllInObjectScope(final TimestampFormatter timestampFormatter)
+    {
         this(timestampFormatter, false);
     }
 
-    public JacksonAllInObjectScope(final TimestampFormatter timestampFormatter, final boolean fillsJsonNullForEmbulkNull) {
+    public JacksonAllInObjectScope(final TimestampFormatter timestampFormatter, final boolean fillsJsonNullForEmbulkNull)
+    {
         this.timestampFormatter = timestampFormatter;
         this.jsonParser = new StringJsonParser();
         this.fillsJsonNullForEmbulkNull = fillsJsonNullForEmbulkNull;
     }
 
     @Override
-    public ObjectNode scopeObject(final SinglePageRecordReader singlePageRecordReader) {
+    public ObjectNode scopeObject(final SinglePageRecordReader singlePageRecordReader)
+    {
         final ObjectNode resultObject = OBJECT_MAPPER.createObjectNode();
 
         singlePageRecordReader.getSchema().visitColumns(new ColumnVisitor() {
                 @Override
-                public void booleanColumn(final Column column) {
+                public void booleanColumn(final Column column)
+                {
                     if (!singlePageRecordReader.isNull(column)) {
                         resultObject.put(column.getName(), singlePageRecordReader.getBoolean(column));
-                    } else if (fillsJsonNullForEmbulkNull) {
+                    }
+                    else if (fillsJsonNullForEmbulkNull) {
                         resultObject.putNull(column.getName());
                     }
                 }
 
                 @Override
-                public void longColumn(final Column column) {
+                public void longColumn(final Column column)
+                {
                     if (!singlePageRecordReader.isNull(column)) {
                         resultObject.put(column.getName(), singlePageRecordReader.getLong(column));
-                    } else if (fillsJsonNullForEmbulkNull)  {
+                    }
+                    else if (fillsJsonNullForEmbulkNull)  {
                         resultObject.putNull(column.getName());
                     }
                 }
 
                 @Override
-                public void doubleColumn(final Column column) {
+                public void doubleColumn(final Column column)
+                {
                     if (!singlePageRecordReader.isNull(column)) {
                         resultObject.put(column.getName(), singlePageRecordReader.getDouble(column));
-                    } else if (fillsJsonNullForEmbulkNull) {
+                    }
+                    else if (fillsJsonNullForEmbulkNull) {
                         resultObject.putNull(column.getName());
                     }
                 }
 
                 @Override
-                public void stringColumn(final Column column) {
+                public void stringColumn(final Column column)
+                {
                     if (!singlePageRecordReader.isNull(column)) {
                         resultObject.put(column.getName(), singlePageRecordReader.getString(column));
-                    } else if (fillsJsonNullForEmbulkNull) {
+                    }
+                    else if (fillsJsonNullForEmbulkNull) {
                         resultObject.putNull(column.getName());
                     }
                 }
 
                 @Override
-                public void timestampColumn(final Column column) {
+                public void timestampColumn(final Column column)
+                {
                     if (!singlePageRecordReader.isNull(column)) {
                         if (timestampFormatter == null) {
                             resultObject.put(column.getName(),
                                              singlePageRecordReader.getTimestamp(column).getEpochSecond());
-                        } else {
+                        }
+                        else {
                             resultObject.put(column.getName(),
                                              timestampFormatter.format(singlePageRecordReader.getTimestamp(column)));
                         }
-                    } else if (fillsJsonNullForEmbulkNull) {
+                    }
+                    else if (fillsJsonNullForEmbulkNull) {
                         resultObject.putNull(column.getName());
                     }
                 }
 
                 @Override
-                public void jsonColumn(final Column column) {
+                public void jsonColumn(final Column column)
+                {
                     // TODO(dmikurube): Use jackson-datatype-msgpack.
                     // See: https://github.com/embulk/embulk-base-restclient/issues/32
                     if (!singlePageRecordReader.isNull(column)) {
@@ -111,12 +129,15 @@ public class JacksonAllInObjectScope extends JacksonObjectScopeBase {
 
                         if (node.isObject()) {
                             resultObject.set(column.getName(), jsonParser.parseJsonObject(jsonText));
-                        } else if (node.isArray()) {
+                        }
+                        else if (node.isArray()) {
                             resultObject.set(column.getName(), jsonParser.parseJsonArray(jsonText));
-                        } else {
+                        }
+                        else {
                             throw new DataException("Unexpected node: " + jsonText);
                         }
-                    } else {
+                    }
+                    else {
                         resultObject.putNull(column.getName());
                     }
                 }

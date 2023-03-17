@@ -57,8 +57,7 @@ public class OpenSearchRetryHelper
                 .build()
                 .runInterruptible(new Retryable<T>() {
                         @Override
-                        public T call()
-                                throws Exception
+                        public T call() throws Exception
                         {
                             try {
                                 return singleRequester.requestOnce(clientStarted);
@@ -75,8 +74,7 @@ public class OpenSearchRetryHelper
                         }
 
                         @Override
-                        public void onRetry(Exception exception, int retryCount, int retryLimit, int retryWait)
-                                throws RetryGiveupException
+                        public void onRetry(Exception exception, int retryCount, int retryLimit, int retryWait) throws RetryGiveupException
                         {
                             String message = String.format(
                                 Locale.ENGLISH, "Retrying %d/%d after %d seconds. Message: %s",
@@ -90,8 +88,7 @@ public class OpenSearchRetryHelper
                         }
 
                         @Override
-                        public void onGiveup(Exception first, Exception last)
-                                throws RetryGiveupException
+                        public void onGiveup(Exception first, Exception last) throws RetryGiveupException
                         {
                         }
                     });
@@ -116,7 +113,6 @@ public class OpenSearchRetryHelper
             return;
         }
 
-        // TODO
         try {
             this.clientStarted._transport().close();
         }

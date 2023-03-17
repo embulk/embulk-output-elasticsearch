@@ -88,28 +88,28 @@ public class TestElasticsearchHttpClient
     public void testValidateIndexOrAliasName()
     {
         ElasticsearchHttpClient client = new ElasticsearchHttpClient();
-        client.validateIndexOrAliasName("embulk", "index");
+        client.validateIndexOrAliasName("embulk");
     }
 
     @Test(expected = ConfigException.class)
     public void testIndexNameContainsUpperCase()
     {
         ElasticsearchHttpClient client = new ElasticsearchHttpClient();
-        client.validateIndexOrAliasName("Embulk", "index");
+        client.validateIndexOrAliasName("Embulk");
     }
 
     @Test(expected = ConfigException.class)
     public void testIndexNameStartsInvalidChars()
     {
         ElasticsearchHttpClient client = new ElasticsearchHttpClient();
-        client.validateIndexOrAliasName("_embulk", "index");
+        client.validateIndexOrAliasName("_embulk");
     }
 
     @Test(expected = ConfigException.class)
     public void testIndexNameContainsInvalidChars()
     {
         ElasticsearchHttpClient client = new ElasticsearchHttpClient();
-        client.validateIndexOrAliasName("em#bulk", "index");
+        client.validateIndexOrAliasName("em#bulk");
     }
 
     @Test(expected = ConfigException.class)
@@ -120,14 +120,14 @@ public class TestElasticsearchHttpClient
             index += "s";
         }
         ElasticsearchHttpClient client = new ElasticsearchHttpClient();
-        client.validateIndexOrAliasName(index, "index");
+        client.validateIndexOrAliasName(index);
     }
 
     @Test(expected = ConfigException.class)
     public void testIndexNameEqDot()
     {
         ElasticsearchHttpClient client = new ElasticsearchHttpClient();
-        client.validateIndexOrAliasName(".", "index");
+        client.validateIndexOrAliasName(".");
     }
 
     @Test

@@ -214,7 +214,7 @@ public class ElasticsearchOutputPluginDelegate
 
         log.info(String.format("Connecting to Elasticsearch version:%s", client.getEsVersion(task)));
         log.info("Executing plugin with '{}' mode.", task.getMode());
-        client.validateIndexOrAliasName(task.getIndex(), "index");
+        client.validateIndexOrAliasName(task.getIndex());
 
         if (task.getMode().equals(Mode.REPLACE)) {
             task.setAlias(Optional.of(task.getIndex()));

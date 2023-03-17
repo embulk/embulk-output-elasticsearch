@@ -74,6 +74,7 @@ public class ElasticsearchRecordBuffer
     public void bufferRecord(ServiceRecord serviceRecord)
     {
         JacksonServiceRecord jacksonServiceRecord;
+
         try {
             jacksonServiceRecord = (JacksonServiceRecord) serviceRecord;
 
@@ -86,11 +87,14 @@ public class ElasticsearchRecordBuffer
             requestCount++;
             totalCount++;
             requestBytes += record.toString().getBytes().length;
-            if (requestCount >= bulkActions || requestBytes >= bulkSize) {
+
+            if (bulkActions <= requestCount || bulkSize <= requestBytes) {
                 client.push(records, task);
+
                 if (totalCount % 10000 == 0) {
                     log.info("Inserted {} records", totalCount);
                 }
+
                 records = JsonNodeFactory.instance.arrayNode();
                 requestBytes = 0;
                 requestCount = 0;
@@ -118,6 +122,7 @@ public class ElasticsearchRecordBuffer
             client.push(records, task);
             log.info("Inserted {} records", records.size());
         }
+
         return ElasticsearchOutputPlugin.CONFIG_MAPPER_FACTORY.newTaskReport().set("inserted", totalCount);
     }
 }

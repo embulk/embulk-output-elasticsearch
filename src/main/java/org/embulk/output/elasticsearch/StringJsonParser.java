@@ -26,35 +26,43 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import org.embulk.spi.DataException;
 
-public class StringJsonParser {
-    public StringJsonParser() {
+public class StringJsonParser
+{
+    public StringJsonParser()
+    {
         this.mapper = new ObjectMapper();
         this.mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         this.mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS, false);
     }
 
-    public ObjectNode parseJsonObject(final String jsonText) {
+    public ObjectNode parseJsonObject(final String jsonText)
+    {
         final JsonNode node = this.parseJsonNode(jsonText);
         if (node.isObject()) {
             return (ObjectNode) node;
-        } else {
+        }
+        else {
             throw new DataException("Expected object node: " + jsonText);
         }
     }
 
-    public ArrayNode parseJsonArray(final String jsonText) {
+    public ArrayNode parseJsonArray(final String jsonText)
+    {
         final JsonNode node = this.parseJsonNode(jsonText);
         if (node.isArray()) {
             return (ArrayNode) node;
-        } else {
+        }
+        else {
             throw new DataException("Expected array node: " + jsonText);
         }
     }
 
-    public JsonNode parseJsonNode(final String jsonText) {
+    public JsonNode parseJsonNode(final String jsonText)
+    {
         try {
             return mapper.readTree(jsonText);
-        } catch (final IOException e) {
+        }
+        catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
     }

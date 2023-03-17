@@ -36,7 +36,6 @@ import org.embulk.spi.Exec;
 import org.opensearch.client.json.jackson.JacksonJsonpMapper;
 import org.opensearch.client.json.jackson.JacksonJsonpParser;
 import org.opensearch.client.json.JsonData;
-import org.opensearch.client.json.JsonpMapper;
 import org.opensearch.client.opensearch.core.BulkRequest;
 import org.opensearch.client.opensearch.core.BulkResponse;
 import org.opensearch.client.opensearch.core.InfoResponse;
@@ -177,25 +176,25 @@ public class ElasticsearchHttpClient
         return sendInfoRequest(task).version().number();
     }
 
-    // TODO: delete
-    public void validateIndexOrAliasName(String index, String type)
+    // TODO: Delete this
+    public void validateIndexOrAliasName(String index)
     {
         for (int i = 0; i < index.length(); i++) {
             if (invalidIndexCharacters.contains(index.charAt(i))) {
-                throw new ConfigException(String.format("%s '%s' must not contain the invalid characters " + invalidIndexCharacters.toString(), type, index));
+                throw new ConfigException(String.format("'%s' must not contain the invalid characters " + invalidIndexCharacters.toString(), index));
             }
         }
 
         if (!index.toLowerCase(Locale.ROOT).equals(index)) {
-            throw new ConfigException(String.format("%s '%s' must be lowercase", type, index));
+            throw new ConfigException(String.format("'%s' must be lowercase", index));
         }
 
         if (index.startsWith("_") || index.startsWith("-") || index.startsWith("+")) {
-            throw new ConfigException(String.format("%s '%s' must not start with '_', '-', or '+'", type, index));
+            throw new ConfigException(String.format("'%s' must not start with '_', '-', or '+'", index));
         }
 
         if (index.length() > maxIndexNameBytes) {
-            throw new ConfigException(String.format("%s name is too long, (%s > %s)", type, index.length(), maxIndexNameBytes));
+            throw new ConfigException(String.format("index name is too long, (%s > %s)", index.length(), maxIndexNameBytes));
         }
 
         if (index.equals(".") || index.equals("..")) {
@@ -203,7 +202,7 @@ public class ElasticsearchHttpClient
         }
     }
 
-    private Optional<String> getRecordId(JsonObject record, Optional<String> idColumn, JsonpMapper jsonpMapper)
+    private Optional<String> getRecordId(JsonObject record, Optional<String> idColumn)
     {
         if (!idColumn.isPresent()) {
             return Optional.empty();
@@ -294,16 +293,14 @@ public class ElasticsearchHttpClient
     private BulkResponse sendBulkRequest(JsonNode records, PluginTask task)
     {
         try (OpenSearchRetryHelper retryHelper = createRetryHelper(task)) {
-            JsonpMapper jsonpMapper = retryHelper.jsonpMapper();
-            Optional<String> idColumn = task.getId();
             BulkRequest.Builder br = new BulkRequest.Builder();
 
             JsonParser parser = new JacksonJsonpParser(records.traverse());
-            JsonData jsonData = JsonData.from(parser, jsonpMapper);
+            JsonData jsonData = JsonData.from(parser, retryHelper.jsonpMapper());
 
             for (JsonValue jsonValue : jsonData.toJson().asJsonArray()) {
                 JsonObject record = jsonValue.asJsonObject();
-                Optional<String> id = getRecordId(record, idColumn, jsonpMapper);
+                Optional<String> id = getRecordId(record, task.getId());
 
                 br.operations(op -> op
                     .index(idx -> idx
@@ -516,6 +513,7 @@ public class ElasticsearchHttpClient
                     {
                         try {
                             RestClientBuilder restClientBuilder = RestClient.builder(getHttpHosts(task).toArray(new HttpHost[0]));
+
                             restClientBuilder.setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback() {
                                 @Override
                                 public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder)
@@ -530,6 +528,7 @@ public class ElasticsearchHttpClient
                                     return httpClientBuilder;
                                 }
                             });
+
                             restClientBuilder.setRequestConfigCallback(new RestClientBuilder.RequestConfigCallback() {
                                 @Override
                                 public RequestConfig.Builder customizeRequestConfig(RequestConfig.Builder requestConfigBuilder)
@@ -539,6 +538,7 @@ public class ElasticsearchHttpClient
                                     return requestConfigBuilder;
                                 }
                             });
+
                             OpenSearchTransport transport = new RestClientTransport(restClientBuilder.build(), new JacksonJsonpMapper());
                             return new OpenSearchClient(transport);
                         }

@@ -37,14 +37,16 @@ import org.embulk.util.config.ConfigMapperFactory;
 
 public class OpenSearchOutputPluginBase<T extends RestClientOutputTaskBase>
         extends RestClientPluginBase<T>
-        implements OutputPlugin {
+        implements OutputPlugin
+{
     protected OpenSearchOutputPluginBase(
             final ConfigMapperFactory configMapperFactory,
             final Class<T> taskClass,
             final EmbulkDataEgestable<T> embulkDataEgester,
             final RecordBufferBuildable<T> recordBufferBuilder,
             final OutputTaskValidatable<T> outputTaskValidator,
-            final ServiceRequestMapperBuildable<T> serviceRequestMapperBuilder) {
+            final ServiceRequestMapperBuildable<T> serviceRequestMapperBuilder)
+    {
         super(configMapperFactory);
         this.taskClass = taskClass;
         this.embulkDataEgester = embulkDataEgester;
@@ -56,13 +58,15 @@ public class OpenSearchOutputPluginBase<T extends RestClientOutputTaskBase>
     protected OpenSearchOutputPluginBase(
             final ConfigMapperFactory configMapperFactory,
             final Class<T> taskClass,
-            final RestClientOutputPluginDelegate<T> delegate) {
+            final RestClientOutputPluginDelegate<T> delegate)
+    {
         this(configMapperFactory, taskClass, delegate, delegate, delegate, delegate);
     }
 
     @Override
     public ConfigDiff transaction(
-            final ConfigSource config, final Schema schema, final int taskCount, final OutputPlugin.Control control) {
+            final ConfigSource config, final Schema schema, final int taskCount, final OutputPlugin.Control control)
+    {
         final T task = loadConfig(config, this.taskClass);
         this.outputTaskValidator.validateOutputTask(task, schema, taskCount);
         return resume(task.toTaskSource(), schema, taskCount, control);
@@ -70,7 +74,8 @@ public class OpenSearchOutputPluginBase<T extends RestClientOutputTaskBase>
 
     @Override
     public ConfigDiff resume(
-            final TaskSource taskSource, final Schema schema, final int taskCount, final OutputPlugin.Control control) {
+            final TaskSource taskSource, final Schema schema, final int taskCount, final OutputPlugin.Control control)
+    {
         final T task = loadTask(taskSource, this.taskClass);
         final List<TaskReport> taskReports = control.run(taskSource);
         return this.embulkDataEgester.egestEmbulkData(task, schema, taskCount, taskReports);
@@ -78,11 +83,13 @@ public class OpenSearchOutputPluginBase<T extends RestClientOutputTaskBase>
 
     @Override
     public void cleanup(
-            final TaskSource taskSource, final Schema schema, final int taskCount, final List<TaskReport> successTaskReports) {
+            final TaskSource taskSource, final Schema schema, final int taskCount, final List<TaskReport> successTaskReports)
+    {
     }
 
     @Override
-    public TransactionalPageOutput open(final TaskSource taskSource, final Schema schema, final int taskIndex) {
+    public TransactionalPageOutput open(final TaskSource taskSource, final Schema schema, final int taskIndex)
+    {
         final T task = loadTask(taskSource, this.taskClass);
         final ServiceRequestMapper<? extends ValueLocator> serviceRequestMapper =
                 this.serviceRequestMapperBuilder.buildServiceRequestMapper(task);

@@ -24,7 +24,8 @@ import org.embulk.spi.Page;
 import org.embulk.spi.Schema;
 import org.embulk.util.config.ConfigMapperFactory;
 
-public class OpenSearchPageOutput<T extends RestClientOutputTaskBase> extends RestClientPageOutput<T> {
+public class OpenSearchPageOutput<T extends RestClientOutputTaskBase> extends RestClientPageOutput<T>
+{
     public OpenSearchPageOutput(
             final ConfigMapperFactory configMapperFactory,
             final Class<T> taskClass,
@@ -32,12 +33,14 @@ public class OpenSearchPageOutput<T extends RestClientOutputTaskBase> extends Re
             final RecordExporter recordExporter,
             final RecordBuffer recordBuffer,
             final Schema embulkSchema,
-            final int taskIndex) {
+            final int taskIndex)
+    {
         super(configMapperFactory, taskClass, task, recordExporter, recordBuffer, embulkSchema, taskIndex);
     }
 
     @Override
-    public void add(final Page page) {
+    public void add(final Page page)
+    {
         super.add(page);
 
         page.release();
