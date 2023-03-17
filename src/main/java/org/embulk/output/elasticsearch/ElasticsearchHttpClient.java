@@ -18,7 +18,10 @@ package org.embulk.output.elasticsearch;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonValue;
 import jakarta.json.spi.JsonProvider;
+import jakarta.json.stream.JsonParser;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.config.RequestConfig;
@@ -32,6 +35,7 @@ import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.NodeAdd
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
 import org.embulk.spi.Exec;
 import org.opensearch.client.json.jackson.JacksonJsonpMapper;
+import org.opensearch.client.json.jackson.JacksonJsonpParser;
 import org.opensearch.client.json.JsonData;
 import org.opensearch.client.json.JsonpMapper;
 import org.opensearch.client.opensearch.core.BulkRequest;
@@ -98,7 +102,7 @@ public class ElasticsearchHttpClient
         this.log = LoggerFactory.getLogger(getClass());
     }
 
-    public void push(List<JsonData> records, PluginTask task)
+    public void push(JsonNode records, PluginTask task)
     {
         if (records.size() == 0) {
             return;
@@ -201,13 +205,13 @@ public class ElasticsearchHttpClient
         }
     }
 
-    private Optional<String> getRecordId(JsonData record, Optional<String> idColumn, JsonpMapper jsonpMapper)
+    private Optional<String> getRecordId(JsonObject record, Optional<String> idColumn, JsonpMapper jsonpMapper)
     {
         if (!idColumn.isPresent()) {
             return Optional.empty();
         }
 
-        String id = record.toJson(jsonpMapper).asJsonObject().getString(idColumn.get(), null);
+        String id = record.getString(idColumn.get(), null);
 
         return (id == null) ? Optional.empty() : Optional.of(id);
     }
@@ -289,7 +293,7 @@ public class ElasticsearchHttpClient
         return snapshots != null && !snapshots.isEmpty();
     }
 
-    private BulkResponse sendBulkRequest(List<JsonData> records, PluginTask task)
+    private BulkResponse sendBulkRequest(JsonNode records, PluginTask task)
     {
         try (OpenSearchRetryHelper retryHelper = createRetryHelper(task)) {
             JsonpMapper jsonpMapper = retryHelper.jsonpMapper();
@@ -297,7 +301,11 @@ public class ElasticsearchHttpClient
             Optional<String> idColumn = task.getId();
             BulkRequest.Builder br = new BulkRequest.Builder();
 
-            for (JsonData record : records) {
+            JsonParser parser = new JacksonJsonpParser(records.traverse());
+            JsonData jsonData = JsonData.from(parser, jsonpMapper);
+
+            for (JsonValue jsonValue : jsonData.toJson().asJsonArray()) {
+                JsonObject record = jsonValue.asJsonObject();
                 Optional<String> id = getRecordId(record, idColumn, jsonpMapper);
 
                 br.operations(op -> op

@@ -30,15 +30,12 @@ import org.embulk.base.restclient.record.ServiceRecord;
 import org.embulk.config.TaskReport;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
 import org.opensearch.client.json.jackson.JacksonJsonpMapper;
-import org.opensearch.client.json.jackson.JacksonJsonpParser;
-import org.opensearch.client.json.JsonData;
 import org.opensearch.client.json.JsonpMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -58,7 +55,7 @@ public class ElasticsearchRecordBuffer
     private long totalCount;
     private int requestCount;
     private long requestBytes;
-    private List<JsonData> records;
+    private ArrayNode records;
 
     public ElasticsearchRecordBuffer(String attributeName, PluginTask task)
     {
@@ -71,7 +68,7 @@ public class ElasticsearchRecordBuffer
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .configure(com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS, false);
         this.jsonpMapper = new JacksonJsonpMapper(this.mapper);
-        this.records = new ArrayList<>();
+        this.records = JsonNodeFactory.instance.arrayNode();
         this.totalCount = 0;
         this.requestCount = 0;
         this.requestBytes = 0;
@@ -85,24 +82,21 @@ public class ElasticsearchRecordBuffer
         try {
             jacksonServiceRecord = (JacksonServiceRecord) serviceRecord;
 
-            // TODO: performance
             JacksonTopLevelValueLocator locator = new JacksonTopLevelValueLocator("record");
             JacksonServiceValue serviceValue = jacksonServiceRecord.getValue(locator);
-            JsonNode jsonNode = serviceValue.getInternalJsonNode();
-            JsonParser parser = new JacksonJsonpParser(jsonNode.traverse());
-            JsonData record = JsonData.from(parser, jsonpMapper);
+            JsonNode record = serviceValue.getInternalJsonNode();
+
+            records.add(record);
 
             requestCount++;
             totalCount++;
-            requestBytes += jsonNode.toString().getBytes().length;
-
-            records.add(record);
+            requestBytes += record.toString().getBytes().length;
             if (requestCount >= bulkActions || requestBytes >= bulkSize) {
                 client.push(records, task);
                 if (totalCount % 10000 == 0) {
                     log.info("Inserted {} records", totalCount);
                 }
-                records = new ArrayList<>();
+                records = JsonNodeFactory.instance.arrayNode();
                 requestBytes = 0;
                 requestCount = 0;
             }
@@ -130,11 +124,5 @@ public class ElasticsearchRecordBuffer
             log.info("Inserted {} records", records.size());
         }
         return ElasticsearchOutputPlugin.CONFIG_MAPPER_FACTORY.newTaskReport().set("inserted", totalCount);
-    }
-
-    private JsonData parseServiceRecord(String serviceRecordString)
-    {
-        JsonParser parser = jsonpMapper.jsonProvider().createParser(new StringReader(serviceRecordString));
-        return JsonData.from(parser, jsonpMapper);
     }
 }
