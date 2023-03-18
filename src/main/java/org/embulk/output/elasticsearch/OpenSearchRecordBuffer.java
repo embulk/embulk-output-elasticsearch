@@ -25,7 +25,7 @@ import org.embulk.base.restclient.jackson.JacksonTopLevelValueLocator;
 import org.embulk.base.restclient.record.RecordBuffer;
 import org.embulk.base.restclient.record.ServiceRecord;
 import org.embulk.config.TaskReport;
-import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
+import org.embulk.output.elasticsearch.OpenSearchOutputPluginDelegate.PluginTask;
 import org.embulk.output.elasticsearch.jackson.JacksonServiceRecord;
 import org.embulk.output.elasticsearch.jackson.JacksonServiceValue;
 import org.opensearch.client.json.JsonpMapper;
@@ -34,16 +34,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * ElasticsearchRecordBuffer is an implementation of {@code RecordBuffer} which includes JSON output directly to Elasticsearch server.
+ * OpenSearchRecordBuffer is an implementation of {@code RecordBuffer} which includes JSON output directly to Elasticsearch server.
  */
-public class ElasticsearchRecordBuffer
+public class OpenSearchRecordBuffer
         extends RecordBuffer
 {
     private final String attributeName;
     private final PluginTask task;
     private final long bulkActions;
     private final long bulkSize;
-    private final ElasticsearchHttpClient client;
+    private final OpenSearchHttpClient client;
     private final ObjectMapper mapper;
     private final JsonpMapper jsonpMapper;
     private final Logger log;
@@ -52,13 +52,13 @@ public class ElasticsearchRecordBuffer
     private long requestBytes;
     private ArrayNode records;
 
-    public ElasticsearchRecordBuffer(String attributeName, PluginTask task)
+    public OpenSearchRecordBuffer(String attributeName, PluginTask task)
     {
         this.attributeName = attributeName;
         this.task = task;
         this.bulkActions = task.getBulkActions();
         this.bulkSize = task.getBulkSize();
-        this.client = new ElasticsearchHttpClient();
+        this.client = new OpenSearchHttpClient();
         this.mapper = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .configure(com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS, false);
@@ -123,6 +123,6 @@ public class ElasticsearchRecordBuffer
             log.info("Inserted {} records", records.size());
         }
 
-        return ElasticsearchOutputPlugin.CONFIG_MAPPER_FACTORY.newTaskReport().set("inserted", totalCount);
+        return OpenSearchOutputPlugin.CONFIG_MAPPER_FACTORY.newTaskReport().set("inserted", totalCount);
     }
 }

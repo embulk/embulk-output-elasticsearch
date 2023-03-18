@@ -75,7 +75,7 @@ dependencies {
 }
 
 embulkPlugin {
-    mainClass = "org.embulk.output.elasticsearch.ElasticsearchOutputPlugin"
+    mainClass = "org.embulk.output.elasticsearch.OpenSearchOutputPlugin"
     category = "output"
     type = "elasticsearch"
 }

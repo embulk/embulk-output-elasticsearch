@@ -19,12 +19,12 @@ package org.embulk.output.elasticsearch;
 import org.embulk.util.config.ConfigMapper;
 import org.embulk.util.config.ConfigMapperFactory;
 
-public class ElasticsearchOutputPlugin
-        extends OpenSearchOutputPluginBase<ElasticsearchOutputPluginDelegate.PluginTask>
+public class OpenSearchOutputPlugin
+        extends OpenSearchOutputPluginBase<OpenSearchOutputPluginDelegate.PluginTask>
 {
-    public ElasticsearchOutputPlugin()
+    public OpenSearchOutputPlugin()
     {
-        super(CONFIG_MAPPER_FACTORY, ElasticsearchOutputPluginDelegate.PluginTask.class, new ElasticsearchOutputPluginDelegate());
+        super(CONFIG_MAPPER_FACTORY, OpenSearchOutputPluginDelegate.PluginTask.class, new OpenSearchOutputPluginDelegate());
     }
 
     static final ConfigMapperFactory CONFIG_MAPPER_FACTORY = ConfigMapperFactory.builder().addDefaultModules().build();

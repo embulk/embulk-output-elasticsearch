@@ -26,7 +26,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.embulk.EmbulkTestRuntime;
 import org.embulk.config.ConfigSource;
-import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
+import org.embulk.output.elasticsearch.OpenSearchOutputPluginDelegate.PluginTask;
 import org.embulk.spi.Exec;
 import org.embulk.spi.Schema;
 import org.embulk.spi.type.Types;
@@ -42,7 +42,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 
-public class ElasticsearchTestUtils
+public class OpenSearchTestUtils
 {
     public static String ES_HOST;
     public static int ES_PORT;
@@ -80,14 +80,14 @@ public class ElasticsearchTestUtils
 
         ES_NODES = Arrays.asList(ImmutableMap.of("host", ES_HOST, "port", ES_PORT));
 
-        PATH_PREFIX = ElasticsearchTestUtils.class.getClassLoader().getResource("sample_01.csv").getPath();
-        JSON_PATH_PREFIX = ElasticsearchTestUtils.class.getClassLoader().getResource("sample_01.json").getPath();
+        PATH_PREFIX = OpenSearchTestUtils.class.getClassLoader().getResource("sample_01.csv").getPath();
+        JSON_PATH_PREFIX = OpenSearchTestUtils.class.getClassLoader().getResource("sample_01.json").getPath();
     }
 
     public void prepareBeforeTest(PluginTask task) throws Exception
     {
-        ElasticsearchHttpClient client = new ElasticsearchHttpClient();
-        Method deleteIndex = ElasticsearchHttpClient.class.getDeclaredMethod("deleteIndex", String.class, PluginTask.class);
+        OpenSearchHttpClient client = new OpenSearchHttpClient();
+        Method deleteIndex = OpenSearchHttpClient.class.getDeclaredMethod("deleteIndex", String.class, PluginTask.class);
         deleteIndex.setAccessible(true);
 
         // Delete index
@@ -102,7 +102,7 @@ public class ElasticsearchTestUtils
 
     public ConfigSource config()
     {
-        return ElasticsearchOutputPlugin.CONFIG_MAPPER_FACTORY.newConfigSource()
+        return OpenSearchOutputPlugin.CONFIG_MAPPER_FACTORY.newConfigSource()
                 .set("in", inputConfig())
                 .set("parser", parserConfig(schemaConfig()))
                 .set("type", "elasticsearch")
@@ -128,7 +128,7 @@ public class ElasticsearchTestUtils
 
     public ConfigSource configJSON()
     {
-        return ElasticsearchOutputPlugin.CONFIG_MAPPER_FACTORY.newConfigSource()
+        return OpenSearchOutputPlugin.CONFIG_MAPPER_FACTORY.newConfigSource()
                 .set("in", inputConfigJSON())
                 .set("parser", parserConfigJSON())
                 .set("type", "elasticsearch")

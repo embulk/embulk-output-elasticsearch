@@ -29,9 +29,9 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.embulk.config.ConfigException;
-import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.AuthMethod;
-import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.NodeAddressTask;
-import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
+import org.embulk.output.elasticsearch.OpenSearchOutputPluginDelegate.AuthMethod;
+import org.embulk.output.elasticsearch.OpenSearchOutputPluginDelegate.NodeAddressTask;
+import org.embulk.output.elasticsearch.OpenSearchOutputPluginDelegate.PluginTask;
 import org.embulk.spi.Exec;
 import org.opensearch.client.RestClient;
 import org.opensearch.client.RestClientBuilder;
@@ -75,7 +75,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class ElasticsearchHttpClient
+public class OpenSearchHttpClient
 {
     private final Logger log;
 
@@ -91,7 +91,7 @@ public class ElasticsearchHttpClient
     private final long maxIndexNameBytes = 255;
     private final List<Character> invalidIndexCharacters = Arrays.asList('\\', '/', '*', '?', '"', '<', '>', '|', '#', ' ', ',');
 
-    public ElasticsearchHttpClient()
+    public OpenSearchHttpClient()
     {
         this.log = LoggerFactory.getLogger(getClass());
     }

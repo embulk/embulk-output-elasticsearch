@@ -39,16 +39,16 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
-public class ElasticsearchOutputPluginDelegate
-        implements RestClientOutputPluginDelegate<ElasticsearchOutputPluginDelegate.PluginTask>
+public class OpenSearchOutputPluginDelegate
+        implements RestClientOutputPluginDelegate<OpenSearchOutputPluginDelegate.PluginTask>
 {
     private final Logger log;
-    private final ElasticsearchHttpClient client;
+    private final OpenSearchHttpClient client;
 
-    public ElasticsearchOutputPluginDelegate()
+    public OpenSearchOutputPluginDelegate()
     {
         this.log = LoggerFactory.getLogger(getClass());
-        this.client = new ElasticsearchHttpClient();
+        this.client = new OpenSearchHttpClient();
     }
 
     public interface NodeAddressTask
@@ -249,7 +249,7 @@ public class ElasticsearchOutputPluginDelegate
     @Override  // Overridden from |RecordBufferBuildable|
     public RecordBuffer buildRecordBuffer(PluginTask task, Schema schema, int taskIndex)
     {
-        return new ElasticsearchRecordBuffer("records", task);
+        return new OpenSearchRecordBuffer("records", task);
     }
 
     @Override
@@ -271,6 +271,6 @@ public class ElasticsearchOutputPluginDelegate
             client.reassignAlias(task.getAlias().orElse(null), task.getIndex(), task);
         }
 
-        return ElasticsearchOutputPlugin.CONFIG_MAPPER_FACTORY.newConfigDiff();
+        return OpenSearchOutputPlugin.CONFIG_MAPPER_FACTORY.newConfigDiff();
     }
 }
