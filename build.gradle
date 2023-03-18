@@ -15,7 +15,7 @@ repositories {
 }
 
 group = "org.embulk"
-version = "0.6.0-SNAPSHOT"
+version = "1.0.0-SNAPSHOT"
 description = "OpenSearch output plugin is an Embulk plugin that loads records to OpenSearch read by any input plugins."
 
 sourceCompatibility = JavaVersion.VERSION_11
@@ -203,10 +203,10 @@ signing {
 }
 
 gem {
-    authors = [ "Muga Nishizawa" ]
-    email = [ "muga.nishizawa@gmail.com" ]
+    authors = [ "Yu Shigetani" ]
+    email = [ "s2g4t1n2@gmail.com" ]
     summary = "OpenSearch output plugin for Embulk"
-    homepage = "https://github.com/calorie/embulk-output-elasticsearch"
+    homepage = "https://github.com/calorie/embulk-output-opensearch"
     licenses = [ "Apache-2.0" ]
 
     from rootProject.file("LICENSE")

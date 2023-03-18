@@ -17,11 +17,3 @@ jobs:
 
       - name: Check building
         run: docker compose run --rm java ./gradlew gem --console rich --info
-
-      - name: Publish
-        run: |
-          mkdir ~/.gem
-          echo "---" > ~/.gem/credentials
-          echo ":github: Bearer ${{ secrets.PACKAGE_TOKEN }}" >> ~/.gem/credentials
-          chmod 600 ~/.gem/credentials
-          find ./build/gems -name 'embulk-output-opensearch-*.gem' -maxdepth 1 -print0 | xargs -0 gem push --key github --host 'https://rubygems.pkg.github.com/calorie'

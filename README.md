@@ -1,6 +1,8 @@
 # OpenSearch output plugin for Embulk
 
-This project is under active development.
+- Use [opensearch-java](https://github.com/opensearch-project/opensearch-java) client
+- Test in [OpenSearch Docker](https://hub.docker.com/r/opensearchproject/opensearch) container
+- [Support Embulk v0.11](https://www.embulk.org/articles/2021/04/27/changes-in-v0.11.html)
 
 ## Overview
 
@@ -8,6 +10,18 @@ This project is under active development.
 * **Rollback supported**: no
 * **Resume supported**: no
 * **Cleanup supported**: no
+
+## Installation
+
+https://github.com/users/calorie/packages/rubygems/package/embulk-output-opensearch
+
+Install via Gemfile:
+
+```
+source "https://rubygems.pkg.github.com/calorie" do
+  gem "embulk-output-opensearch", "1.0.0"
+end
+```
 
 ## Configuration
 
