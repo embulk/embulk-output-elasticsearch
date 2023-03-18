@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.embulk.output.elasticsearch;
+package org.embulk.output.elasticsearch.jackson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
@@ -105,7 +105,7 @@ public class JacksonServiceValue extends ServiceValue
         return timestampFormatter.parse(value.asText());
     }
 
-    JsonNode getInternalJsonNode()
+    public JsonNode getInternalJsonNode()
     {
         return this.value;
     }

@@ -26,6 +26,8 @@ import org.embulk.base.restclient.record.RecordBuffer;
 import org.embulk.base.restclient.record.ServiceRecord;
 import org.embulk.config.TaskReport;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
+import org.embulk.output.elasticsearch.jackson.JacksonServiceRecord;
+import org.embulk.output.elasticsearch.jackson.JacksonServiceValue;
 import org.opensearch.client.json.JsonpMapper;
 import org.opensearch.client.json.jackson.JacksonJsonpMapper;
 import org.slf4j.Logger;

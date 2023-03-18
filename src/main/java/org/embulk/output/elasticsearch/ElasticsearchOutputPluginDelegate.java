@@ -25,6 +25,8 @@ import org.embulk.base.restclient.record.RecordBuffer;
 import org.embulk.config.ConfigDiff;
 import org.embulk.config.ConfigException;
 import org.embulk.config.TaskReport;
+import org.embulk.output.elasticsearch.jackson.JacksonAllInObjectScope;
+import org.embulk.output.elasticsearch.jackson.JacksonServiceRequestMapper;
 import org.embulk.spi.Schema;
 import org.embulk.util.config.Config;
 import org.embulk.util.config.ConfigDefault;
