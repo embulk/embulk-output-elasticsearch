@@ -155,11 +155,14 @@ public class TestOpenSearchHttpClient
 
         // check alias
         assertThat(client.isAliasExisting(ES_ALIAS, task), is(true));
-        assertThat(client.getIndexByAlias(ES_ALIAS, task).toString(), is("[" + ES_INDEX + "]"));
+
+        Method getIndexByAlias = OpenSearchHttpClient.class.getDeclaredMethod("getIndexByAlias", String.class, PluginTask.class);
+        getIndexByAlias.setAccessible(true);
+        assertThat(getIndexByAlias.invoke(client, ES_ALIAS, task).toString(), is("[" + ES_INDEX + "]"));
 
         // reassign index
         client.reassignAlias(ES_ALIAS, ES_INDEX2, task);
-        assertThat(client.getIndexByAlias(ES_ALIAS, task).toString(), is("[" + ES_INDEX2 + "]"));
+        assertThat(getIndexByAlias.invoke(client, ES_ALIAS, task).toString(), is("[" + ES_INDEX2 + "]"));
     }
 
     @Test

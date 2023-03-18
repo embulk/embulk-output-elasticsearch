@@ -96,7 +96,7 @@ public class OpenSearchHttpClient
         this.log = LoggerFactory.getLogger(getClass());
     }
 
-    public void push(JsonNode records, PluginTask task)
+    public void push(final JsonNode records, final PluginTask task)
     {
         if (records.size() == 0) {
             return;
@@ -111,21 +111,7 @@ public class OpenSearchHttpClient
         sendBulkRequest(records, task);
     }
 
-    public List<String> getIndexByAlias(String aliasName, PluginTask task)
-    {
-        // curl -XGET localhost:9200/_alias/{alias}
-        // No alias: 404
-        // Alias found: {"embulk_20161018-183738":{"aliases":{"embulk":{}}}}
-        GetAliasResponse getAliasResponse = sendGetAliasRequest(aliasName, task);
-        Map<String, IndexAliases> result = getAliasResponse.result();
-        if (result == null || result.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        return result.keySet().stream().collect(Collectors.toList());
-    }
-
-    public boolean isIndexExisting(String indexName, PluginTask task)
+    public boolean isIndexExisting(final String indexName, final PluginTask task)
     {
         // curl -XGET localhost:9200/{index}
         // No index: 404
@@ -139,12 +125,12 @@ public class OpenSearchHttpClient
         }
     }
 
-    public String generateNewIndexName(String indexName)
+    public String generateNewIndexName(final String indexName)
     {
         return indexName + new SimpleDateFormat("_yyyyMMdd-HHmmss").format(getTransactionTime().toEpochMilli());
     }
 
-    public boolean isAliasExisting(String aliasName, PluginTask task)
+    public boolean isAliasExisting(final String aliasName, final PluginTask task)
     {
         BooleanResponse booleanResponse = sendExistsAliasRequest(aliasName, task);
         return booleanResponse.value();
@@ -153,7 +139,7 @@ public class OpenSearchHttpClient
     // Should be called just once while Embulk transaction.
     // Be sure to call after all exporting tasks completed
     // This method will delete existing index
-    public void reassignAlias(String aliasName, String newIndexName, PluginTask task)
+    public void reassignAlias(final String aliasName, final String newIndexName, final PluginTask task)
     {
         if (!isAliasExisting(aliasName, task)) {
             assignAlias(newIndexName, aliasName, task);
@@ -167,14 +153,14 @@ public class OpenSearchHttpClient
         }
     }
 
-    public String getEsVersion(PluginTask task)
+    public String getEsVersion(final PluginTask task)
     {
         // curl -XGET 'http://localhost:9200'
         return sendInfoRequest(task).version().number();
     }
 
     // TODO: Delete this
-    public void validateIndexOrAliasName(String index)
+    public void validateIndexOrAliasName(final String index)
     {
         for (int i = 0; i < index.length(); i++) {
             if (invalidIndexCharacters.contains(index.charAt(i))) {
@@ -199,7 +185,21 @@ public class OpenSearchHttpClient
         }
     }
 
-    private Optional<String> getRecordId(JsonObject record, Optional<String> idColumn)
+    private List<String> getIndexByAlias(final String aliasName, final PluginTask task)
+    {
+        // curl -XGET localhost:9200/_alias/{alias}
+        // No alias: 404
+        // Alias found: {"embulk_20161018-183738":{"aliases":{"embulk":{}}}}
+        GetAliasResponse getAliasResponse = sendGetAliasRequest(aliasName, task);
+        Map<String, IndexAliases> result = getAliasResponse.result();
+        if (result == null || result.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        return result.keySet().stream().collect(Collectors.toList());
+    }
+
+    private Optional<String> getRecordId(final JsonObject record, final Optional<String> idColumn)
     {
         if (!idColumn.isPresent()) {
             return Optional.empty();
@@ -210,7 +210,7 @@ public class OpenSearchHttpClient
         return (id == null) ? Optional.empty() : Optional.of(id);
     }
 
-    private void assignAlias(String indexName, String aliasName, PluginTask task)
+    private void assignAlias(final String indexName, final String aliasName, final PluginTask task)
     {
         if (!isIndexExisting(indexName, task)) {
             return;
@@ -237,7 +237,7 @@ public class OpenSearchHttpClient
         log.info("Reassigned alias [{}] to index[{}]", aliasName, indexName);
     }
 
-    private void deleteIndex(String indexName, PluginTask task)
+    private void deleteIndex(final String indexName, final PluginTask task)
     {
         if (!isIndexExisting(indexName, task)) {
             return;
@@ -252,7 +252,7 @@ public class OpenSearchHttpClient
         log.info("Deleted Index [{}]", indexName);
     }
 
-    private void waitSnapshot(PluginTask task)
+    private void waitSnapshot(final PluginTask task)
     {
         int maxSnapshotWaitingMills = task.getMaxSnapshotWaitingSecs() * 1000;
         long execCount = 1;
@@ -277,7 +277,7 @@ public class OpenSearchHttpClient
         }
     }
 
-    private boolean isSnapshotProgressing(PluginTask task)
+    private boolean isSnapshotProgressing(final PluginTask task)
     {
         // https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-snapshots.html#_snapshot_status
         // curl -XGET localhost:9200/_snapshot/_status
@@ -287,7 +287,7 @@ public class OpenSearchHttpClient
         return snapshots != null && !snapshots.isEmpty();
     }
 
-    private BulkResponse sendBulkRequest(JsonNode records, PluginTask task)
+    private BulkResponse sendBulkRequest(final JsonNode records, final PluginTask task)
     {
         try (OpenSearchRetryHelper retryHelper = createRetryHelper(task)) {
             BulkRequest.Builder br = new BulkRequest.Builder();
@@ -324,7 +324,7 @@ public class OpenSearchHttpClient
                         }
 
                         @Override
-                        protected boolean isExceptionToRetry(Exception exception)
+                        protected boolean isExceptionToRetry(final Exception exception)
                         {
                             return task.getId().isPresent();
                         }
@@ -332,7 +332,7 @@ public class OpenSearchHttpClient
         }
     }
 
-    private GetAliasResponse sendGetAliasRequest(String aliasName, PluginTask task)
+    private GetAliasResponse sendGetAliasRequest(final String aliasName, final PluginTask task)
     {
         try (OpenSearchRetryHelper retryHelper = createRetryHelper(task)) {
             return retryHelper.requestWithRetry(
@@ -351,7 +351,7 @@ public class OpenSearchHttpClient
         }
     }
 
-    private GetIndexResponse sendGetIndexRequest(String indexName, PluginTask task)
+    private GetIndexResponse sendGetIndexRequest(final String indexName, final PluginTask task)
     {
         try (OpenSearchRetryHelper retryHelper = createRetryHelper(task)) {
             GetIndexRequest request = new GetIndexRequest.Builder().index(indexName).build();
@@ -372,7 +372,7 @@ public class OpenSearchHttpClient
         }
     }
 
-    private BooleanResponse sendExistsAliasRequest(String aliasName, PluginTask task)
+    private BooleanResponse sendExistsAliasRequest(final String aliasName, final PluginTask task)
     {
         try (OpenSearchRetryHelper retryHelper = createRetryHelper(task)) {
             ExistsAliasRequest request = new ExistsAliasRequest.Builder().name(aliasName).build();
@@ -546,7 +546,7 @@ public class OpenSearchHttpClient
                 });
     }
 
-    private List<HttpHost> getHttpHosts(PluginTask task)
+    private List<HttpHost> getHttpHosts(final PluginTask task)
     {
         List<HttpHost> hosts = new ArrayList<>();
         String protocol = task.getUseSsl() ? "https" : "http";

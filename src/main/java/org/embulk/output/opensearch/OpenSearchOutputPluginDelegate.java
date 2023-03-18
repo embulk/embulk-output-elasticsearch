@@ -51,8 +51,7 @@ public class OpenSearchOutputPluginDelegate
         this.client = new OpenSearchHttpClient();
     }
 
-    public interface NodeAddressTask
-            extends Task
+    public interface NodeAddressTask extends Task
     {
         @Config("host")
         String getHost();
@@ -62,8 +61,7 @@ public class OpenSearchOutputPluginDelegate
         int getPort();
     }
 
-    public interface PluginTask
-            extends RestClientOutputTaskBase
+    public interface PluginTask extends RestClientOutputTaskBase
     {
         @Config("mode")
         @ConfigDefault("\"insert\"")

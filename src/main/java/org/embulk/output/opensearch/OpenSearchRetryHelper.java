@@ -28,13 +28,12 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Locale;
 
-public class OpenSearchRetryHelper
-        implements AutoCloseable
+public class OpenSearchRetryHelper implements AutoCloseable
 {
-    public OpenSearchRetryHelper(int maximumRetries,
-                              int initialRetryIntervalMillis,
-                              int maximumRetryIntervalMillis,
-                              OpenSearchClientCreator clientCreator)
+    public OpenSearchRetryHelper(final int maximumRetries,
+                              final int initialRetryIntervalMillis,
+                              final int maximumRetryIntervalMillis,
+                              final OpenSearchClientCreator clientCreator)
     {
         this.maximumRetries = maximumRetries;
         this.initialRetryIntervalMillis = initialRetryIntervalMillis;

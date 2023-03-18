@@ -20,7 +20,7 @@ public abstract class OpenSearchSingleRequester<T>
 {
     public abstract T requestOnce(org.opensearch.client.opensearch.OpenSearchClient client);
 
-    public final boolean toRetry(Exception exception)
+    public final boolean toRetry(final Exception exception)
     {
         if (exception instanceof org.opensearch.client.opensearch._types.OpenSearchException) {
             return isResponseStatusToRetry(((org.opensearch.client.opensearch._types.OpenSearchException) exception).response());
@@ -30,7 +30,7 @@ public abstract class OpenSearchSingleRequester<T>
         }
     }
 
-    protected boolean isResponseStatusToRetry(org.opensearch.client.opensearch._types.ErrorResponse response)
+    protected boolean isResponseStatusToRetry(final org.opensearch.client.opensearch._types.ErrorResponse response)
     {
         int status = response.status();
         if (status == 404) {
@@ -42,7 +42,7 @@ public abstract class OpenSearchSingleRequester<T>
         return status / 100 != 4; // Retry unless 4xx except for 429.
     }
 
-    protected boolean isExceptionToRetry(Exception exception)
+    protected boolean isExceptionToRetry(final Exception exception)
     {
         return false;
     }

@@ -36,8 +36,7 @@ import org.slf4j.LoggerFactory;
 /**
  * OpenSearchRecordBuffer is an implementation of {@code RecordBuffer} which includes JSON output directly to OpenSearch server.
  */
-public class OpenSearchRecordBuffer
-        extends RecordBuffer
+public class OpenSearchRecordBuffer extends RecordBuffer
 {
     private final String attributeName;
     private final PluginTask task;
@@ -52,7 +51,7 @@ public class OpenSearchRecordBuffer
     private long requestBytes;
     private ArrayNode records;
 
-    public OpenSearchRecordBuffer(String attributeName, PluginTask task)
+    public OpenSearchRecordBuffer(final String attributeName, final PluginTask task)
     {
         this.attributeName = attributeName;
         this.task = task;
