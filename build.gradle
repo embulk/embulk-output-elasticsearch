@@ -15,11 +15,11 @@ repositories {
 }
 
 group = "org.embulk"
-version = "0.6.0-SNAPSHOT"
-description = "Elasticsearch output plugin is an Embulk plugin that loads records to Elasticsearch read by any input plugins."
+version = "1.0.0-SNAPSHOT"
+description = "OpenSearch output plugin is an Embulk plugin that loads records to OpenSearch read by any input plugins."
 
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
 
 tasks.withType(JavaCompile) {
     options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
@@ -58,7 +58,15 @@ dependencies {
 
     implementation "org.embulk:embulk-util-timestamp:0.2.1"
 
+    implementation 'jakarta.xml.bind:jakarta.xml.bind-api:2.3.3'
+
+    implementation 'org.opensearch.client:opensearch-rest-client:2.6.0'
+    implementation 'org.opensearch.client:opensearch-java:2.2.0'
+
+    implementation 'org.msgpack:msgpack-core:0.9.3'
+
     testImplementation "junit:junit:4.13.2"
+    testImplementation "org.hamcrest:hamcrest:2.2"
     testImplementation "org.embulk:embulk-core:0.10.28"
     testImplementation "org.embulk:embulk-core:0.10.28:tests"
     testImplementation "org.embulk:embulk-standards:0.10.28"
@@ -67,9 +75,9 @@ dependencies {
 }
 
 embulkPlugin {
-    mainClass = "org.embulk.output.elasticsearch.ElasticsearchOutputPlugin"
+    mainClass = "org.embulk.output.opensearch.OpenSearchOutputPlugin"
     category = "output"
-    type = "elasticsearch"
+    type = "opensearch"
 }
 
 javadoc {
@@ -195,10 +203,10 @@ signing {
 }
 
 gem {
-    authors = [ "Muga Nishizawa" ]
-    email = [ "muga.nishizawa@gmail.com" ]
-    summary = "Elasticsearch output plugin for Embulk"
-    homepage = "https://github.com/embulk/embulk-output-elasticsearch"
+    authors = [ "Yu Shigetani" ]
+    email = [ "s2g4t1n2@gmail.com" ]
+    summary = "OpenSearch output plugin for Embulk"
+    homepage = "https://github.com/calorie/embulk-output-opensearch"
     licenses = [ "Apache-2.0" ]
 
     from rootProject.file("LICENSE")

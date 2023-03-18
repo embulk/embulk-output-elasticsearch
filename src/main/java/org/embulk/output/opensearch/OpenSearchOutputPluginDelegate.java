@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package org.embulk.output.elasticsearch;
+package org.embulk.output.opensearch;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.embulk.base.restclient.RestClientOutputPluginDelegate;
 import org.embulk.base.restclient.RestClientOutputTaskBase;
-import org.embulk.base.restclient.jackson.JacksonServiceRequestMapper;
 import org.embulk.base.restclient.jackson.JacksonTopLevelValueLocator;
-import org.embulk.base.restclient.jackson.scope.JacksonAllInObjectScope;
 import org.embulk.base.restclient.record.RecordBuffer;
 import org.embulk.config.ConfigDiff;
 import org.embulk.config.ConfigException;
 import org.embulk.config.TaskReport;
+import org.embulk.output.opensearch.jackson.JacksonAllInObjectScope;
+import org.embulk.output.opensearch.jackson.JacksonServiceRequestMapper;
 import org.embulk.spi.Schema;
 import org.embulk.util.config.Config;
 import org.embulk.util.config.ConfigDefault;
@@ -39,16 +39,16 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
-public class ElasticsearchOutputPluginDelegate
-        implements RestClientOutputPluginDelegate<ElasticsearchOutputPluginDelegate.PluginTask>
+public class OpenSearchOutputPluginDelegate
+        implements RestClientOutputPluginDelegate<OpenSearchOutputPluginDelegate.PluginTask>
 {
     private final Logger log;
-    private final ElasticsearchHttpClient client;
+    private final OpenSearchHttpClient client;
 
-    public ElasticsearchOutputPluginDelegate()
+    public OpenSearchOutputPluginDelegate()
     {
         this.log = LoggerFactory.getLogger(getClass());
-        this.client = new ElasticsearchHttpClient();
+        this.client = new OpenSearchHttpClient();
     }
 
     public interface NodeAddressTask
@@ -72,10 +72,6 @@ public class ElasticsearchOutputPluginDelegate
         @Config("nodes")
         List<NodeAddressTask> getNodes();
 
-        @Config("cluster_name")
-        @ConfigDefault("\"elasticsearch\"")
-        String getClusterName();
-
         @Config("index")
         String getIndex();
         void setIndex(String indexName);
@@ -84,9 +80,6 @@ public class ElasticsearchOutputPluginDelegate
         @ConfigDefault("null")
         Optional<String> getAlias();
         void setAlias(Optional<String> aliasName);
-
-        @Config("index_type")
-        String getType();
 
         @Config("id")
         @ConfigDefault("null")
@@ -115,10 +108,6 @@ public class ElasticsearchOutputPluginDelegate
         @Config("bulk_size")
         @ConfigDefault("5242880")
         long getBulkSize();
-
-        @Config("concurrent_requests")
-        @ConfigDefault("5")
-        int getConcurrentRequests();
 
         @Config("maximum_retries")
         @ConfigDefault("7")
@@ -151,18 +140,6 @@ public class ElasticsearchOutputPluginDelegate
         @Config("fill_null_for_empty_column")
         @ConfigDefault("false")
         boolean getFillNullForEmptyColumn();
-
-        // The following method has been removed. It came org.embulk.spi.time.TimestampFormatter.Task, but it has not been used.
-        //
-        // @Config("default_timezone")
-        // @ConfigDefault("\"UTC\"")
-        // String getDefaultTimeZoneId()
-
-        // The following method has been removed. It came org.embulk.spi.time.TimestampFormatter.Task, but it has not been used.
-        //
-        // @Config("default_timestamp_format")
-        // @ConfigDefault("\"%Y-%m-%d %H:%M:%S.%6N %z\"")
-        // String getDefaultTimestampFormat();
     }
 
     public enum Mode
@@ -222,19 +199,15 @@ public class ElasticsearchOutputPluginDelegate
     {
         if (task.getNodes().size() > 0) {
             for (NodeAddressTask node : task.getNodes()) {
-                if (node.getHost().endsWith("es.amazonaws.com")) {
-                    log.warn("This plugin does't support AWS Elasticsearch Service. See README https://github.com/embulk/embulk-output-elasticsearch/blob/master/README.md");
-                }
                 if (node.getPort() == 9300) {
                     log.warn("Port:9300 is usually used by TransportClient. HTTP/Rest Client uses 9200.");
                 }
             }
         }
 
-        log.info(String.format("Connecting to Elasticsearch version:%s", client.getEsVersion(task)));
+        log.info(String.format("Connecting to OpenSearch version:%s", client.getEsVersion(task)));
         log.info("Executing plugin with '{}' mode.", task.getMode());
-        client.validateIndexOrAliasName(task.getIndex(), "index");
-        client.validateIndexOrAliasName(task.getType(), "index_type");
+        client.validateIndexOrAliasName(task.getIndex());
 
         if (task.getMode().equals(Mode.REPLACE)) {
             task.setAlias(Optional.of(task.getIndex()));
@@ -268,7 +241,7 @@ public class ElasticsearchOutputPluginDelegate
     @Override  // Overridden from |RecordBufferBuildable|
     public RecordBuffer buildRecordBuffer(PluginTask task, Schema schema, int taskIndex)
     {
-        return new ElasticsearchRecordBuffer("records", task);
+        return new OpenSearchRecordBuffer("records", task);
     }
 
     @Override
@@ -290,6 +263,6 @@ public class ElasticsearchOutputPluginDelegate
             client.reassignAlias(task.getAlias().orElse(null), task.getIndex(), task);
         }
 
-        return ElasticsearchOutputPlugin.CONFIG_MAPPER_FACTORY.newConfigDiff();
+        return OpenSearchOutputPlugin.CONFIG_MAPPER_FACTORY.newConfigDiff();
     }
 }

@@ -14,33 +14,33 @@
  * limitations under the License.
  */
 
-package org.embulk.output.elasticsearch;
+package org.embulk.output.opensearch;
 
-import org.eclipse.jetty.http.HttpMethod;
 import org.embulk.EmbulkTestRuntime;
 import org.embulk.config.ConfigException;
-import org.embulk.config.ConfigSource;
-import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
-import org.embulk.spi.Exec;
-import org.embulk.spi.time.Timestamp;
+import org.embulk.output.opensearch.OpenSearchOutputPluginDelegate.PluginTask;
 import org.embulk.util.config.ConfigMapper;
 import org.embulk.util.config.ConfigMapperFactory;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+import org.opensearch.client.opensearch.OpenSearchClient;
+import org.opensearch.client.opensearch.indices.CreateIndexRequest;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 
-import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_ALIAS;
-import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_INDEX;
-import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_INDEX2;
-import static org.embulk.output.elasticsearch.ElasticsearchTestUtils.ES_NODES;
+import static org.embulk.output.opensearch.OpenSearchTestUtils.ES_ALIAS;
+import static org.embulk.output.opensearch.OpenSearchTestUtils.ES_INDEX;
+import static org.embulk.output.opensearch.OpenSearchTestUtils.ES_INDEX2;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-public class TestElasticsearchHttpClient
+public class TestOpenSearchHttpClient
 {
     @BeforeClass
     public static void initializeConstant()
@@ -50,47 +50,61 @@ public class TestElasticsearchHttpClient
     @Before
     public void createResources() throws Exception
     {
-        utils = new ElasticsearchTestUtils();
+        utils = new OpenSearchTestUtils();
         utils.initializeConstant();
 
         final PluginTask task = CONFIG_MAPPER.map(utils.config(), PluginTask.class);
         utils.prepareBeforeTest(task);
+
+        openSearchClient = utils.client();
+    }
+
+    @After
+    public void close()
+    {
+        try {
+            openSearchClient._transport().close();
+        }
+        catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     @Rule
     public EmbulkTestRuntime runtime = new EmbulkTestRuntime();
 
-    private static final ConfigMapperFactory CONFIG_MAPPER_FACTORY = ElasticsearchOutputPlugin.CONFIG_MAPPER_FACTORY;
-    private static final ConfigMapper CONFIG_MAPPER = ElasticsearchOutputPlugin.CONFIG_MAPPER;
+    private static final ConfigMapperFactory CONFIG_MAPPER_FACTORY = OpenSearchOutputPlugin.CONFIG_MAPPER_FACTORY;
+    private static final ConfigMapper CONFIG_MAPPER = OpenSearchOutputPlugin.CONFIG_MAPPER;
 
-    private ElasticsearchTestUtils utils;
+    private OpenSearchTestUtils utils;
+    private OpenSearchClient openSearchClient;
 
     @Test
     public void testValidateIndexOrAliasName()
     {
-        ElasticsearchHttpClient client = new ElasticsearchHttpClient();
-        client.validateIndexOrAliasName("embulk", "index");
+        OpenSearchHttpClient client = new OpenSearchHttpClient();
+        client.validateIndexOrAliasName("embulk");
     }
 
     @Test(expected = ConfigException.class)
     public void testIndexNameContainsUpperCase()
     {
-        ElasticsearchHttpClient client = new ElasticsearchHttpClient();
-        client.validateIndexOrAliasName("Embulk", "index");
+        OpenSearchHttpClient client = new OpenSearchHttpClient();
+        client.validateIndexOrAliasName("Embulk");
     }
 
     @Test(expected = ConfigException.class)
     public void testIndexNameStartsInvalidChars()
     {
-        ElasticsearchHttpClient client = new ElasticsearchHttpClient();
-        client.validateIndexOrAliasName("_embulk", "index");
+        OpenSearchHttpClient client = new OpenSearchHttpClient();
+        client.validateIndexOrAliasName("_embulk");
     }
 
     @Test(expected = ConfigException.class)
     public void testIndexNameContainsInvalidChars()
     {
-        ElasticsearchHttpClient client = new ElasticsearchHttpClient();
-        client.validateIndexOrAliasName("em#bulk", "index");
+        OpenSearchHttpClient client = new OpenSearchHttpClient();
+        client.validateIndexOrAliasName("em#bulk");
     }
 
     @Test(expected = ConfigException.class)
@@ -100,44 +114,41 @@ public class TestElasticsearchHttpClient
         for (int i = 0; i < 255; i++) {
             index += "s";
         }
-        ElasticsearchHttpClient client = new ElasticsearchHttpClient();
-        client.validateIndexOrAliasName(index, "index");
+        OpenSearchHttpClient client = new OpenSearchHttpClient();
+        client.validateIndexOrAliasName(index);
     }
 
     @Test(expected = ConfigException.class)
     public void testIndexNameEqDot()
     {
-        ElasticsearchHttpClient client = new ElasticsearchHttpClient();
-        client.validateIndexOrAliasName(".", "index");
+        OpenSearchHttpClient client = new OpenSearchHttpClient();
+        client.validateIndexOrAliasName(".");
     }
 
     @Test
     public void testGenerateNewIndex()
     {
-        ElasticsearchHttpClient client = new ElasticsearchHttpClient();
+        OpenSearchHttpClient client = new OpenSearchHttpClient();
         String newIndexName = client.generateNewIndexName(ES_INDEX);
-        Timestamp time = Exec.getTransactionTime();
+        Instant time = OpenSearchTestUtils.getTransactionTime();
         assertThat(newIndexName, is(ES_INDEX + new SimpleDateFormat("_yyyyMMdd-HHmmss").format(time.toEpochMilli())));
     }
 
     @Test
     public void testCreateAlias() throws Exception
     {
-        ElasticsearchHttpClient client = new ElasticsearchHttpClient();
+        OpenSearchHttpClient client = new OpenSearchHttpClient();
         final PluginTask task = CONFIG_MAPPER.map(utils.config(), PluginTask.class);
         // delete index
-        Method method = ElasticsearchHttpClient.class.getDeclaredMethod("deleteIndex", String.class, PluginTask.class);
+        Method method = OpenSearchHttpClient.class.getDeclaredMethod("deleteIndex", String.class, PluginTask.class);
         method.setAccessible(true);
         method.invoke(client, "newindex", task);
 
         // create index
-        Method sendRequest = ElasticsearchHttpClient.class.getDeclaredMethod("sendRequest", String.class, HttpMethod.class, PluginTask.class);
-        sendRequest.setAccessible(true);
-        String path = String.format("/%s/", ES_INDEX);
-        sendRequest.invoke(client, path, HttpMethod.PUT, task);
-
-        path = String.format("/%s/", ES_INDEX2);
-        sendRequest.invoke(client, path, HttpMethod.PUT, task);
+        CreateIndexRequest request1 = new CreateIndexRequest.Builder().index(ES_INDEX).build();
+        openSearchClient.indices().create(request1);
+        CreateIndexRequest request2 = new CreateIndexRequest.Builder().index(ES_INDEX2).build();
+        openSearchClient.indices().create(request2);
 
         // create alias
         client.reassignAlias(ES_ALIAS, ES_INDEX, task);
@@ -154,7 +165,7 @@ public class TestElasticsearchHttpClient
     @Test
     public void testIsIndexExistingWithNonExistsIndex()
     {
-        ElasticsearchHttpClient client = new ElasticsearchHttpClient();
+        OpenSearchHttpClient client = new OpenSearchHttpClient();
         final PluginTask task = CONFIG_MAPPER.map(utils.config(), PluginTask.class);
         assertThat(client.isIndexExisting("non-existing-index", task), is(false));
     }
@@ -162,26 +173,16 @@ public class TestElasticsearchHttpClient
     @Test
     public void testIsAliasExistingWithNonExistsAlias()
     {
-        ElasticsearchHttpClient client = new ElasticsearchHttpClient();
+        OpenSearchHttpClient client = new OpenSearchHttpClient();
         final PluginTask task = CONFIG_MAPPER.map(utils.config(), PluginTask.class);
         assertThat(client.isAliasExisting("non-existing-alias", task), is(false));
     }
 
     @Test
-    public void testGetAuthorizationHeader() throws Exception
+    public void testGetEsVersion()
     {
-        ElasticsearchHttpClient client = new ElasticsearchHttpClient();
-
-        ConfigSource config = CONFIG_MAPPER_FACTORY.newConfigSource()
-                .set("auth_method", "basic")
-                .set("user", "username")
-                .set("password", "password")
-                .set("index", "idx")
-                .set("index_type", "idx_type")
-                .set("nodes", ES_NODES);
-
-        assertThat(
-                client.getAuthorizationHeader(CONFIG_MAPPER.map(config, PluginTask.class)),
-                is("Basic dXNlcm5hbWU6cGFzc3dvcmQ="));
+        OpenSearchHttpClient client = new OpenSearchHttpClient();
+        final PluginTask task = CONFIG_MAPPER.map(utils.config(), PluginTask.class);
+        assertThat(client.getEsVersion(task), is("2.6.0"));
     }
 }

@@ -1,5 +1,5 @@
-embulk-output-elasticsearch
-Copyright 2015 The Embulk project
+embulk-output-opensearch
+Copyright 2015 The Embulk project, Yu Shigetani
 
 The gem distribution of this product includes software developed in a part of the Embulk project (https://www.embulk.org/).
 It has been licenced under the Apache Software License, Version 2.0.
