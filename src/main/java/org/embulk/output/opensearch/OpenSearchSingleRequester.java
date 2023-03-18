@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.embulk.output.elasticsearch;
+package org.embulk.output.opensearch;
 
 public abstract class OpenSearchSingleRequester<T>
 {

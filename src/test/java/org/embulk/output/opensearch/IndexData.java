@@ -1,4 +1,4 @@
-package org.embulk.output.elasticsearch;
+package org.embulk.output.opensearch;
 
 public class IndexData
 {

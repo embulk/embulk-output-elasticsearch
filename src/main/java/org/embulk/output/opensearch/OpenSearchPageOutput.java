@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.embulk.output.elasticsearch;
+package org.embulk.output.opensearch;
 
 import org.embulk.base.restclient.RestClientOutputTaskBase;
 import org.embulk.base.restclient.RestClientPageOutput;

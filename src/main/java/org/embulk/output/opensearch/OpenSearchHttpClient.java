@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.embulk.output.elasticsearch;
+package org.embulk.output.opensearch;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,9 +29,9 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.embulk.config.ConfigException;
-import org.embulk.output.elasticsearch.OpenSearchOutputPluginDelegate.AuthMethod;
-import org.embulk.output.elasticsearch.OpenSearchOutputPluginDelegate.NodeAddressTask;
-import org.embulk.output.elasticsearch.OpenSearchOutputPluginDelegate.PluginTask;
+import org.embulk.output.opensearch.OpenSearchOutputPluginDelegate.AuthMethod;
+import org.embulk.output.opensearch.OpenSearchOutputPluginDelegate.NodeAddressTask;
+import org.embulk.output.opensearch.OpenSearchOutputPluginDelegate.PluginTask;
 import org.embulk.spi.Exec;
 import org.opensearch.client.RestClient;
 import org.opensearch.client.RestClientBuilder;

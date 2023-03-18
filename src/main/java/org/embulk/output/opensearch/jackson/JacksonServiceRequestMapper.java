@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.embulk.output.elasticsearch.jackson;
+package org.embulk.output.opensearch.jackson;
 
 import org.embulk.base.restclient.ServiceRequestMapper;
 import org.embulk.base.restclient.jackson.JacksonValueLocator;

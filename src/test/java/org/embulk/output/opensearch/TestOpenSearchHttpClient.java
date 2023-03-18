@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package org.embulk.output.elasticsearch;
+package org.embulk.output.opensearch;
 
 import org.embulk.EmbulkTestRuntime;
 import org.embulk.config.ConfigException;
-import org.embulk.output.elasticsearch.OpenSearchOutputPluginDelegate.PluginTask;
+import org.embulk.output.opensearch.OpenSearchOutputPluginDelegate.PluginTask;
 import org.embulk.util.config.ConfigMapper;
 import org.embulk.util.config.ConfigMapperFactory;
 import org.junit.After;
@@ -34,9 +34,9 @@ import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 
-import static org.embulk.output.elasticsearch.OpenSearchTestUtils.ES_ALIAS;
-import static org.embulk.output.elasticsearch.OpenSearchTestUtils.ES_INDEX;
-import static org.embulk.output.elasticsearch.OpenSearchTestUtils.ES_INDEX2;
+import static org.embulk.output.opensearch.OpenSearchTestUtils.ES_ALIAS;
+import static org.embulk.output.opensearch.OpenSearchTestUtils.ES_INDEX;
+import static org.embulk.output.opensearch.OpenSearchTestUtils.ES_INDEX2;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.embulk.output.elasticsearch;
+package org.embulk.output.opensearch;
 
 import jakarta.json.spi.JsonProvider;
 import org.embulk.util.retryhelper.RetryExecutor;

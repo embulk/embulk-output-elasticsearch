@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.embulk.output.elasticsearch;
+package org.embulk.output.opensearch;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -25,8 +25,8 @@ import org.embulk.base.restclient.record.RecordBuffer;
 import org.embulk.config.ConfigDiff;
 import org.embulk.config.ConfigException;
 import org.embulk.config.TaskReport;
-import org.embulk.output.elasticsearch.jackson.JacksonAllInObjectScope;
-import org.embulk.output.elasticsearch.jackson.JacksonServiceRequestMapper;
+import org.embulk.output.opensearch.jackson.JacksonAllInObjectScope;
+import org.embulk.output.opensearch.jackson.JacksonServiceRequestMapper;
 import org.embulk.spi.Schema;
 import org.embulk.util.config.Config;
 import org.embulk.util.config.ConfigDefault;
@@ -73,7 +73,7 @@ public class OpenSearchOutputPluginDelegate
         List<NodeAddressTask> getNodes();
 
         @Config("cluster_name")
-        @ConfigDefault("\"elasticsearch\"")
+        @ConfigDefault("\"opensearch\"")
         String getClusterName();
 
         @Config("index")
@@ -213,7 +213,7 @@ public class OpenSearchOutputPluginDelegate
             }
         }
 
-        log.info(String.format("Connecting to Elasticsearch version:%s", client.getEsVersion(task)));
+        log.info(String.format("Connecting to OpenSearch version:%s", client.getEsVersion(task)));
         log.info("Executing plugin with '{}' mode.", task.getMode());
         client.validateIndexOrAliasName(task.getIndex());
 

@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package org.embulk.output.elasticsearch.jackson;
+package org.embulk.output.opensearch.jackson;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.embulk.base.restclient.record.EmbulkValueScope;
 import org.embulk.base.restclient.record.SinglePageRecordReader;
 
-public class JacksonNewObjectScope extends JacksonObjectScopeBase
+public abstract class JacksonObjectScopeBase extends EmbulkValueScope
 {
-    @Override
-    public ObjectNode scopeObject(final SinglePageRecordReader singlePageRecordReader)
-    {
-        return OBJECT_MAPPER.createObjectNode();
-    }
+    public abstract ObjectNode scopeObject(SinglePageRecordReader singlePageRecordReader);
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    @Override
+    public final JacksonServiceValue scopeEmbulkValues(final SinglePageRecordReader singlePageRecordReader)
+    {
+        return new JacksonServiceValue(this.scopeObject(singlePageRecordReader));
+    }
 }

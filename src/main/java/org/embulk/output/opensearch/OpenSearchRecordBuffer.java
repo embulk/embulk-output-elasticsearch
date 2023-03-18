@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.embulk.output.elasticsearch;
+package org.embulk.output.opensearch;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,16 +25,16 @@ import org.embulk.base.restclient.jackson.JacksonTopLevelValueLocator;
 import org.embulk.base.restclient.record.RecordBuffer;
 import org.embulk.base.restclient.record.ServiceRecord;
 import org.embulk.config.TaskReport;
-import org.embulk.output.elasticsearch.OpenSearchOutputPluginDelegate.PluginTask;
-import org.embulk.output.elasticsearch.jackson.JacksonServiceRecord;
-import org.embulk.output.elasticsearch.jackson.JacksonServiceValue;
+import org.embulk.output.opensearch.OpenSearchOutputPluginDelegate.PluginTask;
+import org.embulk.output.opensearch.jackson.JacksonServiceRecord;
+import org.embulk.output.opensearch.jackson.JacksonServiceValue;
 import org.opensearch.client.json.JsonpMapper;
 import org.opensearch.client.json.jackson.JacksonJsonpMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * OpenSearchRecordBuffer is an implementation of {@code RecordBuffer} which includes JSON output directly to Elasticsearch server.
+ * OpenSearchRecordBuffer is an implementation of {@code RecordBuffer} which includes JSON output directly to OpenSearch server.
  */
 public class OpenSearchRecordBuffer
         extends RecordBuffer

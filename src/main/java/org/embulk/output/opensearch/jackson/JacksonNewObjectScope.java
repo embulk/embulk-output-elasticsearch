@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The Embulk project
+ * Copyright 2017 The Embulk project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,19 @@
  * limitations under the License.
  */
 
-package org.embulk.output.elasticsearch;
+package org.embulk.output.opensearch.jackson;
 
-import org.embulk.config.UserDataException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.embulk.base.restclient.record.SinglePageRecordReader;
 
-public class ResourceNotFoundException extends RuntimeException implements UserDataException
+public class JacksonNewObjectScope extends JacksonObjectScopeBase
 {
-    protected ResourceNotFoundException()
+    @Override
+    public ObjectNode scopeObject(final SinglePageRecordReader singlePageRecordReader)
     {
+        return OBJECT_MAPPER.createObjectNode();
     }
 
-    public ResourceNotFoundException(String message)
-    {
-        super(message);
-    }
-
-    public ResourceNotFoundException(Throwable cause)
-    {
-        super(cause);
-    }
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 }

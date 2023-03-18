@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.embulk.output.elasticsearch;
+package org.embulk.output.opensearch;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -26,7 +26,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.embulk.EmbulkTestRuntime;
 import org.embulk.config.ConfigSource;
-import org.embulk.output.elasticsearch.OpenSearchOutputPluginDelegate.PluginTask;
+import org.embulk.output.opensearch.OpenSearchOutputPluginDelegate.PluginTask;
 import org.embulk.spi.Exec;
 import org.embulk.spi.Schema;
 import org.embulk.spi.type.Types;
@@ -105,7 +105,7 @@ public class OpenSearchTestUtils
         return OpenSearchOutputPlugin.CONFIG_MAPPER_FACTORY.newConfigSource()
                 .set("in", inputConfig())
                 .set("parser", parserConfig(schemaConfig()))
-                .set("type", "elasticsearch")
+                .set("type", "opensearch")
                 .set("mode", "insert")
                 .set("nodes", ES_NODES)
                 .set("index", ES_INDEX)
@@ -131,7 +131,7 @@ public class OpenSearchTestUtils
         return OpenSearchOutputPlugin.CONFIG_MAPPER_FACTORY.newConfigSource()
                 .set("in", inputConfigJSON())
                 .set("parser", parserConfigJSON())
-                .set("type", "elasticsearch")
+                .set("type", "opensearch")
                 .set("mode", "insert")
                 .set("nodes", ES_NODES)
                 .set("index", ES_INDEX)

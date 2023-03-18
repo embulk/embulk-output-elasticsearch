@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.embulk.output.elasticsearch;
+package org.embulk.output.opensearch;
 
 import com.google.common.collect.Lists;
 import org.embulk.EmbulkTestRuntime;
@@ -22,9 +22,9 @@ import org.embulk.config.ConfigException;
 import org.embulk.config.ConfigSource;
 import org.embulk.config.TaskReport;
 import org.embulk.config.TaskSource;
-import org.embulk.output.elasticsearch.OpenSearchOutputPluginDelegate.AuthMethod;
-import org.embulk.output.elasticsearch.OpenSearchOutputPluginDelegate.Mode;
-import org.embulk.output.elasticsearch.OpenSearchOutputPluginDelegate.PluginTask;
+import org.embulk.output.opensearch.OpenSearchOutputPluginDelegate.AuthMethod;
+import org.embulk.output.opensearch.OpenSearchOutputPluginDelegate.Mode;
+import org.embulk.output.opensearch.OpenSearchOutputPluginDelegate.PluginTask;
 import org.embulk.spi.OutputPlugin;
 import org.embulk.spi.Page;
 import org.embulk.spi.PageTestUtils;
@@ -45,12 +45,12 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.embulk.output.elasticsearch.OpenSearchTestUtils.ES_BULK_ACTIONS;
-import static org.embulk.output.elasticsearch.OpenSearchTestUtils.ES_BULK_SIZE;
-import static org.embulk.output.elasticsearch.OpenSearchTestUtils.ES_CONCURRENT_REQUESTS;
-import static org.embulk.output.elasticsearch.OpenSearchTestUtils.ES_ID;
-import static org.embulk.output.elasticsearch.OpenSearchTestUtils.ES_INDEX;
-import static org.embulk.output.elasticsearch.OpenSearchTestUtils.ES_NODES;
+import static org.embulk.output.opensearch.OpenSearchTestUtils.ES_BULK_ACTIONS;
+import static org.embulk.output.opensearch.OpenSearchTestUtils.ES_BULK_SIZE;
+import static org.embulk.output.opensearch.OpenSearchTestUtils.ES_CONCURRENT_REQUESTS;
+import static org.embulk.output.opensearch.OpenSearchTestUtils.ES_ID;
+import static org.embulk.output.opensearch.OpenSearchTestUtils.ES_INDEX;
+import static org.embulk.output.opensearch.OpenSearchTestUtils.ES_NODES;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
@@ -103,7 +103,7 @@ public class TestOpenSearchOutputPlugin
         final ConfigSource config = runtime.getExec().newConfigSource()
             .set("in", utils.inputConfig())
             .set("parser", utils.parserConfig(utils.schemaConfig()))
-            .set("type", "elasticsearch")
+            .set("type", "opensearch")
             .set("mode", "") // NULL
             .set("nodes", ES_NODES)
             .set("index", ES_INDEX)
