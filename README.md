@@ -17,7 +17,7 @@ https://github.com/users/calorie/packages/rubygems/package/embulk-output-opensea
 
 Install via Gemfile:
 
-```
+```ruby
 source "https://rubygems.pkg.github.com/calorie" do
   gem "embulk-output-opensearch", "1.0.0"
 end
@@ -97,8 +97,8 @@ Firstly install Docker and Docker compose then `docker compose up opensearch`,
 so that an ES server will be locally launched then you can run tests with `docker compose run --rm java ./gradlew test`.
 
 ```sh
-$ docker compose up opensearch
-$ docker compose run --rm java ./gradlew test  # -t to watch change of files and rebuild continuously
+docker compose up opensearch
+docker compose run --rm java ./gradlew test  # -t to watch change of files and rebuild continuously
 ```
 
 For Maintainers
@@ -108,13 +108,13 @@ For Maintainers
 
 Modify `version` in `build.gradle` at a detached commit, and then tag the commit with an annotation.
 
-```
-git checkout --detach master
-(Edit: Remove "-SNAPSHOT" in "version" in build.gradle.)
+```sh
+git checkout --detach main
+# (Edit: Remove "-SNAPSHOT" in "version" in build.gradle.)
 git add build.gradle
 git commit -m "Release vX.Y.Z"
 git tag -a vX.Y.Z
-(Edit: Write a tag annotation in the changelog format.)
+# (Edit: Write a tag annotation in the changelog format.)
 ```
 
 See [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) for the changelog format. We adopt a part of it for Git's tag annotation like below.
@@ -131,6 +131,6 @@ See [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) for the changelog f
 
 Push the annotated tag, then. It triggers a release operation on GitHub Actions after approval.
 
-```
+```sh
 git push -u origin vX.Y.Z
 ```
