@@ -72,10 +72,6 @@ public class OpenSearchOutputPluginDelegate
         @Config("nodes")
         List<NodeAddressTask> getNodes();
 
-        @Config("cluster_name")
-        @ConfigDefault("\"opensearch\"")
-        String getClusterName();
-
         @Config("index")
         String getIndex();
         void setIndex(String indexName);
@@ -112,10 +108,6 @@ public class OpenSearchOutputPluginDelegate
         @Config("bulk_size")
         @ConfigDefault("5242880")
         long getBulkSize();
-
-        @Config("concurrent_requests")
-        @ConfigDefault("5")
-        int getConcurrentRequests();
 
         @Config("maximum_retries")
         @ConfigDefault("7")
