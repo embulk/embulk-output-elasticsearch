@@ -15,7 +15,7 @@ repositories {
 }
 
 group = "org.embulk"
-version = "0.6.0-SNAPSHOT"
+version = "0.7.0-SNAPSHOT"
 description = "Elasticsearch output plugin is an Embulk plugin that loads records to Elasticsearch read by any input plugins."
 
 sourceCompatibility = JavaVersion.VERSION_1_8
@@ -54,7 +54,7 @@ dependencies {
     implementation "javax.validation:validation-api:1.1.0.Final"
 
     implementation "org.embulk:embulk-base-restclient:0.10.1"
-    implementation "org.embulk:embulk-util-retryhelper-jetty92:0.8.2"
+    implementation "org.embulk:embulk-util-retryhelper-jetty94:0.9.0"
 
     implementation "org.embulk:embulk-util-timestamp:0.2.1"
 
