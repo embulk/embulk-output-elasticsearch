@@ -1,3 +1,6 @@
+## 0.7.0 - 2024-03-01
+* [update] Add jetty94 to support TLS1.3
+
 ## 0.6.0 - 2023-02-14
 * [maintenance] Support typeless endpoint for ES version 8.x [#71](https://github.com/embulk/embulk-output-elasticsearch/pull/71)
 
