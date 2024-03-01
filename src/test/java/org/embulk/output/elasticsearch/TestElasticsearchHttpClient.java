@@ -17,12 +17,12 @@
 package org.embulk.output.elasticsearch;
 
 import org.eclipse.jetty.http.HttpMethod;
-import org.embulk.EmbulkTestRuntime;
 import org.embulk.config.ConfigException;
 import org.embulk.config.ConfigSource;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
 import org.embulk.spi.Exec;
 import org.embulk.spi.time.Timestamp;
+import org.embulk.test.EmbulkTestRuntime;
 import org.embulk.util.config.ConfigMapper;
 import org.embulk.util.config.ConfigMapperFactory;
 import org.junit.Before;

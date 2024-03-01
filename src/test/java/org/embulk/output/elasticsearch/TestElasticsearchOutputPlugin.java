@@ -19,7 +19,6 @@ package org.embulk.output.elasticsearch;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Lists;
 import org.eclipse.jetty.http.HttpMethod;
-import org.embulk.EmbulkTestRuntime;
 import org.embulk.config.ConfigException;
 import org.embulk.config.ConfigSource;
 import org.embulk.config.TaskReport;
@@ -27,15 +26,16 @@ import org.embulk.config.TaskSource;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.AuthMethod;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.Mode;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
-import org.embulk.spi.Exec;
 import org.embulk.spi.OutputPlugin;
 import org.embulk.spi.Page;
-import org.embulk.spi.PageTestUtils;
 import org.embulk.spi.Schema;
 import org.embulk.spi.TransactionalPageOutput;
 import org.embulk.spi.time.Timestamp;
-import org.embulk.standards.CsvParserPlugin;
+import org.embulk.parser.csv.CsvParserPlugin;
+import org.embulk.test.EmbulkTestRuntime;
+import org.embulk.test.PageTestUtils;
 import org.embulk.util.config.ConfigMapper;
+import org.embulk.util.config.ConfigMapperFactory;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -57,6 +57,7 @@ import static org.junit.Assert.assertTrue;
 
 public class TestElasticsearchOutputPlugin
 {
+    private static final ConfigMapperFactory CONFIG_MAPPER_FACTORY = ElasticsearchOutputPlugin.CONFIG_MAPPER_FACTORY;
     private static final ConfigMapper CONFIG_MAPPER = ElasticsearchOutputPlugin.CONFIG_MAPPER;
 
     @Rule
@@ -85,7 +86,7 @@ public class TestElasticsearchOutputPlugin
     @Test
     public void testDefaultValuesNull()
     {
-        final ConfigSource config = runtime.getExec().newConfigSource()
+        final ConfigSource config = CONFIG_MAPPER_FACTORY.newConfigSource()
             .set("in", utils.inputConfig())
             .set("parser", utils.parserConfig(utils.schemaConfig()))
             .set("type", "elasticsearch")
@@ -98,14 +99,14 @@ public class TestElasticsearchOutputPlugin
             .set("bulk_size", ES_BULK_SIZE)
             .set("concurrent_requests", ES_CONCURRENT_REQUESTS
             );
-        Schema schema = utils.oldParserConfig(runtime).loadConfig(CsvParserPlugin.PluginTask.class).getSchemaConfig().toSchema();
+        Schema schema = CONFIG_MAPPER.map(utils.oldParserConfig(), CsvParserPlugin.PluginTask.class).getSchemaConfig().toSchema();
         try {
             plugin.transaction(config, schema, 0, new OutputPlugin.Control()
             {
                 @Override
                 public List<TaskReport> run(TaskSource taskSource)
                 {
-                    return Lists.newArrayList(Exec.newTaskReport());
+                    return Lists.newArrayList(CONFIG_MAPPER_FACTORY.newTaskReport());
                 }
             });
         }
@@ -120,13 +121,13 @@ public class TestElasticsearchOutputPlugin
     public void testTransaction()
     {
         ConfigSource config = utils.config();
-        Schema schema = utils.oldParserConfig(runtime).loadConfig(CsvParserPlugin.PluginTask.class).getSchemaConfig().toSchema();
+        Schema schema = CONFIG_MAPPER.map(utils.oldParserConfig(), CsvParserPlugin.PluginTask.class).getSchemaConfig().toSchema();
         plugin.transaction(config, schema, 0, new OutputPlugin.Control()
         {
             @Override
             public List<TaskReport> run(TaskSource taskSource)
             {
-                return Lists.newArrayList(Exec.newTaskReport());
+                return Lists.newArrayList(CONFIG_MAPPER_FACTORY.newTaskReport());
             }
         });
         // no error happens
@@ -136,14 +137,14 @@ public class TestElasticsearchOutputPlugin
     public void testResume()
     {
         ConfigSource config = utils.config();
-        Schema schema = utils.oldParserConfig(runtime).loadConfig(CsvParserPlugin.PluginTask.class).getSchemaConfig().toSchema();
+        Schema schema = CONFIG_MAPPER.map(utils.oldParserConfig(), CsvParserPlugin.PluginTask.class).getSchemaConfig().toSchema();
         final PluginTask task = CONFIG_MAPPER.map(config, PluginTask.class);
         plugin.resume(task.dump(), schema, 0, new OutputPlugin.Control()
         {
             @Override
             public List<TaskReport> run(TaskSource taskSource)
             {
-                return Lists.newArrayList(Exec.newTaskReport());
+                return Lists.newArrayList(CONFIG_MAPPER_FACTORY.newTaskReport());
             }
         });
     }
@@ -152,9 +153,9 @@ public class TestElasticsearchOutputPlugin
     public void testCleanup()
     {
         ConfigSource config = utils.config();
-        Schema schema = utils.oldParserConfig(runtime).loadConfig(CsvParserPlugin.PluginTask.class).getSchemaConfig().toSchema();
+        Schema schema = CONFIG_MAPPER.map(utils.oldParserConfig(), CsvParserPlugin.PluginTask.class).getSchemaConfig().toSchema();
         final PluginTask task = CONFIG_MAPPER.map(config, PluginTask.class);
-        plugin.cleanup(task.dump(), schema, 0, Arrays.asList(Exec.newTaskReport()));
+        plugin.cleanup(task.dump(), schema, 0, Arrays.asList(CONFIG_MAPPER_FACTORY.newTaskReport()));
         // no error happens
     }
 
@@ -162,13 +163,13 @@ public class TestElasticsearchOutputPlugin
     public void testOutputByOpen() throws Exception
     {
         ConfigSource config = utils.config();
-        Schema schema = utils.oldParserConfig(runtime).loadConfig(CsvParserPlugin.PluginTask.class).getSchemaConfig().toSchema();
+        Schema schema = CONFIG_MAPPER.map(utils.oldParserConfig(), CsvParserPlugin.PluginTask.class).getSchemaConfig().toSchema();
         final PluginTask task = CONFIG_MAPPER.map(config, PluginTask.class);
         plugin.transaction(config, schema, 0, new OutputPlugin.Control() {
             @Override
             public List<TaskReport> run(TaskSource taskSource)
             {
-                return Lists.newArrayList(Exec.newTaskReport());
+                return Lists.newArrayList(CONFIG_MAPPER_FACTORY.newTaskReport());
             }
         });
         TransactionalPageOutput output = plugin.open(task.dump(), schema, 0);
@@ -214,7 +215,7 @@ public class TestElasticsearchOutputPlugin
     public void testOpenAbort()
     {
         ConfigSource config = utils.config();
-        Schema schema = utils.oldParserConfig(runtime).loadConfig(CsvParserPlugin.PluginTask.class).getSchemaConfig().toSchema();
+        Schema schema = CONFIG_MAPPER.map(utils.oldParserConfig(), CsvParserPlugin.PluginTask.class).getSchemaConfig().toSchema();
         final PluginTask task = CONFIG_MAPPER.map(config, PluginTask.class);
         TransactionalPageOutput output = plugin.open(task.dump(), schema, 0);
         output.abort();
