@@ -30,10 +30,10 @@ import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginT
 import org.embulk.spi.DataException;
 import org.embulk.spi.Exec;
 import org.embulk.spi.time.Timestamp;
-import org.embulk.util.retryhelper.jetty92.Jetty92ClientCreator;
-import org.embulk.util.retryhelper.jetty92.Jetty92RetryHelper;
-import org.embulk.util.retryhelper.jetty92.Jetty92SingleRequester;
-import org.embulk.util.retryhelper.jetty92.StringJetty92ResponseEntityReader;
+import org.embulk.util.retryhelper.jetty94.Jetty94ClientCreator;
+import org.embulk.util.retryhelper.jetty94.Jetty94RetryHelper;
+import org.embulk.util.retryhelper.jetty94.Jetty94SingleRequester;
+import org.embulk.util.retryhelper.jetty94.StringJetty94ResponseEntityReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -355,10 +355,10 @@ public class ElasticsearchHttpClient
         final String uri = createRequestUri(task, path);
         final String authorizationHeader = getAuthorizationHeader(task);
 
-        try (Jetty92RetryHelper retryHelper = createRetryHelper(task)) {
+        try (Jetty94RetryHelper retryHelper = createRetryHelper(task)) {
             String responseBody = retryHelper.requestWithRetry(
-                    new StringJetty92ResponseEntityReader(task.getTimeoutMills()),
-                    new Jetty92SingleRequester() {
+                    new StringJetty94ResponseEntityReader(task.getTimeoutMills()),
+                    new Jetty94SingleRequester() {
                         @Override
                         public void requestOnce(org.eclipse.jetty.client.HttpClient client, org.eclipse.jetty.client.api.Response.Listener responseListener)
                         {
@@ -430,13 +430,13 @@ public class ElasticsearchHttpClient
         }
     }
 
-    private Jetty92RetryHelper createRetryHelper(final PluginTask task)
+    private Jetty94RetryHelper createRetryHelper(final PluginTask task)
     {
-        return new Jetty92RetryHelper(
+        return new Jetty94RetryHelper(
                 task.getMaximumRetries(),
                 task.getInitialRetryIntervalMillis(),
                 task.getMaximumRetryIntervalMillis(),
-                new Jetty92ClientCreator() {
+                new Jetty94ClientCreator() {
                     @Override
                     public org.eclipse.jetty.client.HttpClient createAndStart()
                     {
