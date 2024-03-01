@@ -9,9 +9,6 @@ plugins {
 
 repositories {
     mavenCentral()
-
-    // Tests need EmbulkTestRuntime. EmbulkTestRuntime needs old-style embulk-standards till 0.10.28. 0.10.28 needs jcenter.
-    jcenter()
 }
 
 group = "org.embulk"
