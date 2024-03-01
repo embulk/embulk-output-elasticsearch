@@ -18,7 +18,6 @@ package org.embulk.output.elasticsearch;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.embulk.EmbulkTestRuntime;
 import org.embulk.config.ConfigSource;
 import org.embulk.output.elasticsearch.ElasticsearchOutputPluginDelegate.PluginTask;
 import org.embulk.spi.Schema;
@@ -99,9 +98,9 @@ public class ElasticsearchTestUtils
                 .set("maximum_retries", 2);
     }
 
-    public ConfigSource oldParserConfig(final EmbulkTestRuntime runtime)
+    public ConfigSource oldParserConfig()
     {
-        return runtime.getExec().newConfigSource()
+        return ElasticsearchOutputPlugin.CONFIG_MAPPER_FACTORY.newConfigSource()
                 .set("parser", parserConfig(schemaConfig()))
                 .getNested("parser");
     }
