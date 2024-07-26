@@ -9,50 +9,40 @@ jobs:
     strategy:
       fail-fast: false
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up OpenJDK 8
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v4
         with:
           java-version: 8
           distribution: "temurin"
           cache: "gradle"
-
       - name: Run elastisearch container
         run: docker-compose up -d
-
       - name: List containers
         run: docker-compose ps
-
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-
       - name: Testing
         run: ./gradlew check --console rich --info
-
       - name: Check building
         run: ./gradlew gem --console rich --info
-
       - name: JaCoCo test report
         if: success()
         run: ./gradlew jacocoTestReport
-
       - name: Pack reports
         if: always()
         run: zip -9 -r -q reports.zip ./build/reports
-
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         if: success()
         with:
           name: reports
           path: ./reports.zip
-
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         if: success()
         with:
           name: gem
           path: ./pkg/*.gem
-
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         if: success()
         with:
           name: jar
