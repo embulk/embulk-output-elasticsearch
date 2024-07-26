@@ -4,7 +4,7 @@ plugins {
     id "signing"
     id "jacoco"
     id "checkstyle"
-    id "org.embulk.embulk-plugins" version "0.5.5"
+    id "org.embulk.embulk-plugins" version "0.6.2"
 }
 
 repositories {
@@ -18,15 +18,16 @@ group = "org.embulk"
 version = "0.6.0-SNAPSHOT"
 description = "Elasticsearch output plugin is an Embulk plugin that loads records to Elasticsearch read by any input plugins."
 
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
-
 tasks.withType(JavaCompile) {
     options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
     options.encoding = "UTF-8"
 }
 
 java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+
     withJavadocJar()
     withSourcesJar()
 }
@@ -122,6 +123,7 @@ publishing {
                         // http://central.sonatype.org/pages/requirements.html#license-information
                         name = "The Apache License, Version 2.0"
                         url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+                        distribution = "repo"
                     }
                 }
 
