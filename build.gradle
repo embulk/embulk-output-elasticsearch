@@ -9,9 +9,6 @@ plugins {
 
 repositories {
     mavenCentral()
-
-    // Tests need EmbulkTestRuntime. EmbulkTestRuntime needs old-style embulk-standards till 0.10.28. 0.10.28 needs jcenter.
-    jcenter()
 }
 
 group = "org.embulk"
@@ -33,10 +30,9 @@ java {
 }
 
 dependencies {
-    compileOnly "org.embulk:embulk-api:0.10.28"
-    compileOnly "org.embulk:embulk-spi:0.10.28"
+    compileOnly "org.embulk:embulk-spi:0.11"
 
-    implementation("org.embulk:embulk-util-config:0.3.2") {
+    implementation("org.embulk:embulk-util-config:0.3.4") {
         // They conflict with embulk-core. They are once excluded here,
         // and added explicitly with versions exactly the same with embulk-core:0.10.28.
         exclude group: "com.fasterxml.jackson.core", module: "jackson-annotations"
@@ -50,21 +46,22 @@ dependencies {
     // and added explicitly with versions exactly the same with embulk-core:0.10.28.
     implementation "com.fasterxml.jackson.core:jackson-annotations:2.6.7"
     implementation "com.fasterxml.jackson.core:jackson-core:2.6.7"
-    implementation "com.fasterxml.jackson.core:jackson-databind:2.6.7"
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.6.7.5"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.6.7"
     implementation "javax.validation:validation-api:1.1.0.Final"
 
     implementation "org.embulk:embulk-base-restclient:0.10.1"
     implementation "org.embulk:embulk-util-retryhelper-jetty94:0.9.0"
 
-    implementation "org.embulk:embulk-util-timestamp:0.2.1"
+    implementation "org.embulk:embulk-util-timestamp:0.2.2"
 
     testImplementation "junit:junit:4.13.2"
-    testImplementation "org.embulk:embulk-core:0.10.28"
-    testImplementation "org.embulk:embulk-core:0.10.28:tests"
-    testImplementation "org.embulk:embulk-standards:0.10.28"
-    testImplementation "org.embulk:embulk-junit4:0.10.28"
-    testImplementation "org.embulk:embulk-deps:0.10.28"
+    testImplementation "org.embulk:embulk-core:0.11.2"
+    testImplementation "org.embulk:embulk-deps:0.11.2"
+    testImplementation "org.embulk:embulk-junit4:0.11.2"
+    testImplementation "org.embulk:embulk-input-file:0.11.0"
+    testImplementation "org.embulk:embulk-parser-csv:0.11.4"
+    testImplementation "com.google.guava:guava:18.0"
 }
 
 embulkPlugin {
